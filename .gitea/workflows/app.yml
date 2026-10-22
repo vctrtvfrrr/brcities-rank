@@ -12,6 +12,10 @@ on:
       - "pipeline/dados/dataset.json"
       - ".gitea/workflows/app.yml"
 
+concurrency:
+  group: app-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   verify-and-deploy:
     runs-on: ubuntu-latest
