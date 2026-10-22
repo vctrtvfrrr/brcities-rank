@@ -109,6 +109,16 @@ describe("setWeight", () => {
     expect(activeWeights(setWeight(session, "Porte", -5)).Porte).toBe(0);
   });
 
+  it("keeps a lone category at 100", () => {
+    const [only] = session.categories;
+    const single = {
+      ...session,
+      categories: [only],
+      evaluators: session.evaluators.map((e) => ({ ...e, weights: { [only.id]: 100 } })),
+    };
+    expect(activeWeights(setWeight(single, only.id, 70))).toEqual({ [only.id]: 100 });
+  });
+
   it("changes only the active evaluator", () => {
     const other = { id: "evaluator-2", name: "Outra", weights: { Segurança: 100, Clima: 0, Porte: 0 }, grades: {} };
     const two = { ...session, evaluators: [...session.evaluators, other] };

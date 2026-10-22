@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   averageWeights,
   displayWeights,
@@ -11,7 +11,8 @@ import {
 
 const categoryName = (category: Category) => (category.kind === "objective" ? category.id : category.name);
 const formatAverage = (value: number) => value.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
-const RELEASE_EVENTS = ["pointerup", "pointercancel", "keyup", "blur"] as const;
+const POINTER_RELEASE_EVENTS = ["pointerup", "pointercancel", "blur"] as const;
+const KEYBOARD_RELEASE_EVENTS = ["keyup", "blur"] as const;
 
 type Props = {
   session: Session;
@@ -21,6 +22,7 @@ type Props = {
 
 export function CategoryPanel({ session, onChange, onToggleCategory }: Props) {
   const [frozenOrder, setFrozenOrder] = useState<string[] | null>(null);
+  const usingPointer = useRef(false);
   const active = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
   const shown = displayWeights(active, session.categories);
   const averages = averageWeights(session);
@@ -32,9 +34,10 @@ export function CategoryPanel({ session, onChange, onToggleCategory }: Props) {
   useEffect(() => {
     if (!frozen) return;
     const release = () => setFrozenOrder(null);
-    for (const type of RELEASE_EVENTS) window.addEventListener(type, release);
+    const events = usingPointer.current ? POINTER_RELEASE_EVENTS : KEYBOARD_RELEASE_EVENTS;
+    for (const type of events) window.addEventListener(type, release);
     return () => {
-      for (const type of RELEASE_EVENTS) window.removeEventListener(type, release);
+      for (const type of events) window.removeEventListener(type, release);
     };
   }, [frozen]);
 
@@ -81,6 +84,12 @@ export function CategoryPanel({ session, onChange, onToggleCategory }: Props) {
                 value={active.weights[category.id]}
                 aria-label={`Peso de ${name}`}
                 aria-valuetext={`${shown[category.id]}%`}
+                onPointerDown={() => {
+                  usingPointer.current = true;
+                }}
+                onKeyDown={() => {
+                  usingPointer.current = false;
+                }}
                 onChange={(event) => changeWeight(category.id, Number(event.target.value))}
               />
               <p className="muted small">média da Sessão: {formatAverage(averages[category.id])}%</p>

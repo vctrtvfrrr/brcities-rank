@@ -70,8 +70,8 @@ function updateActiveEvaluator(session: Session, update: (evaluator: Evaluator) 
 }
 
 export function setWeight(session: Session, id: string, value: number): Session {
-  const clamped = Math.min(100, Math.max(0, value));
   const others = session.categories.map((c) => c.id).filter((other) => other !== id);
+  const clamped = others.length === 0 ? 100 : Math.min(100, Math.max(0, value));
   return updateActiveEvaluator(session, (evaluator) => {
     const othersTotal = others.reduce((total, other) => total + evaluator.weights[other], 0);
     const remainder = 100 - clamped;
