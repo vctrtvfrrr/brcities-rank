@@ -1,5 +1,6 @@
 import argparse
 import sys
+from datetime import date
 from types import ModuleType
 
 from coleta import EXTRACTED_DIR, PIPELINE_DIR, SOURCES_DIR, extraidos, registro, validacao
@@ -48,7 +49,7 @@ def montar() -> int:
     result = run_cut(municipalities, RESTRICTIONS)
     candidates = [municipalities[code] for code in result.candidates]
     bounds = {criterion.column: freeze(criterion, candidates) for criterion in CRITERIA}
-    registro.write(PIPELINE_DIR, municipalities, RESTRICTIONS, result, CRITERIA, bounds, sources)
+    registro.write(PIPELINE_DIR, municipalities, RESTRICTIONS, result, CRITERIA, bounds, sources, date.today())
     print(f"{len(municipalities)} municípios, {len(candidates)} Candidatas")
     return 0
 
@@ -77,7 +78,7 @@ def main(argv: list[str] | None = None) -> int:
     ):
         command = commands.add_parser(name, help=summary)
         command.add_argument("fontes", nargs="*", metavar="fonte", help=f"uma de: {', '.join(SOURCES)}")
-    commands.add_parser("montar", help="junta os extraídos, roda o Corte, calcula P5/P95 e escreve o registro")
+    commands.add_parser("montar", help="junta os extraídos, roda o Corte, calcula P5/P95 e escreve o registro e o dataset do app")
     commands.add_parser("validar", help="relatório de conferência, fora do Git")
     arguments = parser.parse_args(argv)
     match arguments.command:

@@ -13,6 +13,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "br-dwgd"
 TITLE = "BR-DWGD, Xavier et al. 2022, grade meteorológica diária brasileira"
+YEAR_LABEL = "1991 a 2020"
+LANDING_URL = "https://github.com/AlexandreCandidoXavier/BR-DWGD"
+CREDIT = "Xavier, A. C., Scanlon, B. R., King, C. W. e Alves, A. I. (2022). New improved Brazilian daily weather gridded data (1961–2020). International Journal of Climatology, 42(16), 8390–8404. CC BY 4.0."
 RAIN_ARCHIVE = RemoteFile(
     "pr_Tmax_Tmin_NetCDF_Files.zip",
     "https://drive.google.com/file/d/1oQWHpXwFgTKNH4Fa2GwCPJ3QN1AMgNPJ/view",

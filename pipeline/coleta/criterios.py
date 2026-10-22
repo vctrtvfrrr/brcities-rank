@@ -3,7 +3,7 @@ from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from enum import Enum
 
-from coleta.fontes import atlas_desastres, casa_civil, cnes, ibge_censo_esgoto, ibge_estimativas, inep_ideb, sgb, sim
+from coleta.fontes import alvares, anatel, atlas_desastres, beck, casa_civil, cnes, ibge_censo_esgoto, ibge_estimativas, inep_ideb, sgb, sim
 from coleta.fontes import br_dwgd
 
 
@@ -26,6 +26,7 @@ class Criterion:
     extra_columns: tuple[str, ...] = ()
     binary: bool = False
     other_sources: tuple[tuple[str, str], ...] = ()
+    unit: str = ""
 
     def transform(self, value: float) -> float:
         return math.log(value) if self.logarithmic else value
@@ -75,6 +76,7 @@ SIZE = Criterion(
     column=ibge_estimativas.population_column(2026),
     direction=Direction.HIGHER,
     logarithmic=True,
+    unit="habitantes",
 )
 
 SAFETY = Criterion(
@@ -88,6 +90,7 @@ SAFETY = Criterion(
     source_file=sim.LISTING.name,
     column=sim.RATE_COLUMN,
     direction=Direction.LOWER,
+    unit="por 100 mil habitantes",
 )
 
 DISASTER_YEARS = Criterion(
@@ -113,6 +116,7 @@ DISASTER_YEARS = Criterion(
         *((casa_civil.NAME, note.file.name) for note in casa_civil.NOTES),
         (sgb.NAME, sgb.SECTORS.name),
     ),
+    unit="anos",
 )
 
 DISASTER_DAMAGE = Criterion(
@@ -127,6 +131,7 @@ DISASTER_DAMAGE = Criterion(
     column=atlas_desastres.DAMAGE_RATE_COLUMN,
     direction=Direction.LOWER,
     extra_columns=(atlas_desastres.DAMAGE_COLUMN,),
+    unit="por mil habitantes",
 )
 
 PEDIATRICIANS = Criterion(
@@ -140,6 +145,7 @@ PEDIATRICIANS = Criterion(
     source_file=cnes.dbc_file(cnes.PROFESSIONALS, cnes.STATES[0]).name,
     column=cnes.RATIO_COLUMN,
     direction=Direction.HIGHER,
+    unit="por mil crianças",
 )
 
 SEWAGE = Criterion(
@@ -152,6 +158,7 @@ SEWAGE = Criterion(
     source_file=ibge_censo_esgoto.SEWAGE.name,
     column=ibge_censo_esgoto.COLUMN,
     direction=Direction.HIGHER,
+    unit="%",
 )
 
 
@@ -165,6 +172,7 @@ def _ideb(stage: inep_ideb.Stage, name: str) -> Criterion:
         source_file=stage.file.name,
         column=stage.column,
         direction=Direction.HIGHER,
+        unit="pontos",
     )
 
 
@@ -191,6 +199,7 @@ HUMIDITY = Criterion(
     source_file=br_dwgd.HUMIDITY_ARCHIVE.name,
     column=br_dwgd.HUMIDITY_COLUMN,
     direction=Direction.LOWER,
+    unit="%",
 )
 
 SUMMER_DEW_POINT = Criterion(
@@ -207,6 +216,7 @@ SUMMER_DEW_POINT = Criterion(
     column=br_dwgd.DEW_POINT_COLUMN,
     direction=Direction.LOWER,
     other_sources=((br_dwgd.NAME, br_dwgd.RAIN_ARCHIVE.name),),
+    unit="°C",
 )
 
 RAIN_DAYS = Criterion(
@@ -221,6 +231,7 @@ RAIN_DAYS = Criterion(
     source_file=br_dwgd.RAIN_ARCHIVE.name,
     column=br_dwgd.RAIN_DAYS_COLUMN,
     direction=Direction.LOWER,
+    unit="dias por ano",
 )
 
 HOTTEST_MONTH = Criterion(
@@ -233,6 +244,25 @@ HOTTEST_MONTH = Criterion(
     source_file=br_dwgd.RAIN_ARCHIVE.name,
     column=br_dwgd.TEMPERATURE_COLUMN,
     direction=Direction.LOWER,
+    unit="°C",
 )
 
 CRITERIA = (SAFETY, DISASTER_YEARS, DISASTER_DAMAGE, PEDIATRICIANS, SEWAGE, IDEB_EARLY_YEARS, IDEB_LATE_YEARS, IDEB_HIGH_SCHOOL, HUMIDITY, SUMMER_DEW_POINT, RAIN_DAYS, HOTTEST_MONTH, SIZE)
+
+
+@dataclass(frozen=True)
+class Filter:
+    """A column the app only filters by, so it has no direction, transformation or P5/P95."""
+
+    category: str
+    name: str
+    source: str
+    column: str
+
+
+FILTERS = (
+    Filter("Clima", "Köppen de Beck", beck.NAME, beck.COLUMN),
+    Filter("Clima", "Köppen de Alvares", alvares.NAME, alvares.COLUMN),
+    Filter("Saúde", "Hospital geral com leito de internação", cnes.NAME, cnes.HOSPITAL_COLUMN),
+    Filter("Internet", "Acesso de fibra", anatel.NAME, anatel.COLUMN),
+)

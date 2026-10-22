@@ -1,15 +1,16 @@
-"""Writes the versioned record: dados/municipios.csv, corte.md and criterios.md."""
+"""Writes the versioned record: dados/municipios.csv, dados/dataset.json, corte.md and criterios.md."""
 
 import csv
 import math
 from collections.abc import Mapping, Sequence
+from datetime import date
 from pathlib import Path
 
+from coleta import dataset
 from coleta.corte import CutResult, Restriction
 from coleta.criterios import Bounds, Criterion
-from coleta.extraidos import CODE, ExtractedSource
+from coleta.extraidos import CODE, IDENTITY, ExtractedSource
 
-IDENTITY = ("nome", "uf", "latitude", "longitude")
 GENERATED = "> Gerado pela Coleta (`uv run python -m coleta montar`, em `pipeline/`). Não edite: rode a Coleta de novo."
 
 
@@ -21,9 +22,12 @@ def write(
     criteria: Sequence[Criterion],
     bounds: Mapping[str, Bounds | None],
     sources: Sequence[ExtractedSource],
+    collected_on: date,
 ) -> None:
+    app_dataset = dataset.render(municipalities, criteria, sources, collected_on)
     (pipeline_dir / "dados").mkdir(exist_ok=True)
     _write_csv(pipeline_dir / "dados" / "municipios.csv", municipalities, restrictions, result, criteria)
+    _write_text(pipeline_dir / "dados" / "dataset.json", app_dataset)
     _write_text(pipeline_dir / "corte.md", render_cut(municipalities, result))
     _write_text(pipeline_dir / "criterios.md", render_criteria(criteria, bounds, sources, len(result.candidates)))
 

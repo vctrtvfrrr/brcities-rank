@@ -6,6 +6,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "ibge-censo-populacao"
 TITLE = "IBGE, Censo Demográfico 2022: população residente"
+YEAR_LABEL = "2022"
+LANDING_URL = "https://sidra.ibge.gov.br/tabela/4709"
+CREDIT = "IBGE. Censo Demográfico 2022, tabela 4709 do SIDRA."
 TABLE = 4709
 VARIABLE = 93
 YEAR = 2022

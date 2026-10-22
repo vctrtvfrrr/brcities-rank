@@ -8,6 +8,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "sgb"
 TITLE = "SGB, Setorização de Áreas de Risco Geológico"
+YEAR_LABEL = "2026"
+LANDING_URL = "https://geoportal.sgb.gov.br/portal/apps/dashboards/c338199dee3a4d4bb0e43738b424a298"
+CREDIT = "SGB-CPRM. Setorização de Áreas de Risco Geológico."
 LAYER = "https://geoportal.sgb.gov.br/server/rest/services/gestaoterritorial/risco/FeatureServer/0"
 HIGH_RISK = ("Alto", "Muito alto")
 SECTORS_FIELD = "setores"

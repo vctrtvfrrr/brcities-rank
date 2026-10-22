@@ -10,6 +10,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "atlas-desastres"
 TITLE = "Atlas Digital de Desastres no Brasil"
+YEAR_LABEL = "2016 a 2025"
+LANDING_URL = "https://atlasdigital.mdr.gov.br/paginas/downloads.xhtml"
+CREDIT = "Ministério da Integração e do Desenvolvimento Regional. Atlas Digital de Desastres no Brasil."
 VERSION = "v1.1 de 2026-08-06"
 DATABASE = RemoteFile(
     "BD_Atlas_1991_2025_v1.1_2026.08.06_Consolidado.csv",

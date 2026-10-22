@@ -7,6 +7,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "ibge-censo-esgoto"
 TITLE = "IBGE, Censo Demográfico 2022"
+YEAR_LABEL = "2022"
+LANDING_URL = "https://sidra.ibge.gov.br/tabela/7555"
+CREDIT = "IBGE. Censo Demográfico 2022, tabela 7555 do SIDRA."
 TABLE = 7555
 YEAR = 2022
 RESIDENTS = 382

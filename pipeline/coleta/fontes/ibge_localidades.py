@@ -8,6 +8,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "ibge-localidades"
 TITLE = "IBGE, Localidades do Brasil 2022"
+YEAR_LABEL = "2022"
+LANDING_URL = "https://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/localidades/Localidades_do_Brasil/2022/"
+CREDIT = "IBGE. Localidades do Brasil 2022."
 ARCHIVE = RemoteFile(
     "Localidades_Brasil_gpkg.zip",
     "https://geoftp.ibge.gov.br/organizacao_do_territorio/estrutura_territorial/localidades/"

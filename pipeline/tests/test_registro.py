@@ -1,8 +1,11 @@
+from datetime import date
+
 from coleta import registro
 from coleta.corte import CLIMATE, CUT, PASS, POPULATION, Restriction, run_cut
 from coleta.criterios import SIZE, freeze
 from coleta.extraidos import ExtractedSource
 
+COLLECTED_ON = date(2026, 10, 22)
 RESTRICTIONS = (POPULATION,)
 CRITERIA = (SIZE,)
 FILES = [
@@ -20,7 +23,7 @@ def write(project_dir):
     result = run_cut(MUNICIPALITIES, RESTRICTIONS)
     candidates = [MUNICIPALITIES[code] for code in result.candidates]
     bounds = {criterion.column: freeze(criterion, candidates) for criterion in CRITERIA}
-    registro.write(project_dir, MUNICIPALITIES, RESTRICTIONS, result, CRITERIA, bounds, SOURCES)
+    registro.write(project_dir, MUNICIPALITIES, RESTRICTIONS, result, CRITERIA, bounds, SOURCES, COLLECTED_ON)
 
 
 def snapshot(project_dir):
@@ -33,7 +36,7 @@ def test_record_is_deterministic(tmp_path):
     write(tmp_path)
 
     assert snapshot(tmp_path) == first
-    assert set(first) == {"municipios.csv", "corte.md", "criterios.md"}
+    assert set(first) == {"municipios.csv", "corte.md", "criterios.md", "dataset.json"}
 
 
 def test_csv_is_sorted_by_code_with_cut_and_marks(tmp_path):
@@ -63,7 +66,7 @@ def test_cut_report_lists_only_candidates_with_divergent_climate(tmp_path):
     result = run_cut(municipalities, restrictions)
     candidates = [municipalities[code] for code in result.candidates]
     bounds = {criterion.column: freeze(criterion, candidates) for criterion in CRITERIA}
-    registro.write(tmp_path, municipalities, restrictions, result, CRITERIA, bounds, SOURCES)
+    registro.write(tmp_path, municipalities, restrictions, result, CRITERIA, bounds, SOURCES, COLLECTED_ON)
 
     text = (tmp_path / "corte.md").read_text(encoding="utf-8")
     section = text.split("## Fontes de clima divergentes")[1]
@@ -93,7 +96,7 @@ def test_cut_report_omits_divergent_climate_city_cut_by_a_later_restriction(tmp_
     result = run_cut(municipalities, restrictions)
     candidates = [municipalities[code] for code in result.candidates]
     bounds = {criterion.column: freeze(criterion, candidates) for criterion in CRITERIA}
-    registro.write(tmp_path, municipalities, restrictions, result, CRITERIA, bounds, SOURCES)
+    registro.write(tmp_path, municipalities, restrictions, result, CRITERIA, bounds, SOURCES, COLLECTED_ON)
 
     text = (tmp_path / "corte.md").read_text(encoding="utf-8")
 

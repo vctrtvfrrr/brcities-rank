@@ -8,6 +8,7 @@ from pathlib import Path
 from coleta.fontes.base import Extraction
 
 CODE = "codigo_ibge"
+IDENTITY = ("nome", "uf", "latitude", "longitude")
 
 
 @dataclass(frozen=True)

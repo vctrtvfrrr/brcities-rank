@@ -9,6 +9,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "alvares"
 TITLE = "Alvares et al. 2013, Köppen's climate classification map for Brazil"
+YEAR_LABEL = "1950 a 1990"
+LANDING_URL = "https://www.ipef.br/geodatabase/"
+CREDIT = "Alvares, C. A., Stape, J. L., Sentelhas, P. C., Gonçalves, J. L. M. e Sparovek, G. (2013). Köppen's climate classification map for Brazil. Meteorologische Zeitschrift, 22(6), 711–728."
 ARCHIVE = RemoteFile("Koppen_Brazil_2013.rar", "https://www.ipef.br/geodatabase/Koppen_Brazil_2013.rar", manual=True)
 FILES = (ARCHIVE,)
 SPREADSHEET = "Koppen Brazil 2013/Koppen Brazilian municipalities.xls"

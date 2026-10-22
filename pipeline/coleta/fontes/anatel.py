@@ -9,6 +9,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "anatel"
 TITLE = "Anatel, acessos de banda larga fixa"
+YEAR_LABEL = "2025 e 2026"
+LANDING_URL = "https://informacoes.anatel.gov.br/paineis/acessos/banda-larga-fixa"
+CREDIT = "Anatel. Acessos de banda larga fixa, dados abertos."
 ARCHIVE = RemoteFile(
     "acessos_banda_larga_fixa.zip",
     "https://www.anatel.gov.br/dadosabertos/paineis_de_dados/acessos/acessos_banda_larga_fixa.zip",

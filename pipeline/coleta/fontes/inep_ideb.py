@@ -10,6 +10,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "inep-ideb"
 TITLE = "INEP, IDEB"
+YEAR_LABEL = "2025"
+LANDING_URL = "https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/ideb/resultados"
+CREDIT = "INEP. Índice de Desenvolvimento da Educação Básica (IDEB) 2025, resultados por município."
 YEAR = 2025
 RESULTS = "https://download.inep.gov.br/ideb/resultados"
 PUBLIC_NETWORK = "Pública"

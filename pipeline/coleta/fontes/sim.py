@@ -12,6 +12,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "sim"
 TITLE = "SIM/DataSUS, Declarações de Óbito"
+YEAR_LABEL = "2022 a 2024"
+LANDING_URL = "https://datasus.saude.gov.br/transferencia-de-arquivos/"
+CREDIT = "Ministério da Saúde. SIM/DataSUS, Sistema de Informações sobre Mortalidade."
 FTP = "ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DORES"
 YEARS = (2022, 2023, 2024)
 UFS = (

@@ -1,7 +1,7 @@
 """Convention shared by the source modules.
 
 Each module in this package exposes NAME (its folder under fontes/), TITLE,
-FILES, download(folder) and extract(folder). download never overwrites a file
+YEAR_LABEL, LANDING_URL and CREDIT (the citation shown by the app), FILES, download(folder) and extract(folder). download never overwrites a file
 already present and returns the manual files still missing; extract returns an
 Extraction keyed by the 7-digit IBGE code and knows nothing about the Corte.
 A module may also expose derive(row), which montar applies to every merged

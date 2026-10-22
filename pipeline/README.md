@@ -3,6 +3,7 @@
 Levanta os dados dos 5.570 municípios nas fontes públicas descritas em [METODOLOGIA.md](METODOLOGIA.md) e escreve o registro versionado:
 
 - `dados/municipios.csv`: um município por linha, com os valores das restrições de referência, o motivo do corte ou as marcas A conferir, e os valores dos critérios.
+- `dados/dataset.json`: o dataset que o app consome, colunar, com as 22 colunas do app, o catálogo dos critérios e os metadados das fontes (versão do contrato, data da Coleta e, por fonte, edição, ano, endereço e crédito). A Coleta falha se `hospital_geral` ou `fibra` vier com valor fora de sim, não ou vazio.
 - `corte.md`: quantas cidades cada restrição de referência cortou e quais Candidatas passaram com marca.
 - `criterios.md`: fonte, recorte, edição, endereço e P5/P95 de cada critério.
 

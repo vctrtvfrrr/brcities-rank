@@ -10,6 +10,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "cnes"
 TITLE = "CNES/DataSUS"
+YEAR_LABEL = "2026"
+LANDING_URL = "https://datasus.saude.gov.br/transferencia-de-arquivos/"
+CREDIT = "Ministério da Saúde. CNES/DataSUS, Cadastro Nacional de Estabelecimentos de Saúde."
 YEAR = 2026
 MONTH = 9
 COMPETENCE = f"{YEAR % 100:02d}{MONTH:02d}"

@@ -12,6 +12,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "beck"
 TITLE = "Beck et al. 2023, High-resolution (1 km) Köppen-Geiger maps for 1901–2099"
+YEAR_LABEL = "1991 a 2020"
+LANDING_URL = "https://www.gloh2o.org/koppen"
+CREDIT = "Beck, H. E., McVicar, T. R., Vergopolan, N. et al. (2023). High-resolution (1 km) Köppen-Geiger maps for 1901–2099 based on constrained CMIP6 projections. Scientific Data, 10, 724. CC BY 4.0."
 ARCHIVE = RemoteFile("koppen_geiger_tif.zip", "https://ndownloader.figshare.com/files/61012822")
 FILES = (ARCHIVE,)
 PERIOD = "1991_2020"

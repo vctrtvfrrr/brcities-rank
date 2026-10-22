@@ -9,6 +9,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "casa-civil"
 TITLE = "Casa Civil, municípios mais suscetíveis a deslizamentos, enxurradas e inundações"
+YEAR_LABEL = "2023 e 2025"
+LANDING_URL = "https://www.gov.br/casacivil/pt-br/assuntos/cadastro-de-municipios-suscetiveis-a-eventos-de-enxurradas-e-inundacoes/criterios-de-identificacao"
+CREDIT = "Casa Civil da Presidência da República. Municípios mais suscetíveis a deslizamentos, enxurradas e inundações, NT 1/2023 e NT 1/2025."
 PAGE = "https://www.gov.br/casacivil/pt-br/assuntos/cadastro-de-municipios-suscetiveis-a-eventos-de-enxurradas-e-inundacoes"
 COLUMN = "suscetivel_casa_civil"
 YES = "sim"

@@ -6,6 +6,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "ibge-censo-criancas"
 TITLE = "IBGE, Censo 2022, crianças de 0 a 14 anos"
+YEAR_LABEL = "2022"
+LANDING_URL = "https://sidra.ibge.gov.br/tabela/9514"
+CREDIT = "IBGE. Censo Demográfico 2022, tabela 9514 do SIDRA."
 TABLE = 9514
 VARIABLE = 93
 YEAR = 2022

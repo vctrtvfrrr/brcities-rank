@@ -6,6 +6,9 @@ from coleta.fontes.base import Extraction, RemoteFile, download_files
 
 NAME = "ibge-estimativas"
 TITLE = "IBGE, Estimativas da População"
+YEAR_LABEL = "2024 e 2026"
+LANDING_URL = "https://sidra.ibge.gov.br/tabela/6579"
+CREDIT = "IBGE. Estimativas da População, tabela 6579 do SIDRA."
 TABLE = 6579
 VARIABLE = 9324
 API = f"https://servicodados.ibge.gov.br/api/v3/agregados/{TABLE}"
