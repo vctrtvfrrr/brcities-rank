@@ -1,11 +1,17 @@
 import { describe, expect, it } from "vitest";
 import { fixtureDataset } from "./fixture-dataset";
 import {
+  addSubjective,
   averageWeights,
+  countGrades,
   createInitialSession,
+  deleteSubjective,
   displayWeights,
   equalizeWeights,
+  gradeOf,
   orderedCategories,
+  renameSubjective,
+  setGrade,
   setWeight,
   toggleCategory,
   type Session,
@@ -209,5 +215,178 @@ describe("orderedCategories", () => {
   it("breaks a tie by the catalog order", () => {
     const next = withActiveWeights(session, { Segurança: 25, Clima: 50, Porte: 25 });
     expect(ids(next)).toEqual(["Clima", "Segurança", "Porte"]);
+  });
+});
+
+const twoEvaluators = (session: Session): Session => ({
+  ...session,
+  evaluators: [
+    ...session.evaluators,
+    { id: "evaluator-2", name: "Ana", weights: { ...session.evaluators[0].weights }, grades: {} },
+  ],
+});
+
+describe("addSubjective", () => {
+  const start = twoEvaluators(createInitialSession(fixtureDataset));
+
+  it("adds a subjective category that is on, with weight 0 for every evaluator", () => {
+    const session = addSubjective(start);
+    const added = session.categories.at(-1)!;
+    expect(added).toMatchObject({ kind: "subjective", on: true });
+    expect(session.evaluators.map((e) => e.weights[added.id])).toEqual([0, 0]);
+  });
+
+  it("keeps the existing weights untouched, still summing 100", () => {
+    const session = addSubjective(start);
+    for (const evaluator of session.evaluators) {
+      expect(evaluator.weights.Clima).toBeCloseTo(100 / 3);
+      expect(sum(evaluator.weights)).toBeCloseTo(100);
+    }
+  });
+
+  it("gives each new subjective its own id and a distinct default name", () => {
+    const session = addSubjective(addSubjective(start));
+    const [first, second] = session.categories.filter((c) => c.kind === "subjective");
+    expect(first.id).not.toBe(second.id);
+    expect(first.kind === "subjective" && second.kind === "subjective" && first.name !== second.name).toBe(true);
+  });
+
+  it("orders a subjective after the objectives when the weights tie", () => {
+    const session = addSubjective(withActiveWeights(start, { Segurança: 40, Clima: 40, Porte: 20 }));
+    expect(
+      orderedCategories(session)
+        .map((c) => c.id)
+        .at(-1),
+    ).toBe(session.categories.at(-1)!.id);
+  });
+
+  it("does not mutate the previous Session", () => {
+    addSubjective(start);
+    expect(start.categories).toHaveLength(3);
+  });
+});
+
+describe("renameSubjective", () => {
+  it("renames only the chosen subjective", () => {
+    const session = addSubjective(addSubjective(createInitialSession(fixtureDataset)));
+    const [first, second] = session.categories.filter((c) => c.kind === "subjective");
+    const renamed = renameSubjective(session, first.id, "Lazer");
+    expect(renamed.categories.find((c) => c.id === first.id)).toMatchObject({ name: "Lazer" });
+    expect(renamed.categories.find((c) => c.id === second.id)).toEqual(second);
+  });
+
+  it("keeps the grades and weights, which are keyed by id", () => {
+    const base = addSubjective(createInitialSession(fixtureDataset));
+    const id = base.categories.at(-1)!.id;
+    const graded = setGrade(base, id, "3550308", 4);
+    expect(renameSubjective(graded, id, "Lazer").evaluators).toEqual(graded.evaluators);
+  });
+});
+
+describe("setGrade", () => {
+  const base = addSubjective(twoEvaluators(createInitialSession(fixtureDataset)));
+  const id = base.categories.at(-1)!.id;
+
+  it("records the grade of the active evaluator for a city", () => {
+    const session = setGrade(base, id, "3550308", 5);
+    expect(gradeOf(session, id, "3550308")).toBe(5);
+    expect(session.evaluators[1].grades).toEqual({});
+  });
+
+  it("records it for the evaluator that is active at the time", () => {
+    const session = setGrade({ ...base, activeEvaluatorId: "evaluator-2" }, id, "3550308", 2);
+    expect(session.evaluators[1].grades[id]).toEqual({ "3550308": 2 });
+    expect(session.evaluators[0].grades).toEqual({});
+  });
+
+  it("replaces a different grade", () => {
+    const session = setGrade(setGrade(base, id, "3550308", 5), id, "3550308", 2);
+    expect(gradeOf(session, id, "3550308")).toBe(2);
+  });
+
+  it("erases the grade when the same one is given again", () => {
+    const session = setGrade(setGrade(base, id, "3550308", 5), id, "3550308", 5);
+    expect(gradeOf(session, id, "3550308")).toBeUndefined();
+  });
+
+  it("keeps the grades of other cities", () => {
+    const session = setGrade(setGrade(base, id, "3550308", 5), id, "3304557", 1);
+    expect(gradeOf(setGrade(session, id, "3304557", 1), id, "3550308")).toBe(5);
+  });
+});
+
+describe("deleteSubjective", () => {
+  const base = twoEvaluators(createInitialSession(fixtureDataset));
+  const added = addSubjective(addSubjective(base));
+  const [first, second] = added.categories.filter((c) => c.kind === "subjective");
+
+  const withLoad = (): Session => {
+    let session: Session = {
+      ...added,
+      evaluators: added.evaluators.map((e) => ({
+        ...e,
+        weights: { Segurança: 30, Clima: 15, Porte: 15, [first.id]: 40, [second.id]: 0 },
+      })),
+    };
+    session = setGrade(session, first.id, "3550308", 5);
+    session = setGrade(session, first.id, "3304557", 2);
+    session = setGrade({ ...session, activeEvaluatorId: "evaluator-2" }, first.id, "3550308", 3);
+    return { ...session, activeEvaluatorId: "evaluator-1" };
+  };
+
+  it("counts the grades of every evaluator", () => {
+    expect(countGrades(withLoad(), first.id)).toBe(3);
+    expect(countGrades(withLoad(), second.id)).toBe(0);
+  });
+
+  it("removes the category, its weights and its grades from every evaluator", () => {
+    const session = deleteSubjective(withLoad(), first.id);
+    expect(session.categories.map((c) => c.id)).not.toContain(first.id);
+    for (const evaluator of session.evaluators) {
+      expect(evaluator.weights).not.toHaveProperty(first.id);
+      expect(evaluator.grades).not.toHaveProperty(first.id);
+    }
+  });
+
+  it("renormalizes the remaining weights of each evaluator in proportion", () => {
+    const session = deleteSubjective(withLoad(), first.id);
+    for (const evaluator of session.evaluators) {
+      expect(evaluator.weights.Segurança).toBeCloseTo(50);
+      expect(evaluator.weights.Clima).toBeCloseTo(25);
+      expect(evaluator.weights.Porte).toBeCloseTo(25);
+      expect(evaluator.weights[second.id]).toBe(0);
+      expect(sum(evaluator.weights)).toBeCloseTo(100);
+    }
+  });
+
+  it("keeps the other subjectives and their grades", () => {
+    const graded = setGrade(withLoad(), second.id, "3550308", 4);
+    const session = deleteSubjective(graded, first.id);
+    expect(gradeOf(session, second.id, "3550308")).toBe(4);
+  });
+
+  it("splits the weight equally when everything left was at 0", () => {
+    const session: Session = {
+      ...added,
+      evaluators: added.evaluators.map((e) => ({
+        ...e,
+        weights: { Segurança: 0, Clima: 0, Porte: 0, [first.id]: 100, [second.id]: 0 },
+      })),
+    };
+    const result = deleteSubjective(session, first.id);
+    expect(result.evaluators[0].weights.Clima).toBeCloseTo(25);
+    expect(result.evaluators[0].weights[second.id]).toBeCloseTo(25);
+  });
+});
+
+describe("grades survive any change that is not deleting them", () => {
+  it("keeps grades through toggles and weight changes", () => {
+    const base = addSubjective(createInitialSession(fixtureDataset));
+    const id = base.categories.at(-1)!.id;
+    let session = setGrade(base, id, "3550308", 5);
+    session = toggleCategory(toggleCategory(session, id), id);
+    session = setWeight(session, id, 70);
+    session = equalizeWeights(session);
+    expect(gradeOf(session, id, "3550308")).toBe(5);
   });
 });

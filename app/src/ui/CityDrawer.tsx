@@ -1,18 +1,31 @@
 import { useEffect, useRef } from "react";
-import type { CategoryDetail, CityDetail, CriterionDetail } from "../domain/city-detail";
+import type { CategoryDetail, CityDetail, CriterionDetail, SubjectiveDetail } from "../domain/city-detail";
 import type { Dataset, SourceInfo } from "../domain/dataset";
-import { describeConstraint, formatCount, formatDate, formatNote, formatScore, formatValue } from "./format";
+import { GRADES, type Grade } from "../domain/session";
+import {
+  describeConstraint,
+  formatCount,
+  formatDate,
+  formatGrade,
+  formatNote,
+  formatScore,
+  formatValue,
+} from "./format";
 
 const yesNo = (value: boolean | null) => (value === null ? null : value ? "sim" : "não");
 
 export function CityDrawer({
   dataset,
   detail,
+  evaluatorName,
   onClose,
+  onGrade,
 }: {
   dataset: Dataset;
   detail: CityDetail;
+  evaluatorName: string;
   onClose: () => void;
+  onGrade: (id: string, code: string, grade: Grade) => void;
 }) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => event.key === "Escape" && onClose();
@@ -48,6 +61,14 @@ export function CityDrawer({
       <Standing dataset={dataset} detail={detail} />
       {detail.categories.map((category) => (
         <Category key={category.id} category={category} />
+      ))}
+      {detail.subjectives.map((subjective) => (
+        <Subjective
+          key={subjective.id}
+          subjective={subjective}
+          evaluatorName={evaluatorName}
+          onGrade={(grade) => onGrade(subjective.id, detail.code, grade)}
+        />
       ))}
       <Filters detail={detail} />
     </aside>
@@ -101,6 +122,49 @@ function Category({ category }: { category: CategoryDetail }) {
         {category.criteria.map((criterion) => (
           <Criterion key={criterion.key} criterion={criterion} />
         ))}
+      </div>
+    </section>
+  );
+}
+
+function Subjective({
+  subjective,
+  evaluatorName,
+  onGrade,
+}: {
+  subjective: SubjectiveDetail;
+  evaluatorName: string;
+  onGrade: (grade: Grade) => void;
+}) {
+  return (
+    <section className={subjective.on ? "catblock" : "catblock off"} aria-label={subjective.name}>
+      <div className="cathead">
+        <span>
+          {subjective.name} <span className="tag sub">subjetiva</span>
+          {subjective.on ? "" : " (desligada)"}
+        </span>
+        <span>{subjective.note === null ? "" : formatNote(subjective.note)}</span>
+      </div>
+      <div className="crit">
+        <span>Média das notas</span>
+        <span className="wide">{subjective.average === null ? "–" : formatGrade(subjective.average)}</span>
+      </div>
+      <div className="grade-row">
+        <span className="muted small">Nota de {evaluatorName}</span>
+        <span className="stars show" role="group" aria-label={`Nota de ${evaluatorName} para ${subjective.name}`}>
+          {GRADES.map((grade) => (
+            <button
+              type="button"
+              key={grade}
+              className={subjective.mine === grade ? "on" : undefined}
+              aria-pressed={subjective.mine === grade}
+              aria-label={`Nota ${grade}`}
+              onClick={() => onGrade(grade)}
+            >
+              {grade}
+            </button>
+          ))}
+        </span>
       </div>
     </section>
   );

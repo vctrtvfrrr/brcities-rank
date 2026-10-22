@@ -1,6 +1,6 @@
 import type { CatalogEntry, Dataset, SourceInfo } from "./dataset";
 import type { Bounds, RankResult } from "./rank";
-import type { Constraint, Session } from "./session";
+import { gradeOf, type Constraint, type Grade, type Session } from "./session";
 
 export type Standing =
   | { kind: "ranked"; position: number; of: number; score: number }
@@ -25,6 +25,15 @@ export type CategoryDetail = {
   criteria: CriterionDetail[];
 };
 
+export type SubjectiveDetail = {
+  id: string;
+  name: string;
+  on: boolean;
+  average: number | null;
+  note: number | null;
+  mine: Grade | null;
+};
+
 export type FiltersDetail = {
   koppen: { beck: string | null; alvares: string | null; diverge: boolean };
   koppenSources: SourceInfo[];
@@ -41,6 +50,7 @@ export type CityDetail = {
   collected: string;
   standing: Standing;
   categories: CategoryDetail[];
+  subjectives: SubjectiveDetail[];
   filters: FiltersDetail;
 };
 
@@ -79,6 +89,18 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
     criteria: dataset.catalogo.filter((e) => e.pontua && e.categoria === id).map(criterionDetail),
   }));
 
+  const subjectives = session.categories.flatMap<SubjectiveDetail>((category) =>
+    category.kind === "subjective"
+      ? {
+          id: category.id,
+          name: category.name,
+          on: category.on,
+          average: candidate?.gradeAverages[category.id] ?? null,
+          note: candidate?.categoryScores[category.id] ?? null,
+          mine: gradeOf(session, category.id, code) ?? null,
+        }
+      : [],
+  );
   const beck = text("koppen_beck");
   const alvares = text("koppen_alvares");
   return {
@@ -88,6 +110,7 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
     collected: dataset.coleta,
     standing: standingOf(session, result, code, candidate),
     categories,
+    subjectives,
     filters: {
       koppen: { beck, alvares, diverge: beck !== null && alvares !== null && beck !== alvares },
       koppenSources: sourcesOf("koppen_beck", "koppen_alvares"),

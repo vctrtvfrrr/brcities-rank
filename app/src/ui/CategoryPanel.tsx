@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import type { Dataset } from "../domain/dataset";
 import {
+  addSubjective,
   averageWeights,
+  countGrades,
+  deleteSubjective,
   displayWeights,
   equalizeWeights,
   orderedCategories,
+  renameSubjective,
   setWeight,
   type Category,
   type Session,
@@ -49,6 +53,26 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
     onChange((current) => setWeight(current, id, value));
   };
 
+  const [focusId, setFocusId] = useState<string | null>(null);
+  const add = () => {
+    setFrozenOrder(null);
+    setFocusId(addSubjective(session).categories.at(-1)!.id);
+    onChange(addSubjective);
+  };
+
+  const remove = (category: Category) => {
+    const lost = countGrades(session, category.id);
+    const evaluators = session.evaluators.length;
+    if (
+      window.confirm(
+        `Apagar a subjetiva "${categoryName(category)}"? Saem ${lost} ${lost === 1 ? "nota" : "notas"} e o peso dela em ${evaluators} ${evaluators === 1 ? "avaliador" : "avaliadores"}; o peso vai para as demais categorias na proporção atual.`,
+      )
+    ) {
+      setFrozenOrder(null);
+      onChange((current) => deleteSubjective(current, category.id));
+    }
+  };
+
   const equalize = () => {
     if (
       window.confirm(
@@ -77,8 +101,29 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
                   onClick={() => onToggleCategory(category.id)}
                 />
                 <span className="category-name">
-                  <CategoryLabel dataset={dataset} id={category.id} name={name} />
+                  {category.kind === "subjective" ? (
+                    <SubjectiveName
+                      name={category.name}
+                      autoFocus={category.id === focusId}
+                      onCommit={(next) => onChange((current) => renameSubjective(current, category.id, next))}
+                    />
+                  ) : (
+                    <CategoryLabel dataset={dataset} id={category.id} name={name} />
+                  )}
                 </span>
+                {category.kind === "subjective" && (
+                  <>
+                    <span className="tag sub">subjetiva</span>
+                    <button
+                      type="button"
+                      className="ghost"
+                      aria-label={`Apagar a subjetiva ${name}`}
+                      onClick={() => remove(category)}
+                    >
+                      ✕
+                    </button>
+                  </>
+                )}
                 <span className="pct">{shown[category.id]}%</span>
               </div>
               <input
@@ -103,10 +148,47 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
         })}
       </ul>
       <div className="category-actions">
+        <button type="button" onClick={add}>
+          + Subjetiva
+        </button>
         <button type="button" onClick={equalize}>
           Igualar pesos
         </button>
       </div>
     </>
+  );
+}
+
+function SubjectiveName({
+  name,
+  autoFocus,
+  onCommit,
+}: {
+  name: string;
+  autoFocus: boolean;
+  onCommit: (name: string) => void;
+}) {
+  const [draft, setDraft] = useState(name);
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => setDraft(name), [name]);
+  useEffect(() => {
+    if (autoFocus) input.current?.select();
+  }, [autoFocus]);
+  const commit = () => {
+    const trimmed = draft.trim();
+    if (trimmed === "") setDraft(name);
+    else if (trimmed !== name) onCommit(trimmed);
+  };
+  return (
+    <input
+      ref={input}
+      type="text"
+      className="sub-name"
+      value={draft}
+      aria-label="Nome da subjetiva"
+      onChange={(event) => setDraft(event.target.value)}
+      onBlur={commit}
+      onKeyDown={(event) => event.key === "Enter" && event.currentTarget.blur()}
+    />
   );
 }

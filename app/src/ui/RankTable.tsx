@@ -3,26 +3,27 @@ import { useEffect, useRef, type CSSProperties, type KeyboardEvent } from "react
 import type { Candidate } from "../domain/rank";
 import type { Dataset } from "../domain/dataset";
 import { SCORE_READING } from "../domain/explanations";
-import type { Category } from "../domain/session";
+import { GRADES, gradeOf, type Grade, type Session } from "../domain/session";
 import { CategoryLabel } from "./CategoryTip";
-import { formatNote, formatScore } from "./format";
+import { formatGrade, formatNote, formatScore } from "./format";
 import { Tooltip } from "./Tooltip";
 
 const ROW_HEIGHT = 28;
 const DASH = "–";
 
-const categoryName = (category: Category) => (category.kind === "objective" ? category.id : category.name);
-
 type RankTableProps = {
   dataset: Dataset;
   candidates: Candidate[];
-  categories: Category[];
+  session: Session;
   selectedCode: string | null;
   reveal: { code: string } | null;
   onSelect: (code: string) => void;
+  onGrade: (id: string, code: string, grade: Grade) => void;
 };
 
-export function RankTable({ dataset, candidates, categories, selectedCode, reveal, onSelect }: RankTableProps) {
+export function RankTable({ dataset, candidates, session, selectedCode, reveal, onSelect, onGrade }: RankTableProps) {
+  const { categories } = session;
+  const evaluator = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
   const scroller = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: candidates.length,
@@ -40,6 +41,7 @@ export function RankTable({ dataset, candidates, categories, selectedCode, revea
   }, [reveal, candidates, virtualizer]);
 
   const onRowKeyDown = (event: KeyboardEvent, code: string) => {
+    if (event.target !== event.currentTarget) return;
     if (event.key !== "Enter" && event.key !== " ") return;
     event.preventDefault();
     onSelect(code);
@@ -70,7 +72,11 @@ export function RankTable({ dataset, candidates, categories, selectedCode, revea
           </span>
           {categories.map((category) => (
             <span role="columnheader" key={category.id} className={category.on ? "num" : "num dim"}>
-              <CategoryLabel dataset={dataset} id={category.id} name={categoryName(category)} />
+              {category.kind === "subjective" ? (
+                category.name
+              ) : (
+                <CategoryLabel dataset={dataset} id={category.id} name={category.id} />
+              )}
             </span>
           ))}
         </div>
@@ -98,16 +104,80 @@ export function RankTable({ dataset, candidates, categories, selectedCode, revea
                 <span role="cell" className="num">
                   {candidate.score === null ? DASH : formatScore(candidate.score)}
                 </span>
-                {categories.map((category) => (
-                  <span role="cell" key={category.id} className={category.on ? "num" : "num dim"}>
-                    {formatNote(candidate.categoryScores[category.id])}
-                  </span>
-                ))}
+                {categories.map((category) =>
+                  category.kind === "subjective" ? (
+                    <SubjectiveCell
+                      key={category.id}
+                      on={category.on}
+                      label={`${category.name} de ${candidate.name}`}
+                      average={candidate.gradeAverages[category.id] ?? null}
+                      mine={gradeOf(session, category.id, candidate.code) ?? null}
+                      evaluatorName={evaluator.name}
+                      onGrade={(grade) => onGrade(category.id, candidate.code, grade)}
+                    />
+                  ) : (
+                    <span role="cell" key={category.id} className={category.on ? "num" : "num dim"}>
+                      {formatNote(candidate.categoryScores[category.id])}
+                    </span>
+                  ),
+                )}
               </div>
             );
           })}
         </div>
       </div>
     </div>
+  );
+}
+
+function SubjectiveCell({
+  on,
+  label,
+  average,
+  mine,
+  evaluatorName,
+  onGrade,
+}: {
+  on: boolean;
+  label: string;
+  average: number | null;
+  mine: Grade | null;
+  evaluatorName: string;
+  onGrade: (grade: Grade) => void;
+}) {
+  return (
+    <span role="cell" className="num subcell">
+      <span className={on ? undefined : "dim"}>
+        {average === null ? (
+          DASH
+        ) : (
+          <>
+            <span className="mean">{formatGrade(average)}</span>
+            {mine !== null && (
+              <span className="mine" title={`Nota de ${evaluatorName}`}>
+                {mine}
+              </span>
+            )}
+          </>
+        )}
+      </span>
+      <span className="stars" role="group" aria-label={`Nota de ${evaluatorName} para ${label}`}>
+        {GRADES.map((grade) => (
+          <button
+            type="button"
+            key={grade}
+            className={mine === grade ? "on" : undefined}
+            aria-pressed={mine === grade}
+            aria-label={`Nota ${grade}`}
+            onClick={(event) => {
+              event.stopPropagation();
+              onGrade(grade);
+            }}
+          >
+            {grade}
+          </button>
+        ))}
+      </span>
+    </span>
   );
 }

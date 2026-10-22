@@ -3,7 +3,14 @@ import { cityDetail } from "./city-detail";
 import { datasetWithCities, fixtureDataset } from "./fixture-dataset";
 import { rank } from "./rank";
 import { addConstraint, editConstraint } from "./constraints";
-import { createInitialSession, toggleCategory, type Session } from "./session";
+import {
+  addSubjective,
+  createInitialSession,
+  renameSubjective,
+  setGrade,
+  toggleCategory,
+  type Session,
+} from "./session";
 
 const scored = (session: Session) => ["Segurança", "Clima", "Porte"].reduce(toggleCategory, session);
 
@@ -135,5 +142,32 @@ describe("cityDetail filters", () => {
   it("carries the sources of the filters", () => {
     expect(open()("3550308")!.filters.fibraSources).toEqual([fixtureDataset.fontes[0]]);
     expect(open()("3550308")!.filters.koppenSources).toEqual([fixtureDataset.fontes[1]]);
+  });
+});
+
+describe("cityDetail subjectives", () => {
+  const base = renameSubjective(addSubjective(createInitialSession(fixtureDataset)), "subjective-1", "Lazer");
+
+  it("lists each subjective with its name, whether it is on, and no grade yet", () => {
+    expect(open(fixtureDataset, base)("3550308")!.subjectives).toEqual([
+      { id: "subjective-1", name: "Lazer", on: true, average: null, note: null, mine: null },
+    ]);
+  });
+
+  it("shows the average grade, the note and the grade of the active evaluator", () => {
+    const session = setGrade(base, "subjective-1", "3550308", 4);
+    expect(open(fixtureDataset, session)("3550308")!.subjectives[0]).toMatchObject({
+      average: 4,
+      note: 75,
+      mine: 4,
+    });
+  });
+
+  it("lets a city outside the Corte be graded too, without a note", () => {
+    let session = addConstraint(fixtureDataset, setGrade(base, "subjective-1", "3304557", 2), "crime");
+    session = editConstraint(session, "crime", { max: 15 });
+    const detail = open(fixtureDataset, session)("3304557")!;
+    expect(detail.standing.kind).toBe("cut");
+    expect(detail.subjectives[0]).toMatchObject({ average: null, note: null, mine: 2 });
   });
 });

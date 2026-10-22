@@ -13,6 +13,8 @@ export type Category =
 
 export type Grade = 1 | 2 | 3 | 4 | 5;
 
+export const GRADES: Grade[] = [1, 2, 3, 4, 5];
+
 export type Evaluator = {
   id: string;
   name: string;
@@ -118,4 +120,58 @@ export function orderedCategories(session: Session): Category[] {
     .map((category, at) => ({ category, at }))
     .sort((a, b) => active.weights[b.category.id] - active.weights[a.category.id] || a.at - b.at)
     .map(({ category }) => category);
+}
+
+const SUBJECTIVE_ID_PREFIX = "subjective-";
+
+export function addSubjective(session: Session): Session {
+  const taken = session.categories
+    .filter((c) => c.kind === "subjective")
+    .map((c) => Number(c.id.slice(SUBJECTIVE_ID_PREFIX.length)));
+  const number = Math.max(0, ...taken) + 1;
+  const id = `${SUBJECTIVE_ID_PREFIX}${number}`;
+  return {
+    ...session,
+    categories: [...session.categories, { id, kind: "subjective", name: `Subjetiva ${number}`, on: true }],
+    evaluators: session.evaluators.map((e) => ({ ...e, weights: { ...e.weights, [id]: 0 } })),
+  };
+}
+
+export function renameSubjective(session: Session, id: string, name: string): Session {
+  return {
+    ...session,
+    categories: session.categories.map((c) => (c.id === id && c.kind === "subjective" ? { ...c, name } : c)),
+  };
+}
+
+export function countGrades(session: Session, id: string): number {
+  return session.evaluators.reduce((total, e) => total + Object.keys(e.grades[id] ?? {}).length, 0);
+}
+
+export function deleteSubjective(session: Session, id: string): Session {
+  const categories = session.categories.filter((c) => c.id !== id);
+  return {
+    ...session,
+    categories,
+    evaluators: session.evaluators.map((evaluator) => {
+      const total = categories.reduce((sum, c) => sum + evaluator.weights[c.id], 0);
+      const weights = Object.fromEntries(
+        categories.map((c) => [c.id, total > 0 ? (evaluator.weights[c.id] * 100) / total : 100 / categories.length]),
+      );
+      const grades = Object.fromEntries(Object.entries(evaluator.grades).filter(([category]) => category !== id));
+      return { ...evaluator, weights, grades };
+    }),
+  };
+}
+
+export function gradeOf(session: Session, id: string, code: string, evaluatorId = session.activeEvaluatorId) {
+  return session.evaluators.find((e) => e.id === evaluatorId)?.grades[id]?.[code];
+}
+
+export function setGrade(session: Session, id: string, code: string, grade: Grade): Session {
+  return updateActiveEvaluator(session, (evaluator) => {
+    const { [code]: current, ...others } = evaluator.grades[id] ?? {};
+    const cityGrades = current === grade ? others : { ...others, [code]: grade };
+    return { ...evaluator, grades: { ...evaluator.grades, [id]: cityGrades } };
+  });
 }

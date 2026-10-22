@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { datasetWithCities, fixtureDataset } from "./fixture-dataset";
 import { rank } from "./rank";
-import { createInitialSession, toggleCategory, type Session } from "./session";
+import { addConstraint, editConstraint } from "./constraints";
+import { addSubjective, createInitialSession, setGrade, toggleCategory, type Session } from "./session";
 
 describe("rank without categories", () => {
   it("returns every city as a Candidate, without Pontuação, in alphabetical order", () => {
@@ -246,5 +247,108 @@ describe("Ranking order", () => {
     ]);
     const { candidates } = rank(dataset, withOn(createInitialSession(dataset), "Segurança"));
     expect(candidates.map((c) => c.code)).toEqual(["9", "10"]);
+  });
+});
+
+describe("subjective categories", () => {
+  const dataset = datasetWithCities([
+    { code: "1", name: "A", values: { crime: 0 } },
+    { code: "2", name: "B", values: { crime: 100 } },
+    { code: "3", name: "C", values: { crime: 50 } },
+  ]);
+  const withSubjective = () => {
+    const session = addSubjective(createInitialSession(dataset));
+    return { session, id: session.categories.at(-1)!.id };
+  };
+  const secondEvaluator = (session: Session): Session => ({
+    ...session,
+    evaluators: [
+      ...session.evaluators,
+      { id: "e2", name: "Ana", weights: { ...session.evaluators[0].weights }, grades: {} },
+    ],
+  });
+  const gradeAs = (session: Session, evaluatorId: string, id: string, code: string, grade: 1 | 2 | 3 | 4 | 5) =>
+    setGrade({ ...session, activeEvaluatorId: evaluatorId }, id, code, grade);
+
+  it("has no note for a city that nobody graded", () => {
+    const { session, id } = withSubjective();
+    const [a] = rank(dataset, session).candidates;
+    expect(a.categoryScores).not.toHaveProperty(id);
+    expect(a.gradeAverages).not.toHaveProperty(id);
+  });
+
+  it("converts the average grade by (average − 1) × 25, without normalization", () => {
+    const { session: base, id } = withSubjective();
+    let session = base;
+    session = setGrade(session, id, "1", 1);
+    session = setGrade(session, id, "2", 3);
+    session = setGrade(session, id, "3", 5);
+    const scores = byName(rank(dataset, session));
+    expect([scores.A, scores.B, scores.C].map((c) => c.categoryScores[id])).toEqual([0, 50, 100]);
+  });
+
+  it("averages the grades of every evaluator who graded the city", () => {
+    const { session: base, id } = withSubjective();
+    let session = secondEvaluator(base);
+    session = gradeAs(session, "evaluator-1", id, "1", 5);
+    session = gradeAs(session, "e2", id, "1", 2);
+    session = gradeAs(session, "e2", id, "2", 4);
+    const scores = byName(rank(dataset, session));
+    expect(scores.A.gradeAverages[id]).toBe(3.5);
+    expect(scores.A.categoryScores[id]).toBe(62.5);
+    expect(scores.B.categoryScores[id]).toBe(75);
+  });
+
+  it("counts a grade even when the evaluator gave the subjective weight 0", () => {
+    const { session: base, id } = withSubjective();
+    const session = setGrade(toggleCategory(base, "Segurança"), id, "1", 5);
+    const a = byName(rank(dataset, session))["A"];
+    expect(a.categoryScores[id]).toBe(100);
+    expect(a.score).toBeCloseTo(a.categoryScores["Segurança"]);
+  });
+
+  it("counts a grade given by an evaluator with weight 0 when another one weighs the subjective", () => {
+    const { session: base, id } = withSubjective();
+    let session = secondEvaluator(base);
+    session = {
+      ...session,
+      evaluators: session.evaluators.map((e) =>
+        e.id === "e2" ? { ...e, weights: { Segurança: 0, Clima: 0, Porte: 0, [id]: 100 } } : e,
+      ),
+    };
+    session = gradeAs(session, "evaluator-1", id, "1", 5);
+    expect(byName(rank(dataset, session))["A"].score).toBe(100);
+  });
+
+  it("leaves a subjective without a grade out of the calculation, sharing its weight among the rest", () => {
+    const { session: base, id } = withSubjective();
+    let session = toggleCategory(base, "Segurança");
+    session = withWeights(session, { Segurança: 50, Clima: 0, Porte: 0, [id]: 50 });
+    session = setGrade(session, id, "1", 1);
+    const scores = byName(rank(dataset, session));
+    expect(scores.A.score).toBeCloseTo((scores.A.categoryScores["Segurança"] * 50 + 0 * 50) / 100);
+    expect(scores.B.score).toBeCloseTo(scores.B.categoryScores["Segurança"]);
+  });
+
+  it("leaves a Candidate without Pontuação when only an ungraded subjective weighs", () => {
+    const { session: base, id } = withSubjective();
+    const session = setGrade(withWeights(base, { Segurança: 0, Clima: 0, Porte: 0, [id]: 100 }), id, "1", 4);
+    const { candidates } = rank(dataset, session);
+    expect(candidates.map((c) => [c.name, c.score])).toEqual([
+      ["A", 75],
+      ["B", null],
+      ["C", null],
+    ]);
+  });
+
+  it("keeps the grades of a city that leaves the Corte, bringing them back when it returns", () => {
+    const { session: base, id } = withSubjective();
+    const graded = setGrade(base, id, "2", 5);
+    const cutB = editConstraint(addConstraint(dataset, graded, "crime"), "crime", { max: 60 });
+    const result = rank(dataset, cutB);
+    expect(result.candidates.map((c) => c.name)).not.toContain("B");
+    expect(cutB.evaluators[0].grades[id]).toEqual({ "2": 5 });
+    const back = editConstraint(cutB, "crime", { max: null });
+    expect(byName(rank(dataset, back))["B"].categoryScores[id]).toBe(100);
   });
 });

@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import { cityDetail } from "../domain/city-detail";
 import { rank } from "../domain/rank";
-import { createInitialSession, toggleCategory } from "../domain/session";
+import { createInitialSession, setGrade, toggleCategory, type Grade } from "../domain/session";
 import type { Dataset } from "../domain/dataset";
 import { CityDrawer } from "./CityDrawer";
 import { MapView } from "./MapView";
@@ -38,6 +38,11 @@ function Workspace({ dataset }: { dataset: Dataset }) {
     setSelectedCode(code);
     setReveal({ code });
   }, []);
+  const activeEvaluator = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
+  const grade = useCallback(
+    (id: string, code: string, value: Grade) => setSession((current) => setGrade(current, id, code, value)),
+    [],
+  );
   return (
     <div className="app">
       <Sidebar
@@ -51,17 +56,26 @@ function Workspace({ dataset }: { dataset: Dataset }) {
         top={
           <>
             <MapView dataset={dataset} candidates={candidates} cut={cut} onSelect={selectFromMap} />
-            {detail && <CityDrawer dataset={dataset} detail={detail} onClose={closeDetail} />}
+            {detail && (
+              <CityDrawer
+                dataset={dataset}
+                detail={detail}
+                evaluatorName={activeEvaluator.name}
+                onClose={closeDetail}
+                onGrade={grade}
+              />
+            )}
           </>
         }
         bottom={
           <RankTable
             dataset={dataset}
             candidates={candidates}
-            categories={session.categories}
+            session={session}
             selectedCode={selectedCode}
             reveal={reveal}
             onSelect={setSelectedCode}
+            onGrade={grade}
           />
         }
       />

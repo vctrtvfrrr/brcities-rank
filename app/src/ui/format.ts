@@ -7,6 +7,7 @@ const oneDecimal = new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, ma
 
 export const formatValue = (n: number, unit = "") => (unit ? `${value.format(n)} ${unit}` : value.format(n));
 export const formatNote = (note: number) => integer.format(note);
+export const formatGrade = (grade: number) => oneDecimal.format(grade);
 export const formatScore = (score: number) => oneDecimal.format(score);
 export const formatCount = (n: number) => integer.format(n);
 export const formatDate = (iso: string) => iso.split("-").reverse().join("/");

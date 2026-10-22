@@ -10,6 +10,7 @@ export type Candidate = {
   position: number | null;
   score: number | null;
   categoryScores: Record<string, number>;
+  gradeAverages: Record<string, number>;
   criterionScores: Record<string, number>;
 };
 
@@ -54,13 +55,22 @@ export function rank(dataset: Dataset, session: Session): RankResult {
   const population = (index: number) => populacao_2026[index];
   const scoring = scoreCandidates(dataset, candidateIndexes);
   const weights = averageWeights(session);
+  const subjectives = session.categories.filter((c) => c.kind === "subjective");
   const counting = session.categories.filter((c) => c.on && (weights[c.id] ?? 0) > 0).map((c) => c.id);
 
   const candidates = candidateIndexes.map<Candidate>((index, at) => {
-    const scores = scoring.categories[at];
+    const scores = { ...scoring.categories[at] };
+    const gradeAverages: Record<string, number> = {};
+    for (const category of subjectives) {
+      const average = averageGrade(session, category.id, codigo_ibge[index]);
+      if (average === null) continue;
+      gradeAverages[category.id] = average;
+      scores[category.id] = (average - 1) * 25;
+    }
     let weighted = 0;
     let total = 0;
     for (const id of counting) {
+      if (scores[id] === undefined) continue;
       weighted += weights[id] * scores[id];
       total += weights[id];
     }
@@ -72,6 +82,7 @@ export function rank(dataset: Dataset, session: Session): RankResult {
       position: null,
       score: total > 0 ? weighted / total : null,
       categoryScores: scores,
+      gradeAverages,
       criterionScores: scoring.criteria[at],
     };
   });
@@ -89,6 +100,11 @@ export function rank(dataset: Dataset, session: Session): RankResult {
     if (candidate.score !== null) candidate.position = ++position;
   }
   return { candidates, cut, cutCounts, bounds: scoring.bounds };
+}
+
+function averageGrade(session: Session, id: string, code: string): number | null {
+  const grades = session.evaluators.flatMap((e) => e.grades[id]?.[code] ?? []);
+  return grades.length > 0 ? grades.reduce((sum, grade) => sum + grade, 0) / grades.length : null;
 }
 
 type Scoring = {
