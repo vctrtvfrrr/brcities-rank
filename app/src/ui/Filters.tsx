@@ -251,11 +251,12 @@ function LimitInput({
         onChange={(event) => {
           setText(event.target.value);
           clearTimeout(timer.current);
+          if (event.target.validity.badInput) return;
           timer.current = setTimeout(() => commit(event.target.value), COMMIT_DELAY_MS);
         }}
-        onBlur={() => {
+        onBlur={(event) => {
           clearTimeout(timer.current);
-          commit(text);
+          if (!event.target.validity.badInput) commit(text);
         }}
       />
     </label>
