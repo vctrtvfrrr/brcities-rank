@@ -61,11 +61,29 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
     return () => cancelAnimationFrame(frame);
   }, [candidates, virtualizer]);
 
-  const onRowKeyDown = (event: KeyboardEvent, code: string) => {
+  const pendingRow = useRef<number | null>(null);
+  const focusRow = (index: number) => {
+    const target = Math.min(candidates.length - 1, Math.max(0, index));
+    pendingRow.current = target;
+    virtualizer.scrollToIndex(target, { align: "auto" });
+    requestAnimationFrame(() => {
+      scroller.current
+        ?.querySelector<HTMLElement>(`[data-code="${candidates[target].code}"]`)
+        ?.focus({ preventScroll: true });
+      pendingRow.current = null;
+    });
+  };
+
+  const onRowKeyDown = (event: KeyboardEvent, code: string, index: number) => {
     if (event.target !== event.currentTarget) return;
-    if (event.key !== "Enter" && event.key !== " ") return;
-    event.preventDefault();
-    onSelect(code);
+    const step = { ArrowDown: 1, ArrowUp: -1, PageDown: 10, PageUp: -10 }[event.key];
+    if (step !== undefined) {
+      event.preventDefault();
+      focusRow((pendingRow.current ?? index) + step);
+    } else if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onSelect(code);
+    }
   };
 
   return (
@@ -112,7 +130,8 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
                 aria-selected={candidate.code === selectedCode}
                 tabIndex={0}
                 onClick={() => onSelect(candidate.code)}
-                onKeyDown={(event) => onRowKeyDown(event, candidate.code)}
+                onKeyDown={(event) => onRowKeyDown(event, candidate.code, item.index)}
+                data-code={candidate.code}
                 key={candidate.code}
                 style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
               >

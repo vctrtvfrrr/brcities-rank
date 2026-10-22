@@ -14,8 +14,7 @@ const BRAZIL_BOUNDS: [[number, number], [number, number]] = [
 ];
 const OUTLINES_SOURCE = "state-outlines";
 const CITIES_SOURCE = "cities";
-const CUT_COLOR = "#6b6f78";
-const CUT_OPACITY = 0.15;
+const CUT_COLOR = "#5d616a";
 
 const BLANK_STYLE: StyleSpecification = {
   version: 8,
@@ -54,7 +53,7 @@ function addDatasetLayers(map: MapLibreMap, dataset: Dataset, candidates: Candid
     id: "state-outlines",
     type: "line",
     source: OUTLINES_SOURCE,
-    paint: { "line-color": "#6b6f78", "line-width": 1 },
+    paint: { "line-color": "#5d616a", "line-width": 1 },
   });
   map.addSource(CITIES_SOURCE, { type: "geojson", data: citiesGeoJson(dataset, candidates, cut) });
   map.addLayer({
@@ -63,8 +62,9 @@ function addDatasetLayers(map: MapLibreMap, dataset: Dataset, candidates: Candid
     source: CITIES_SOURCE,
     layout: { "circle-sort-key": ["get", "order"] },
     paint: {
-      "circle-color": ["get", "color"],
-      "circle-opacity": ["case", ["get", "cut"], CUT_OPACITY, 0.8],
+      "circle-color": ["case", ["get", "cut"], "rgba(0,0,0,0)", ["get", "color"]],
+      "circle-stroke-color": ["case", ["get", "cut"], CUT_COLOR, "#ffffff"],
+      "circle-stroke-width": ["case", ["get", "cut"], 1, ["interpolate", ["linear"], ["zoom"], 4, 0, 8, 0.75]],
       "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 1.5, 8, 4],
     },
   });
@@ -132,7 +132,10 @@ export function MapView({ dataset, candidates, cut, onSelect }: MapViewProps) {
   }, [dataset, candidates, cut]);
 
   return (
-    <div className="map" ref={container}>
+    <div className="map" ref={container} role="region" aria-label="Mapa das cidades" aria-describedby="map-description">
+      <p id="map-description" className="visually-hidden">
+        {`${candidates.length} candidatas em tons de verde, mais escuro quanto melhor a posição, e ${cut.length} cidades cortadas em círculo vazio. Os marcadores não recebem foco: use a tabela para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
+      </p>
       {unavailable && (
         <p className="notice" role="alert">
           Não foi possível iniciar o mapa neste navegador (é preciso WebGL). A tabela continua disponível.

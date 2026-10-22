@@ -28,7 +28,7 @@ export function SplitPane({ top, bottom }: { top: ReactNode; bottom: ReactNode }
   };
 
   return (
-    <div className="main" ref={container} style={{ gridTemplateRows: `${percent}% 8px minmax(0, 1fr)` }}>
+    <main className="main" ref={container} style={{ gridTemplateRows: `${percent}% 8px minmax(0, 1fr)` }}>
       <div className="map-pane">{top}</div>
       <div
         className={dragging ? "divider drag" : "divider"}
@@ -46,6 +46,6 @@ export function SplitPane({ top, bottom }: { top: ReactNode; bottom: ReactNode }
         onKeyDown={onKeyDown}
       />
       <div className="table-pane">{bottom}</div>
-    </div>
+    </main>
   );
 }
