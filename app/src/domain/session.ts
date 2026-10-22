@@ -50,3 +50,12 @@ export function createInitialSession(dataset: Dataset): Session {
     activeEvaluatorId: FIRST_EVALUATOR_ID,
   };
 }
+
+export function toggleCategory(session: Session, id: string): Session {
+  return {
+    ...session,
+    categories: session.categories.map((category) =>
+      category.id === id ? { ...category, on: !category.on } : category,
+    ),
+  };
+}

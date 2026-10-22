@@ -27,10 +27,22 @@ export const fixtureDataset: Dataset = {
   },
 };
 
-export function datasetWithCities(cities: { code: string; name: string; uf?: string; population?: number }[]): Dataset {
+type CityInput = {
+  code: string;
+  name: string;
+  uf?: string;
+  population?: number;
+  values?: Record<string, number | string | boolean | null>;
+};
+
+export function datasetWithCities(cities: CityInput[]): Dataset {
+  const criteria = fixtureDataset.catalogo
+    .map((entry) => entry.chave)
+    .filter((key) => key !== "populacao_2026");
   return {
     ...fixtureDataset,
     colunas: {
+      ...Object.fromEntries(criteria.map((key) => [key, cities.map((c) => c.values?.[key] ?? null)])),
       codigo_ibge: cities.map((c) => c.code),
       nome: cities.map((c) => c.name),
       uf: cities.map((c) => c.uf ?? "XX"),

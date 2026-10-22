@@ -2,7 +2,9 @@ import type { Session } from "../domain/session";
 
 const formatDate = (iso: string) => iso.split("-").reverse().join("/");
 
-export function Sidebar({ session, collectedOn }: { session: Session; collectedOn: string }) {
+type SidebarProps = { session: Session; collectedOn: string; onToggleCategory: (id: string) => void };
+
+export function Sidebar({ session, collectedOn, onToggleCategory }: SidebarProps) {
   const active = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
   return (
     <aside className="side" aria-label="Sessão">
@@ -29,8 +31,15 @@ export function Sidebar({ session, collectedOn }: { session: Session; collectedO
         <ul className="categories">
           {session.categories.map((category) => (
             <li key={category.id} className={category.on ? undefined : "off"}>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={category.on}
+                aria-label={category.kind === "objective" ? category.id : category.name}
+                className={category.on ? "toggle on" : "toggle"}
+                onClick={() => onToggleCategory(category.id)}
+              />
               <span>{category.kind === "objective" ? category.id : category.name}</span>
-              <span className="muted">{category.on ? "ligada" : "desligada"}</span>
             </li>
           ))}
         </ul>

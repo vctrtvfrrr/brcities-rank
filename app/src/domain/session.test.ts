@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fixtureDataset } from "./fixture-dataset";
-import { createInitialSession } from "./session";
+import { createInitialSession, toggleCategory } from "./session";
 
 describe("createInitialSession", () => {
   const session = createInitialSession(fixtureDataset);
@@ -32,5 +32,22 @@ describe("createInitialSession", () => {
     expect(Object.values(evaluator.weights).every((w) => w === 100 / 3)).toBe(true);
     expect(Object.values(evaluator.weights).reduce((a, b) => a + b, 0)).toBeCloseTo(100);
     expect(evaluator.grades).toEqual({});
+  });
+});
+
+describe("toggleCategory", () => {
+  const session = createInitialSession(fixtureDataset);
+
+  it("turns a category on and off without touching weights or grades", () => {
+    const on = toggleCategory(session, "Clima");
+    expect(on.categories.find((c) => c.id === "Clima")?.on).toBe(true);
+    expect(on.categories.filter((c) => c.on)).toHaveLength(1);
+    expect(on.evaluators).toEqual(session.evaluators);
+    expect(toggleCategory(on, "Clima").categories).toEqual(session.categories);
+  });
+
+  it("does not mutate the previous Session", () => {
+    toggleCategory(session, "Clima");
+    expect(session.categories.every((c) => !c.on)).toBe(true);
   });
 });

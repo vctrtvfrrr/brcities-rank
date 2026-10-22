@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { rank } from "../domain/rank";
-import { createInitialSession } from "../domain/session";
+import { createInitialSession, toggleCategory } from "../domain/session";
 import type { Dataset } from "../domain/dataset";
 import { MapView } from "./MapView";
 import { RankTable } from "./RankTable";
@@ -22,14 +22,18 @@ export function App() {
 }
 
 function Workspace({ dataset }: { dataset: Dataset }) {
-  const [session] = useState(() => createInitialSession(dataset));
+  const [session, setSession] = useState(() => createInitialSession(dataset));
   const { candidates } = useMemo(() => rank(dataset, session), [dataset, session]);
   return (
     <div className="app">
-      <Sidebar session={session} collectedOn={dataset.coleta} />
+      <Sidebar
+        session={session}
+        collectedOn={dataset.coleta}
+        onToggleCategory={(id) => setSession((current) => toggleCategory(current, id))}
+      />
       <SplitPane
-        top={<MapView dataset={dataset} />}
-        bottom={<RankTable candidates={candidates} />}
+        top={<MapView dataset={dataset} candidates={candidates} />}
+        bottom={<RankTable candidates={candidates} categories={session.categories} />}
       />
     </div>
   );
