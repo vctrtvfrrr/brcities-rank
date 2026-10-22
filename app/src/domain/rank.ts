@@ -1,6 +1,6 @@
 import { passesConstraint } from "./constraints";
 import type { CatalogEntry, Dataset } from "./dataset";
-import type { Session } from "./session";
+import { averageWeights, type Session } from "./session";
 
 export type Candidate = {
   index: number;
@@ -86,15 +86,6 @@ export function rank(dataset: Dataset, session: Session): RankResult {
     if (candidate.score !== null) candidate.position = ++position;
   }
   return { candidates, cut, cutCounts };
-}
-
-function averageWeights(session: Session): Record<string, number> {
-  const average: Record<string, number> = {};
-  for (const category of session.categories) {
-    const sum = session.evaluators.reduce((acc, e) => acc + (e.weights[category.id] ?? 0), 0);
-    average[category.id] = sum / session.evaluators.length;
-  }
-  return average;
 }
 
 function scoreCategories(dataset: Dataset, indexes: number[]): Record<string, number>[] {

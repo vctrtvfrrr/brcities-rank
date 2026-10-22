@@ -59,3 +59,63 @@ export function toggleCategory(session: Session, id: string): Session {
     ),
   };
 }
+
+const FLOAT_NOISE = 1e-9;
+
+function updateActiveEvaluator(session: Session, update: (evaluator: Evaluator) => Evaluator): Session {
+  return {
+    ...session,
+    evaluators: session.evaluators.map((e) => (e.id === session.activeEvaluatorId ? update(e) : e)),
+  };
+}
+
+export function setWeight(session: Session, id: string, value: number): Session {
+  const clamped = Math.min(100, Math.max(0, value));
+  const others = session.categories.map((c) => c.id).filter((other) => other !== id);
+  return updateActiveEvaluator(session, (evaluator) => {
+    const othersTotal = others.reduce((total, other) => total + evaluator.weights[other], 0);
+    const remainder = 100 - clamped;
+    const weights: Record<string, number> = {};
+    for (const category of session.categories) {
+      if (category.id === id) weights[id] = clamped;
+      else if (othersTotal > 0) weights[category.id] = (evaluator.weights[category.id] * remainder) / othersTotal;
+      else weights[category.id] = remainder / others.length;
+    }
+    return { ...evaluator, weights };
+  });
+}
+
+export function equalizeWeights(session: Session): Session {
+  const equal = 100 / session.categories.length;
+  return updateActiveEvaluator(session, (evaluator) => ({
+    ...evaluator,
+    weights: Object.fromEntries(session.categories.map((c) => [c.id, equal])),
+  }));
+}
+
+export function displayWeights(evaluator: Evaluator, categories: Category[]): Record<string, number> {
+  const floors = categories.map((c) => Math.floor(evaluator.weights[c.id] + FLOAT_NOISE));
+  const byLargestRemainder = categories
+    .map((c, at) => ({ at, remainder: evaluator.weights[c.id] - floors[at] }))
+    .sort((a, b) => b.remainder - a.remainder || a.at - b.at);
+  const missing = 100 - floors.reduce((total, floor) => total + floor, 0);
+  for (const { at } of byLargestRemainder.slice(0, Math.max(0, missing))) floors[at]++;
+  return Object.fromEntries(categories.map((c, at) => [c.id, floors[at]]));
+}
+
+export function averageWeights(session: Session): Record<string, number> {
+  return Object.fromEntries(
+    session.categories.map((c) => [
+      c.id,
+      session.evaluators.reduce((total, e) => total + (e.weights[c.id] ?? 0), 0) / session.evaluators.length,
+    ]),
+  );
+}
+
+export function orderedCategories(session: Session): Category[] {
+  const active = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
+  return session.categories
+    .map((category, at) => ({ category, at }))
+    .sort((a, b) => active.weights[b.category.id] - active.weights[a.category.id] || a.at - b.at)
+    .map(({ category }) => category);
+}

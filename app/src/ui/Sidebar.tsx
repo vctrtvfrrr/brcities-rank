@@ -1,5 +1,6 @@
 import type { Dataset } from "../domain/dataset";
 import type { Session } from "../domain/session";
+import { CategoryPanel } from "./CategoryPanel";
 import { Filters } from "./Filters";
 
 const formatDate = (iso: string) => iso.split("-").reverse().join("/");
@@ -34,21 +35,7 @@ export function Sidebar({ dataset, session, cutCounts, onChange, onToggleCategor
       </section>
       <section className="fill" aria-labelledby="sec-categories">
         <h2 id="sec-categories">Categorias</h2>
-        <ul className="categories">
-          {session.categories.map((category) => (
-            <li key={category.id} className={category.on ? undefined : "off"}>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={category.on}
-                aria-label={category.kind === "objective" ? category.id : category.name}
-                className={category.on ? "toggle on" : "toggle"}
-                onClick={() => onToggleCategory(category.id)}
-              />
-              <span>{category.kind === "objective" ? category.id : category.name}</span>
-            </li>
-          ))}
-        </ul>
+        <CategoryPanel session={session} onChange={onChange} onToggleCategory={onToggleCategory} />
       </section>
     </aside>
   );

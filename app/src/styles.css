@@ -101,13 +101,40 @@ p {
   padding: 0;
 }
 .categories li {
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--line);
+}
+.categories li:last-child {
+  border-bottom: none;
+}
+.category-head {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 5px 0;
 }
-.categories li.off span {
+.category-name {
+  flex: 1;
+  min-width: 0;
+}
+.categories li.off .category-name {
   opacity: 0.55;
+}
+.categories input[type="range"] {
+  display: block;
+  width: 100%;
+  margin: 2px 0 0;
+  accent-color: var(--accent);
+}
+.pct {
+  min-width: 36px;
+  text-align: right;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.category-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 8px;
 }
 .toggle {
   position: relative;
