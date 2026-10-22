@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { CategoryDetail, CityDetail, CriterionDetail } from "../domain/city-detail";
 import type { Dataset, SourceInfo } from "../domain/dataset";
 import { describeConstraint, formatCount, formatDate, formatNote, formatScore, formatValue } from "./format";
@@ -20,8 +20,20 @@ export function CityDrawer({
     return () => window.removeEventListener("keydown", onKey);
   }, [onClose]);
 
+  const drawer = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const opener = document.activeElement;
+    drawer.current?.focus({ preventScroll: true });
+    return () => {
+      if (opener instanceof HTMLElement && opener.isConnected) opener.focus({ preventScroll: true });
+    };
+  }, []);
+  useEffect(() => {
+    drawer.current?.scrollTo({ top: 0 });
+  }, [detail.code]);
+
   return (
-    <aside className="drawer" aria-label={`Detalhe de ${detail.name}`}>
+    <aside className="drawer" ref={drawer} tabIndex={-1} aria-label={`Detalhe de ${detail.name}`}>
       <div className="drawer-head">
         <h3>
           {detail.name} <span className="muted">{detail.uf}</span>
