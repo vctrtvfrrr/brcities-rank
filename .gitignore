@@ -13,3 +13,8 @@ coverage/
 .idea/
 .vscode/*
 !.vscode/extensions.json
+pipeline/fontes/
+.venv/
+__pycache__/
+.pytest_cache/
+.claude/worktrees/

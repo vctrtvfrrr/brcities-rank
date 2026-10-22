@@ -1,0 +1,21 @@
+[project]
+name = "coleta"
+version = "0.1.0"
+description = "Coleta dos dados municipais do BRCities Rank"
+requires-python = ">=3.12"
+dependencies = [
+    "netcdf4>=1.7.5",
+    "openpyxl>=3.1.5",
+    "pypdf>=6.21.1",
+    "pyreaddbc>=2.0.4",
+    "rasterio>=1.5.2",
+    "xarray>=2026.9.0",
+    "xlrd>=2.0.2",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
