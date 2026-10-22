@@ -74,7 +74,11 @@ describe("criterion normalization", () => {
 
   it("keeps the direction when higher is better", () => {
     const dataset = datasetWithCities(
-      [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((v, i) => ({ code: String(i + 1), name: `Cidade ${i + 1}`, population: v + 1 })),
+      [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((v, i) => ({
+        code: String(i + 1),
+        name: `Cidade ${i + 1}`,
+        population: v + 1,
+      })),
     );
     const cities = byName(rank(dataset, withOn(createInitialSession(dataset), "Porte")));
     expect(cities["Cidade 1"].categoryScores["Porte"]).toBe(0);

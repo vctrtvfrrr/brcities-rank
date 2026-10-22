@@ -5,14 +5,86 @@ export const fixtureDataset: Dataset = {
   coleta: "2026-01-15",
   fontes: [],
   catalogo: [
-    { chave: "crime", categoria: "Segurança", rotulo: "Crime", unidade: "/100 mil", direcao: "menor", transformacao: "nenhuma", pontua: true, fontes: [] },
-    { chave: "rain", categoria: "Clima", rotulo: "Chuva", unidade: "dias", direcao: "menor", transformacao: "nenhuma", pontua: true, fontes: [] },
-    { chave: "heat", categoria: "Clima", rotulo: "Calor", unidade: "°C", direcao: "menor", transformacao: "nenhuma", pontua: true, fontes: [] },
-    { chave: "populacao_2026", categoria: "Porte", rotulo: "População", unidade: "hab.", direcao: "maior", transformacao: "logaritmo", pontua: true, fontes: [] },
-    { chave: "koppen_beck", categoria: "Clima", rotulo: "Köppen de Beck", unidade: "", direcao: null, transformacao: "nenhuma", pontua: false, fontes: [] },
-    { chave: "koppen_alvares", categoria: "Clima", rotulo: "Köppen de Alvares", unidade: "", direcao: null, transformacao: "nenhuma", pontua: false, fontes: [] },
-    { chave: "hospital_geral", categoria: "Saúde", rotulo: "Hospital geral", unidade: "", direcao: null, transformacao: "nenhuma", pontua: false, fontes: [] },
-    { chave: "fibra", categoria: "Internet", rotulo: "Fibra", unidade: "", direcao: null, transformacao: "nenhuma", pontua: false, fontes: [] },
+    {
+      chave: "crime",
+      categoria: "Segurança",
+      rotulo: "Crime",
+      unidade: "/100 mil",
+      direcao: "menor",
+      transformacao: "nenhuma",
+      pontua: true,
+      fontes: [],
+    },
+    {
+      chave: "rain",
+      categoria: "Clima",
+      rotulo: "Chuva",
+      unidade: "dias",
+      direcao: "menor",
+      transformacao: "nenhuma",
+      pontua: true,
+      fontes: [],
+    },
+    {
+      chave: "heat",
+      categoria: "Clima",
+      rotulo: "Calor",
+      unidade: "°C",
+      direcao: "menor",
+      transformacao: "nenhuma",
+      pontua: true,
+      fontes: [],
+    },
+    {
+      chave: "populacao_2026",
+      categoria: "Porte",
+      rotulo: "População",
+      unidade: "hab.",
+      direcao: "maior",
+      transformacao: "logaritmo",
+      pontua: true,
+      fontes: [],
+    },
+    {
+      chave: "koppen_beck",
+      categoria: "Clima",
+      rotulo: "Köppen de Beck",
+      unidade: "",
+      direcao: null,
+      transformacao: "nenhuma",
+      pontua: false,
+      fontes: [],
+    },
+    {
+      chave: "koppen_alvares",
+      categoria: "Clima",
+      rotulo: "Köppen de Alvares",
+      unidade: "",
+      direcao: null,
+      transformacao: "nenhuma",
+      pontua: false,
+      fontes: [],
+    },
+    {
+      chave: "hospital_geral",
+      categoria: "Saúde",
+      rotulo: "Hospital geral",
+      unidade: "",
+      direcao: null,
+      transformacao: "nenhuma",
+      pontua: false,
+      fontes: [],
+    },
+    {
+      chave: "fibra",
+      categoria: "Internet",
+      rotulo: "Fibra",
+      unidade: "",
+      direcao: null,
+      transformacao: "nenhuma",
+      pontua: false,
+      fontes: [],
+    },
   ],
   colunas: {
     codigo_ibge: ["3550308", "3304557", "1100015", "2927408", "4106902", "2611606"],
@@ -40,9 +112,7 @@ type CityInput = {
 };
 
 export function datasetWithCities(cities: CityInput[]): Dataset {
-  const criteria = fixtureDataset.catalogo
-    .map((entry) => entry.chave)
-    .filter((key) => key !== "populacao_2026");
+  const criteria = fixtureDataset.catalogo.map((entry) => entry.chave).filter((key) => key !== "populacao_2026");
   return {
     ...fixtureDataset,
     colunas: {

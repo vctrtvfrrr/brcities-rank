@@ -111,7 +111,11 @@ function ConstraintCard({
         </button>
       </div>
       {"accepted" in constraint ? (
-        <KoppenEditor classes={koppenClasses(dataset)} accepted={constraint.accepted} onChange={(accepted) => edit({ accepted })} />
+        <KoppenEditor
+          classes={koppenClasses(dataset)}
+          accepted={constraint.accepted}
+          onChange={(accepted) => edit({ accepted })}
+        />
       ) : "value" in constraint ? (
         <BooleanEditor value={constraint.value} onChange={(value) => edit({ value })} />
       ) : (
@@ -172,7 +176,12 @@ function BooleanEditor({ value, onChange }: { value: boolean; onChange: (value: 
         <button type="button" className={value ? "on" : undefined} aria-pressed={value} onClick={() => onChange(true)}>
           sim
         </button>
-        <button type="button" className={value ? undefined : "on"} aria-pressed={!value} onClick={() => onChange(false)}>
+        <button
+          type="button"
+          className={value ? undefined : "on"}
+          aria-pressed={!value}
+          onClick={() => onChange(false)}
+        >
           não
         </button>
       </span>
@@ -196,8 +205,18 @@ function NumericEditor({
   return (
     <>
       <div className="lims">
-        <LimitInput label="mín" value={constraint.min} placeholder={range && number.format(range[0])} onCommit={(min) => onEdit({ min })} />
-        <LimitInput label="máx" value={constraint.max} placeholder={range && number.format(range[1])} onCommit={(max) => onEdit({ max })} />
+        <LimitInput
+          label="mín"
+          value={constraint.min}
+          placeholder={range && number.format(range[0])}
+          onCommit={(min) => onEdit({ min })}
+        />
+        <LimitInput
+          label="máx"
+          value={constraint.max}
+          placeholder={range && number.format(range[1])}
+          onCommit={(max) => onEdit({ max })}
+        />
         <span className="muted small">{entry.unidade}</span>
       </div>
       <p className="muted small">

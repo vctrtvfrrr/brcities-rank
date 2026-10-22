@@ -28,9 +28,13 @@ export function RankTable({ candidates, categories }: { candidates: Candidate[];
         style={{ "--categories": categories.length } as CSSProperties}
       >
         <div role="row" className="row head">
-          <span role="columnheader" className="num">#</span>
+          <span role="columnheader" className="num">
+            #
+          </span>
           <span role="columnheader">Cidade</span>
-          <span role="columnheader" className="num">Pontuação</span>
+          <span role="columnheader" className="num">
+            Pontuação
+          </span>
           {categories.map((category) => (
             <span role="columnheader" key={category.id} className={category.on ? "num" : "num dim"}>
               {categoryName(category)}
@@ -48,11 +52,15 @@ export function RankTable({ candidates, categories }: { candidates: Candidate[];
                 key={candidate.code}
                 style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
               >
-                <span role="cell" className="num">{candidate.position ?? DASH}</span>
+                <span role="cell" className="num">
+                  {candidate.position ?? DASH}
+                </span>
                 <span role="cell">
                   {candidate.name} <span className="muted">{candidate.uf}</span>
                 </span>
-                <span role="cell" className="num">{candidate.score === null ? DASH : formatScore(candidate.score)}</span>
+                <span role="cell" className="num">
+                  {candidate.score === null ? DASH : formatScore(candidate.score)}
+                </span>
                 {categories.map((category) => (
                   <span role="cell" key={category.id} className={category.on ? "num" : "num dim"}>
                     {formatNote(candidate.categoryScores[category.id])}

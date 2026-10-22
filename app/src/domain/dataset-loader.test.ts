@@ -2,8 +2,10 @@ import { describe, expect, it } from "vitest";
 import { fixtureDataset } from "./fixture-dataset";
 import { loadDataset, UnsupportedContractVersionError } from "./dataset-loader";
 
-const respondWith = (body: unknown, ok = true) => async () =>
-  ({ ok, status: ok ? 200 : 404, json: async () => body }) as Response;
+const respondWith =
+  (body: unknown, ok = true) =>
+  async () =>
+    ({ ok, status: ok ? 200 : 404, json: async () => body }) as Response;
 
 describe("loadDataset", () => {
   it("returns the dataset when the contract version is known", async () => {

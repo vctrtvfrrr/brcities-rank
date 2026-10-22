@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  addConstraint,
-  constraintOptions,
-  editConstraint,
-  removeConstraint,
-  toggleConstraint,
-} from "./constraints";
+import { addConstraint, constraintOptions, editConstraint, removeConstraint, toggleConstraint } from "./constraints";
 import { fixtureDataset } from "./fixture-dataset";
 import { rank } from "./rank";
 import { createInitialSession, toggleCategory, type Session } from "./session";
@@ -111,8 +105,14 @@ describe("Corte", () => {
   });
 
   it("accepts a single limit", () => {
-    expect(candidateNames(withConstraints(add("crime"), edit("crime", { max: 10 })))).toEqual(["Curitiba", "São Paulo"]);
-    expect(candidateNames(withConstraints(add("crime"), edit("crime", { min: 30 })))).toEqual(["Recife", "Rio de Janeiro"]);
+    expect(candidateNames(withConstraints(add("crime"), edit("crime", { max: 10 })))).toEqual([
+      "Curitiba",
+      "São Paulo",
+    ]);
+    expect(candidateNames(withConstraints(add("crime"), edit("crime", { min: 30 })))).toEqual([
+      "Recife",
+      "Rio de Janeiro",
+    ]);
   });
 
   it("cuts a city with missing data even when the constraint has no limits", () => {
@@ -195,12 +195,7 @@ describe("corta N", () => {
 
 describe("restrictions that fail", () => {
   it("lists, for each cut city, every on constraint it fails", () => {
-    const session = withConstraints(
-      add("crime"),
-      edit("crime", { max: 20 }),
-      add("hospital_geral"),
-      add("fibra"),
-    );
+    const session = withConstraints(add("crime"), edit("crime", { max: 20 }), add("hospital_geral"), add("fibra"));
     const failures = Object.fromEntries(rank(fixtureDataset, session).cut.map((c) => [c.name, c.failedConstraints]));
     expect(failures).toEqual({
       "Alta Floresta D'Oeste": ["crime", "hospital_geral", "fibra"],
