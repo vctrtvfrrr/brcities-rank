@@ -53,6 +53,10 @@ export function createInitialSession(dataset: Dataset): Session {
   };
 }
 
+export function renameSession(session: Session, name: string): Session {
+  return { ...session, name };
+}
+
 export function toggleCategory(session: Session, id: string): Session {
   return {
     ...session,

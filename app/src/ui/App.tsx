@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { cityDetail } from "../domain/city-detail";
 import { rank } from "../domain/rank";
 import { createInitialSession, setGrade, toggleCategory, type Grade } from "../domain/session";
@@ -6,6 +6,7 @@ import type { Dataset } from "../domain/dataset";
 import { CityDrawer } from "./CityDrawer";
 import { MapView } from "./MapView";
 import { RankTable } from "./RankTable";
+import { loadStoredSession, storeSession } from "./session-storage";
 import { Sidebar } from "./Sidebar";
 import { SplitPane } from "./SplitPane";
 import { useDataset } from "./useDataset";
@@ -24,7 +25,8 @@ export function App() {
 }
 
 function Workspace({ dataset }: { dataset: Dataset }) {
-  const [session, setSession] = useState(() => createInitialSession(dataset));
+  const [session, setSession] = useState(() => loadStoredSession(dataset) ?? createInitialSession(dataset));
+  useEffect(() => storeSession(session), [session]);
   const result = useMemo(() => rank(dataset, session), [dataset, session]);
   const { candidates, cut, cutCounts } = result;
   const [selectedCode, setSelectedCode] = useState<string | null>(null);
@@ -50,6 +52,10 @@ function Workspace({ dataset }: { dataset: Dataset }) {
         session={session}
         cutCounts={cutCounts}
         onChange={setSession}
+        onReplaceSession={(next) => {
+          setSession(next);
+          setSelectedCode(null);
+        }}
         onToggleCategory={(id) => setSession((current) => toggleCategory(current, id))}
       />
       <SplitPane

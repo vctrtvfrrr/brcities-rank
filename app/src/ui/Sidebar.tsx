@@ -1,10 +1,11 @@
 import type { Dataset } from "../domain/dataset";
-import type { Session } from "../domain/session";
+import { renameSession, type Session } from "../domain/session";
 import { CategoryPanel } from "./CategoryPanel";
 import { EvaluatorPanel } from "./EvaluatorPanel";
 import { Filters } from "./Filters";
 import { formatDate } from "./format";
 import { ScoreReadingDialog, SourcesDialog } from "./InfoDialogs";
+import { SessionPanel } from "./SessionPanel";
 
 type Props = {
   dataset: Dataset;
@@ -12,9 +13,10 @@ type Props = {
   cutCounts: Record<string, number>;
   onChange: (update: (session: Session) => Session) => void;
   onToggleCategory: (id: string) => void;
+  onReplaceSession: (session: Session) => void;
 };
 
-export function Sidebar({ dataset, session, cutCounts, onChange, onToggleCategory }: Props) {
+export function Sidebar({ dataset, session, cutCounts, onChange, onToggleCategory, onReplaceSession }: Props) {
   return (
     <aside className="side" aria-label="Sessão">
       <header className="brand">
@@ -27,7 +29,12 @@ export function Sidebar({ dataset, session, cutCounts, onChange, onToggleCategor
       </header>
       <section aria-labelledby="sec-session">
         <h2 id="sec-session">Sessão</h2>
-        <p className="muted">{session.name || "Sessão sem nome"}</p>
+        <SessionPanel
+          dataset={dataset}
+          session={session}
+          onReplace={onReplaceSession}
+          onRename={(name) => onChange((current) => renameSession(current, name))}
+        />
       </section>
       <section aria-labelledby="sec-evaluator">
         <h2 id="sec-evaluator">Avaliador ativo</h2>

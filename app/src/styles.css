@@ -658,3 +658,22 @@ dialog.info header h2 {
   color: var(--accent);
   font-weight: 600;
 }
+
+.side section > input[type="text"] {
+  width: 100%;
+  box-sizing: border-box;
+}
+.session-text {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 160px;
+  margin-top: 6px;
+  font:
+    12px ui-monospace,
+    monospace;
+}
+.import-error {
+  color: var(--danger, #b3261e);
+  margin: 6px 0;
+}
