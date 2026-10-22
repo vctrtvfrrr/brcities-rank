@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { Dataset } from "../domain/dataset";
 import {
   averageWeights,
   displayWeights,
@@ -8,6 +9,7 @@ import {
   type Category,
   type Session,
 } from "../domain/session";
+import { CategoryLabel } from "./CategoryTip";
 
 const categoryName = (category: Category) => (category.kind === "objective" ? category.id : category.name);
 const formatAverage = (value: number) => value.toLocaleString("pt-BR", { maximumFractionDigits: 1 });
@@ -15,12 +17,13 @@ const POINTER_RELEASE_EVENTS = ["pointerup", "pointercancel", "blur"] as const;
 const KEYBOARD_RELEASE_EVENTS = ["keyup", "blur"] as const;
 
 type Props = {
+  dataset: Dataset;
   session: Session;
   onChange: (update: (session: Session) => Session) => void;
   onToggleCategory: (id: string) => void;
 };
 
-export function CategoryPanel({ session, onChange, onToggleCategory }: Props) {
+export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: Props) {
   const [frozenOrder, setFrozenOrder] = useState<string[] | null>(null);
   const usingPointer = useRef(false);
   const active = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
@@ -73,7 +76,9 @@ export function CategoryPanel({ session, onChange, onToggleCategory }: Props) {
                   className={category.on ? "toggle on" : "toggle"}
                   onClick={() => onToggleCategory(category.id)}
                 />
-                <span className="category-name">{name}</span>
+                <span className="category-name">
+                  <CategoryLabel dataset={dataset} id={category.id} name={name} />
+                </span>
                 <span className="pct">{shown[category.id]}%</span>
               </div>
               <input

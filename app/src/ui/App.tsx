@@ -35,7 +35,7 @@ function Workspace({ dataset }: { dataset: Dataset }) {
       />
       <SplitPane
         top={<MapView dataset={dataset} candidates={candidates} cut={cut} />}
-        bottom={<RankTable candidates={candidates} categories={session.categories} />}
+        bottom={<RankTable dataset={dataset} candidates={candidates} categories={session.categories} />}
       />
     </div>
   );

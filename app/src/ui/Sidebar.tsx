@@ -2,8 +2,7 @@ import type { Dataset } from "../domain/dataset";
 import type { Session } from "../domain/session";
 import { CategoryPanel } from "./CategoryPanel";
 import { Filters } from "./Filters";
-
-const formatDate = (iso: string) => iso.split("-").reverse().join("/");
+import { formatDate, ScoreReadingDialog, SourcesDialog } from "./InfoDialogs";
 
 type Props = {
   dataset: Dataset;
@@ -20,6 +19,10 @@ export function Sidebar({ dataset, session, cutCounts, onChange, onToggleCategor
       <header className="brand">
         <h1>BRCities Rank</h1>
         <p className="muted small">Dados coletados em {formatDate(dataset.coleta)}</p>
+        <p className="links small">
+          <ScoreReadingDialog />
+          <SourcesDialog dataset={dataset} />
+        </p>
       </header>
       <section aria-labelledby="sec-session">
         <h2 id="sec-session">Sessão</h2>
@@ -35,7 +38,7 @@ export function Sidebar({ dataset, session, cutCounts, onChange, onToggleCategor
       </section>
       <section className="fill" aria-labelledby="sec-categories">
         <h2 id="sec-categories">Categorias</h2>
-        <CategoryPanel session={session} onChange={onChange} onToggleCategory={onToggleCategory} />
+        <CategoryPanel dataset={dataset} session={session} onChange={onChange} onToggleCategory={onToggleCategory} />
       </section>
     </aside>
   );

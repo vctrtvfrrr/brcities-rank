@@ -1,7 +1,11 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useRef, type CSSProperties } from "react";
 import type { Candidate } from "../domain/rank";
+import type { Dataset } from "../domain/dataset";
+import { SCORE_READING } from "../domain/explanations";
 import type { Category } from "../domain/session";
+import { CategoryLabel } from "./CategoryTip";
+import { Tooltip } from "./Tooltip";
 
 const ROW_HEIGHT = 28;
 const DASH = "–";
@@ -10,7 +14,15 @@ const categoryName = (category: Category) => (category.kind === "objective" ? ca
 const formatNote = (note: number) => Math.round(note).toString();
 const formatScore = (score: number) => score.toFixed(1).replace(".", ",");
 
-export function RankTable({ candidates, categories }: { candidates: Candidate[]; categories: Category[] }) {
+export function RankTable({
+  dataset,
+  candidates,
+  categories,
+}: {
+  dataset: Dataset;
+  candidates: Candidate[];
+  categories: Category[];
+}) {
   const scroller = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: candidates.length,
@@ -33,11 +45,18 @@ export function RankTable({ candidates, categories }: { candidates: Candidate[];
           </span>
           <span role="columnheader">Cidade</span>
           <span role="columnheader" className="num">
-            Pontuação
+            <Tooltip label="Pontuação">
+              <strong>Como se lê a Pontuação</strong>
+              {SCORE_READING.map((paragraph) => (
+                <span className="tip-block" key={paragraph}>
+                  {paragraph}
+                </span>
+              ))}
+            </Tooltip>
           </span>
           {categories.map((category) => (
             <span role="columnheader" key={category.id} className={category.on ? "num" : "num dim"}>
-              {categoryName(category)}
+              <CategoryLabel dataset={dataset} id={category.id} name={categoryName(category)} />
             </span>
           ))}
         </div>
