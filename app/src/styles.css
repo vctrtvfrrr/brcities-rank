@@ -50,3 +50,21 @@ p { margin: 0; }
 .dim { opacity: 0.4; }
 .table-wrap [role=table] { min-width: calc(64px + 180px + 90px + var(--categories, 0) * 84px + 24px); }
 .row > :nth-child(2) { overflow: hidden; text-overflow: ellipsis; }
+
+.add-constraint { width: 100%; margin-bottom: 8px; }
+.restr { border: 1px solid var(--line); border-radius: 8px; padding: 8px; margin-bottom: 6px; }
+.restr.off > :not(.restr-head) { opacity: 0.5; }
+.restr-head { display: flex; align-items: center; gap: 8px; }
+.restr .small { margin-top: 4px; }
+.grow { flex: 1; }
+.tag { display: inline-block; padding: 0 6px; border-radius: 9px; background: var(--chip); font-size: 11px; }
+.tag.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+.ghost { border: none; background: none; color: var(--muted); cursor: pointer; }
+.lims { display: flex; gap: 8px; margin-top: 6px; align-items: center; flex-wrap: wrap; }
+.lims input { width: 78px; }
+.kchips { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.kchip { border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 12px; padding: 1px 8px; font-size: 12px; cursor: pointer; }
+.kchip.on { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.seg button { border: none; border-radius: 0; background: var(--panel); color: var(--ink); cursor: pointer; }
+.seg button.on { background: var(--accent); color: #fff; }

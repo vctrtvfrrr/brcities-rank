@@ -1,3 +1,4 @@
+import { passesConstraint } from "./constraints";
 import type { CatalogEntry, Dataset } from "./dataset";
 import type { Session } from "./session";
 
@@ -11,7 +12,19 @@ export type Candidate = {
   categoryScores: Record<string, number>;
 };
 
-export type RankResult = { candidates: Candidate[] };
+export type CutCity = {
+  index: number;
+  code: string;
+  name: string;
+  uf: string;
+  failedConstraints: string[];
+};
+
+export type RankResult = {
+  candidates: Candidate[];
+  cut: CutCity[];
+  cutCounts: Record<string, number>;
+};
 
 type Bounds = { low: number; high: number };
 
@@ -19,14 +32,30 @@ const collator = new Intl.Collator("pt-BR");
 
 export function rank(dataset: Dataset, session: Session): RankResult {
   const { codigo_ibge, nome, uf, populacao_2026 } = dataset.colunas;
+  const checks = session.constraints.map((constraint) => ({
+    criterion: constraint.criterion,
+    on: constraint.on,
+    passes: passesConstraint(dataset, constraint),
+  }));
+  const cutCounts = Object.fromEntries(checks.map((check) => [check.criterion, 0]));
+  const candidateIndexes: number[] = [];
+  const cut: CutCity[] = [];
+
+  codigo_ibge.forEach((code, index) => {
+    const failed = checks.filter((check) => !check.passes(index));
+    for (const check of failed) cutCounts[check.criterion]++;
+    const failedConstraints = failed.filter((check) => check.on).map((check) => check.criterion);
+    if (failedConstraints.length > 0) cut.push({ index, code, name: nome[index], uf: uf[index], failedConstraints });
+    else candidateIndexes.push(index);
+  });
+
   const population = (index: number) => populacao_2026[index];
-  const indexes = codigo_ibge.map((_, index) => index);
-  const categoryScores = scoreCategories(dataset, indexes);
+  const categoryScores = scoreCategories(dataset, candidateIndexes);
   const weights = averageWeights(session);
   const counting = session.categories.filter((c) => c.on && (weights[c.id] ?? 0) > 0).map((c) => c.id);
 
-  const candidates = indexes.map<Candidate>((index) => {
-    const scores = categoryScores[index];
+  const candidates = candidateIndexes.map<Candidate>((index, at) => {
+    const scores = categoryScores[at];
     let weighted = 0;
     let total = 0;
     for (const id of counting) {
@@ -56,7 +85,7 @@ export function rank(dataset: Dataset, session: Session): RankResult {
   for (const candidate of candidates) {
     if (candidate.score !== null) candidate.position = ++position;
   }
-  return { candidates };
+  return { candidates, cut, cutCounts };
 }
 
 function averageWeights(session: Session): Record<string, number> {

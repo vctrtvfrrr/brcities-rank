@@ -1,16 +1,24 @@
+import type { Dataset } from "../domain/dataset";
 import type { Session } from "../domain/session";
+import { Filters } from "./Filters";
 
 const formatDate = (iso: string) => iso.split("-").reverse().join("/");
 
-type SidebarProps = { session: Session; collectedOn: string; onToggleCategory: (id: string) => void };
+type Props = {
+  dataset: Dataset;
+  session: Session;
+  cutCounts: Record<string, number>;
+  onChange: (update: (session: Session) => Session) => void;
+  onToggleCategory: (id: string) => void;
+};
 
-export function Sidebar({ session, collectedOn, onToggleCategory }: SidebarProps) {
+export function Sidebar({ dataset, session, cutCounts, onChange, onToggleCategory }: Props) {
   const active = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
   return (
     <aside className="side" aria-label="Sessão">
       <header className="brand">
         <h1>BRCities Rank</h1>
-        <p className="muted small">Dados coletados em {formatDate(collectedOn)}</p>
+        <p className="muted small">Dados coletados em {formatDate(dataset.coleta)}</p>
       </header>
       <section aria-labelledby="sec-session">
         <h2 id="sec-session">Sessão</h2>
@@ -22,9 +30,7 @@ export function Sidebar({ session, collectedOn, onToggleCategory }: SidebarProps
       </section>
       <section aria-labelledby="sec-filters">
         <h2 id="sec-filters">Filtros</h2>
-        <p className="muted">
-          {session.constraints.length === 0 ? "Nenhuma restrição." : `${session.constraints.length} restrições.`}
-        </p>
+        <Filters dataset={dataset} session={session} cutCounts={cutCounts} onChange={onChange} />
       </section>
       <section className="fill" aria-labelledby="sec-categories">
         <h2 id="sec-categories">Categorias</h2>

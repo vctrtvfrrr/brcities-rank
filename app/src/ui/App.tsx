@@ -23,16 +23,18 @@ export function App() {
 
 function Workspace({ dataset }: { dataset: Dataset }) {
   const [session, setSession] = useState(() => createInitialSession(dataset));
-  const { candidates } = useMemo(() => rank(dataset, session), [dataset, session]);
+  const { candidates, cut, cutCounts } = useMemo(() => rank(dataset, session), [dataset, session]);
   return (
     <div className="app">
       <Sidebar
+        dataset={dataset}
         session={session}
-        collectedOn={dataset.coleta}
+        cutCounts={cutCounts}
+        onChange={setSession}
         onToggleCategory={(id) => setSession((current) => toggleCategory(current, id))}
       />
       <SplitPane
-        top={<MapView dataset={dataset} candidates={candidates} />}
+        top={<MapView dataset={dataset} candidates={candidates} cut={cut} />}
         bottom={<RankTable candidates={candidates} categories={session.categories} />}
       />
     </div>

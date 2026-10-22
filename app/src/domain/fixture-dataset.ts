@@ -10,6 +10,8 @@ export const fixtureDataset: Dataset = {
     { chave: "heat", categoria: "Clima", rotulo: "Calor", unidade: "°C", direcao: "menor", transformacao: "nenhuma", pontua: true, fontes: [] },
     { chave: "populacao_2026", categoria: "Porte", rotulo: "População", unidade: "hab.", direcao: "maior", transformacao: "logaritmo", pontua: true, fontes: [] },
     { chave: "koppen_beck", categoria: "Clima", rotulo: "Köppen de Beck", unidade: "", direcao: null, transformacao: "nenhuma", pontua: false, fontes: [] },
+    { chave: "koppen_alvares", categoria: "Clima", rotulo: "Köppen de Alvares", unidade: "", direcao: null, transformacao: "nenhuma", pontua: false, fontes: [] },
+    { chave: "hospital_geral", categoria: "Saúde", rotulo: "Hospital geral", unidade: "", direcao: null, transformacao: "nenhuma", pontua: false, fontes: [] },
     { chave: "fibra", categoria: "Internet", rotulo: "Fibra", unidade: "", direcao: null, transformacao: "nenhuma", pontua: false, fontes: [] },
   ],
   colunas: {
@@ -22,7 +24,9 @@ export const fixtureDataset: Dataset = {
     rain: [100, 120, 190, 110, 140, 150],
     heat: [28, 33, 27, 30, 25, 31],
     populacao_2026: [12000000, 6700000, 22000, 2400000, 1900000, 1500000],
-    koppen_beck: ["Cfa", "Aw", "Aw", "Af", "Cfb", "As"],
+    koppen_beck: ["Cfa", "Aw", "Aw", "Af", "Cfb", null],
+    koppen_alvares: ["Cfa", null, "Am", "Af", "Cfb", null],
+    hospital_geral: [true, true, false, true, true, false],
     fibra: [true, true, false, true, true, null],
   },
 };
