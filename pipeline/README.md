@@ -1,6 +1,6 @@
 # Pipeline da Coleta
 
-Levanta os dados dos 5.570 municípios nas fontes públicas descritas em [metodologia-dos-dados.md](../docs/metodologia-dos-dados.md) e escreve o registro versionado:
+Levanta os dados dos 5.570 municípios nas fontes públicas descritas em [METODOLOGIA.md](METODOLOGIA.md) e escreve o registro versionado:
 
 - `dados/municipios.csv`: um município por linha, com os valores das restrições de referência, o motivo do corte ou as marcas A conferir, e os valores dos critérios.
 - `corte.md`: quantas cidades cada restrição de referência cortou e quais Candidatas passaram com marca.
