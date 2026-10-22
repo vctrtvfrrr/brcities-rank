@@ -159,7 +159,7 @@ describe("cityDetail subjectives", () => {
         average: null,
         note: null,
         mine: null,
-        grades: [{ evaluator: "Você", active: true, grade: null }],
+        grades: [{ id: "evaluator-1", evaluator: "Você", active: true, grade: null }],
       },
     ]);
   });
@@ -181,8 +181,8 @@ describe("cityDetail subjectives", () => {
     const [subjective] = open(fixtureDataset, session)("3550308")!.subjectives;
     expect(subjective).toMatchObject({ average: 3, mine: 4 });
     expect(subjective.grades).toEqual([
-      { evaluator: "Você", active: true, grade: 4 },
-      { evaluator: "Avaliador 2", active: false, grade: 2 },
+      { id: "evaluator-1", evaluator: "Você", active: true, grade: 4 },
+      { id: "evaluator-2", evaluator: "Avaliador 2", active: false, grade: 2 },
     ]);
   });
 

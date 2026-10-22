@@ -32,7 +32,7 @@ export type SubjectiveDetail = {
   average: number | null;
   note: number | null;
   mine: Grade | null;
-  grades: { evaluator: string; active: boolean; grade: Grade | null }[];
+  grades: { id: string; evaluator: string; active: boolean; grade: Grade | null }[];
 };
 
 export type FiltersDetail = {
@@ -100,6 +100,7 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
           note: candidate?.categoryScores[category.id] ?? null,
           mine: gradeOf(session, category.id, code) ?? null,
           grades: session.evaluators.map((e) => ({
+            id: e.id,
             evaluator: e.name,
             active: e.id === session.activeEvaluatorId,
             grade: e.grades[category.id]?.[code] ?? null,

@@ -151,7 +151,7 @@ function Subjective({
       </div>
       <ul className="evaluator-grades" aria-label={`Notas de ${subjective.name}`}>
         {subjective.grades.map((entry) => (
-          <li key={entry.evaluator} className={entry.active ? "active" : undefined}>
+          <li key={entry.id} className={entry.active ? "active" : undefined}>
             <span>{entry.evaluator}</span>
             <span>{entry.grade ?? "–"}</span>
           </li>
