@@ -75,6 +75,15 @@ describe("parseSession refusing invalid files", () => {
     expect(result).toMatchObject({ reason: expect.stringContaining("99") });
   });
 
+  it.each([[{ toString: null }], [[1]], ["1"], [null]])("refuses a malformed version %j", (version) => {
+    refuses((f) => (f.version = version));
+  });
+
+  it("refuses ids whose numeric suffix is too large to be incremented safely", () => {
+    refuses((f) => (f.evaluators[0].id = "evaluator-9007199254740992"));
+    refuses((f) => (f.categories[f.categories.length - 1].id = "subjective-9007199254740992"));
+  });
+
   it("refuses a constraint on a criterion missing from the catalog", () => {
     const result = refuses((f) => (f.constraints[0].criterion = "inexistente"));
     expect(result).toMatchObject({ reason: expect.stringContaining("inexistente") });

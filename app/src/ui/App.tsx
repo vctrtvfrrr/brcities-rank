@@ -6,7 +6,7 @@ import type { Dataset } from "../domain/dataset";
 import { CityDrawer } from "./CityDrawer";
 import { MapView } from "./MapView";
 import { RankTable } from "./RankTable";
-import { loadStoredSession, storeSession } from "./session-storage";
+import { loadStoredSession, storeSession, watchStoredSession } from "./session-storage";
 import { Sidebar } from "./Sidebar";
 import { SplitPane } from "./SplitPane";
 import { useDataset } from "./useDataset";
@@ -27,6 +27,7 @@ export function App() {
 function Workspace({ dataset }: { dataset: Dataset }) {
   const [session, setSession] = useState(() => loadStoredSession(dataset) ?? createInitialSession(dataset));
   useEffect(() => storeSession(session), [session]);
+  useEffect(() => watchStoredSession(dataset, setSession), [dataset]);
   const result = useMemo(() => rank(dataset, session), [dataset, session]);
   const { candidates, cut, cutCounts } = result;
   const [selectedCode, setSelectedCode] = useState<string | null>(null);

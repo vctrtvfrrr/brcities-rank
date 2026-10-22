@@ -96,7 +96,7 @@ function parseCategories(dataset: Dataset, raw: unknown): Category[] {
       return { id, kind: "objective", on };
     }
     if (entry.kind === "subjective") {
-      if (!/^subjective-\d+$/.test(id)) refuse(`O id "${id}" da categoria subjetiva é inválido.`);
+      if (!/^subjective-\d{1,9}$/.test(id)) refuse(`O id "${id}" da categoria subjetiva é inválido.`);
       return { id, kind: "subjective", name: stringOf(entry.name, `O nome de "${id}"`), on };
     }
     return refuse(`A categoria "${id}" tem um tipo desconhecido.`);
@@ -143,7 +143,7 @@ function parseEvaluators(raw: unknown, categories: Category[]): Evaluator[] {
   return list.map((item) => {
     const entry = objectOf(item, "Cada avaliador");
     const id = stringOf(entry.id, "O id do avaliador");
-    if (!/^evaluator-\d+$/.test(id)) refuse(`O id "${id}" do avaliador é inválido.`);
+    if (!/^evaluator-\d{1,9}$/.test(id)) refuse(`O id "${id}" do avaliador é inválido.`);
     if (seen.has(id)) refuse(`O avaliador "${id}" aparece mais de uma vez.`);
     seen.add(id);
     const name = stringOf(entry.name, `O nome de "${id}"`);
@@ -165,7 +165,8 @@ function parse(dataset: Dataset, text: string): Session {
   }
   const file = objectOf(raw, "A Sessão");
   if (file.version !== SESSION_VERSION) {
-    refuse(`Versão de formato ${String(file.version)} desconhecida; este app lê a versão ${SESSION_VERSION}.`);
+    const found = typeof file.version === "number" ? ` ${file.version}` : "";
+    refuse(`Versão de formato${found} desconhecida; este app lê a versão ${SESSION_VERSION}.`);
   }
   const categories = parseCategories(dataset, file.categories);
   const evaluators = parseEvaluators(file.evaluators, categories);
