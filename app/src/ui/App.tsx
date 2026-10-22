@@ -36,6 +36,7 @@ function Workspace({ dataset }: { dataset: Dataset }) {
     () => (selectedCode ? cityDetail(dataset, session, result, selectedCode) : null),
     [dataset, session, result, selectedCode],
   );
+  const cutCodes = useMemo(() => new Set(cut.map((c) => c.code)), [cut]);
   const closeDetail = useCallback(() => setSelectedCode(null), []);
   const selectFromMap = useCallback((code: string) => {
     setSelectedCode(code);
@@ -52,6 +53,8 @@ function Workspace({ dataset }: { dataset: Dataset }) {
         dataset={dataset}
         session={session}
         cutCounts={cutCounts}
+        cutCodes={cutCodes}
+        onSelectCity={selectFromMap}
         onChange={setSession}
         onReplaceSession={(next) => {
           setSession(next);

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Dataset } from "../domain/dataset";
 import type { Candidate, CutCity } from "../domain/rank";
 import stateOutlinesUrl from "../assets/state-outlines.geojson?url";
+import { citiesLayer, CUT_COLOR } from "./cities-layer";
 import { BASEMAP_STYLE_URL } from "./map-style";
 import { markerColor, rankedCount } from "./marker-color";
 
@@ -14,7 +15,6 @@ const BRAZIL_BOUNDS: [[number, number], [number, number]] = [
 ];
 const OUTLINES_SOURCE = "state-outlines";
 const CITIES_SOURCE = "cities";
-const CUT_COLOR = "#5d616a";
 
 const BLANK_STYLE: StyleSpecification = {
   version: 8,
@@ -56,18 +56,7 @@ function addDatasetLayers(map: MapLibreMap, dataset: Dataset, candidates: Candid
     paint: { "line-color": "#5d616a", "line-width": 1 },
   });
   map.addSource(CITIES_SOURCE, { type: "geojson", data: citiesGeoJson(dataset, candidates, cut) });
-  map.addLayer({
-    id: "cities",
-    type: "circle",
-    source: CITIES_SOURCE,
-    layout: { "circle-sort-key": ["get", "order"] },
-    paint: {
-      "circle-color": ["case", ["get", "cut"], "rgba(0,0,0,0)", ["get", "color"]],
-      "circle-stroke-color": ["case", ["get", "cut"], CUT_COLOR, "#ffffff"],
-      "circle-stroke-width": ["case", ["get", "cut"], 1, ["interpolate", ["linear"], ["zoom"], 4, 0, 8, 0.75]],
-      "circle-radius": ["interpolate", ["linear"], ["zoom"], 3, 1.5, 8, 4],
-    },
-  });
+  map.addLayer(citiesLayer(CITIES_SOURCE));
 }
 
 type MapViewProps = { dataset: Dataset; candidates: Candidate[]; cut: CutCity[]; onSelect: (code: string) => void };
@@ -134,7 +123,7 @@ export function MapView({ dataset, candidates, cut, onSelect }: MapViewProps) {
   return (
     <div className="map" ref={container} role="region" aria-label="Mapa das cidades" aria-describedby="map-description">
       <p id="map-description" className="visually-hidden">
-        {`${candidates.length} candidatas em tons de verde, mais escuro quanto melhor a posição, e ${cut.length} cidades cortadas em círculo vazio. Os marcadores não recebem foco: use a tabela para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
+        {`${candidates.length} candidatas em tons de verde, mais escuro quanto melhor a posição, e ${cut.length} cidades cortadas em círculo vazio. Os marcadores não recebem foco: use a tabela, ou a busca de cidade na barra lateral (que inclui as cortadas), para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
       </p>
       {unavailable && (
         <p className="notice" role="alert">
