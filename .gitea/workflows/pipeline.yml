@@ -1,0 +1,22 @@
+name: pipeline
+
+on:
+  push:
+    paths:
+      - "pipeline/**"
+      - ".gitea/workflows/pipeline.yml"
+  pull_request:
+    paths:
+      - "pipeline/**"
+      - ".gitea/workflows/pipeline.yml"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+      - run: uv run pytest
