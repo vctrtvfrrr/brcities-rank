@@ -1,8 +1,7 @@
 import { useRef } from "react";
 import type { Dataset } from "../domain/dataset";
 import { SCORE_READING } from "../domain/explanations";
-
-export const formatDate = (iso: string) => iso.split("-").reverse().join("/");
+import { formatDate } from "./format";
 
 function InfoDialog({ trigger, title, children }: { trigger: string; title: string; children: React.ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);

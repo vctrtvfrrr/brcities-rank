@@ -2,7 +2,8 @@ import type { Dataset } from "../domain/dataset";
 import type { Session } from "../domain/session";
 import { CategoryPanel } from "./CategoryPanel";
 import { Filters } from "./Filters";
-import { formatDate, ScoreReadingDialog, SourcesDialog } from "./InfoDialogs";
+import { formatDate } from "./format";
+import { ScoreReadingDialog, SourcesDialog } from "./InfoDialogs";
 
 type Props = {
   dataset: Dataset;

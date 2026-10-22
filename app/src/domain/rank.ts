@@ -10,6 +10,7 @@ export type Candidate = {
   position: number | null;
   score: number | null;
   categoryScores: Record<string, number>;
+  criterionScores: Record<string, number>;
 };
 
 export type CutCity = {
@@ -24,9 +25,10 @@ export type RankResult = {
   candidates: Candidate[];
   cut: CutCity[];
   cutCounts: Record<string, number>;
+  bounds: Record<string, Bounds | null>;
 };
 
-type Bounds = { low: number; high: number };
+export type Bounds = { low: number; high: number };
 
 const collator = new Intl.Collator("pt-BR");
 
@@ -50,12 +52,12 @@ export function rank(dataset: Dataset, session: Session): RankResult {
   });
 
   const population = (index: number) => populacao_2026[index];
-  const categoryScores = scoreCategories(dataset, candidateIndexes);
+  const scoring = scoreCandidates(dataset, candidateIndexes);
   const weights = averageWeights(session);
   const counting = session.categories.filter((c) => c.on && (weights[c.id] ?? 0) > 0).map((c) => c.id);
 
   const candidates = candidateIndexes.map<Candidate>((index, at) => {
-    const scores = categoryScores[at];
+    const scores = scoring.categories[at];
     let weighted = 0;
     let total = 0;
     for (const id of counting) {
@@ -70,6 +72,7 @@ export function rank(dataset: Dataset, session: Session): RankResult {
       position: null,
       score: total > 0 ? weighted / total : null,
       categoryScores: scores,
+      criterionScores: scoring.criteria[at],
     };
   });
 
@@ -85,38 +88,54 @@ export function rank(dataset: Dataset, session: Session): RankResult {
   for (const candidate of candidates) {
     if (candidate.score !== null) candidate.position = ++position;
   }
-  return { candidates, cut, cutCounts };
+  return { candidates, cut, cutCounts, bounds: scoring.bounds };
 }
 
-function scoreCategories(dataset: Dataset, indexes: number[]): Record<string, number>[] {
+type Scoring = {
+  categories: Record<string, number>[];
+  criteria: Record<string, number>[];
+  bounds: Record<string, Bounds | null>;
+};
+
+function scoreCandidates(dataset: Dataset, indexes: number[]): Scoring {
+  const scoring = dataset.catalogo.filter((entry) => entry.pontua);
   const criteriaByCategory = new Map<string, CatalogEntry[]>();
-  for (const entry of dataset.catalogo) {
-    if (!entry.pontua) continue;
+  for (const entry of scoring) {
     criteriaByCategory.set(entry.categoria, [...(criteriaByCategory.get(entry.categoria) ?? []), entry]);
   }
-  const notes = new Map(
-    dataset.catalogo.filter((e) => e.pontua).map((entry) => [entry.chave, criterionNotes(dataset, entry, indexes)]),
-  );
-  return indexes.map((_, position) =>
-    Object.fromEntries(
-      [...criteriaByCategory].map(([category, criteria]) => [
-        category,
-        criteria.reduce((sum, entry) => sum + notes.get(entry.chave)![position], 0) / criteria.length,
-      ]),
+  const scored = new Map(scoring.map((entry) => [entry.chave, scoreCriterion(dataset, entry, indexes)]));
+  return {
+    categories: indexes.map((_, position) =>
+      Object.fromEntries(
+        [...criteriaByCategory].map(([category, criteria]) => [
+          category,
+          criteria.reduce((sum, entry) => sum + scored.get(entry.chave)!.notes[position], 0) / criteria.length,
+        ]),
+      ),
     ),
-  );
+    criteria: indexes.map((_, position) =>
+      Object.fromEntries(scoring.map((entry) => [entry.chave, scored.get(entry.chave)!.notes[position]])),
+    ),
+    bounds: Object.fromEntries(scoring.map((entry) => [entry.chave, scored.get(entry.chave)!.bounds])),
+  };
 }
 
-function criterionNotes(dataset: Dataset, entry: CatalogEntry, indexes: number[]): number[] {
+function scoreCriterion(dataset: Dataset, entry: CatalogEntry, indexes: number[]) {
   const column = dataset.colunas[entry.chave] as (number | null)[];
   const transformed = indexes.map((index) => transform(entry, column[index]));
   const bounds = trimBounds(transformed.filter((v): v is number => v !== null));
-  return transformed.map((value) => {
+  const notes = transformed.map((value) => {
     if (value === null || bounds === null) return 0;
     if (bounds.low === bounds.high) return 100;
     const note = ((Math.min(Math.max(value, bounds.low), bounds.high) - bounds.low) / (bounds.high - bounds.low)) * 100;
     return entry.direcao === "menor" ? 100 - note : note;
   });
+  const raw = bounds && { low: untransform(entry, bounds.low), high: untransform(entry, bounds.high) };
+  return { notes, bounds: raw };
+}
+
+function untransform(entry: CatalogEntry, value: number): number {
+  return entry.transformacao === "logaritmo" ? Math.exp(value) : value;
 }
 
 function transform(entry: CatalogEntry, value: number | null): number | null {

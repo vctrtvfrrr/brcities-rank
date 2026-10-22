@@ -1,28 +1,28 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { useRef, type CSSProperties } from "react";
+import { useEffect, useRef, type CSSProperties, type KeyboardEvent } from "react";
 import type { Candidate } from "../domain/rank";
 import type { Dataset } from "../domain/dataset";
 import { SCORE_READING } from "../domain/explanations";
 import type { Category } from "../domain/session";
 import { CategoryLabel } from "./CategoryTip";
+import { formatNote, formatScore } from "./format";
 import { Tooltip } from "./Tooltip";
 
 const ROW_HEIGHT = 28;
 const DASH = "–";
 
 const categoryName = (category: Category) => (category.kind === "objective" ? category.id : category.name);
-const formatNote = (note: number) => Math.round(note).toString();
-const formatScore = (score: number) => score.toFixed(1).replace(".", ",");
 
-export function RankTable({
-  dataset,
-  candidates,
-  categories,
-}: {
+type RankTableProps = {
   dataset: Dataset;
   candidates: Candidate[];
   categories: Category[];
-}) {
+  selectedCode: string | null;
+  reveal: { code: string } | null;
+  onSelect: (code: string) => void;
+};
+
+export function RankTable({ dataset, candidates, categories, selectedCode, reveal, onSelect }: RankTableProps) {
   const scroller = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: candidates.length,
@@ -30,6 +30,20 @@ export function RankTable({
     estimateSize: () => ROW_HEIGHT,
     overscan: 12,
   });
+
+  const revealed = useRef(reveal);
+  useEffect(() => {
+    if (!reveal || reveal === revealed.current) return;
+    revealed.current = reveal;
+    const at = candidates.findIndex((c) => c.code === reveal.code);
+    if (at >= 0) virtualizer.scrollToIndex(at, { align: "center" });
+  }, [reveal, candidates, virtualizer]);
+
+  const onRowKeyDown = (event: KeyboardEvent, code: string) => {
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    onSelect(code);
+  };
 
   return (
     <div className="table-wrap" ref={scroller}>
@@ -67,7 +81,11 @@ export function RankTable({
               <div
                 role="row"
                 aria-rowindex={item.index + 2}
-                className="row"
+                className={candidate.code === selectedCode ? "row selected" : "row"}
+                aria-selected={candidate.code === selectedCode}
+                tabIndex={0}
+                onClick={() => onSelect(candidate.code)}
+                onKeyDown={(event) => onRowKeyDown(event, candidate.code)}
                 key={candidate.code}
                 style={{ height: ROW_HEIGHT, transform: `translateY(${item.start}px)` }}
               >

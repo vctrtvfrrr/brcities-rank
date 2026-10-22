@@ -1,7 +1,9 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { cityDetail } from "../domain/city-detail";
 import { rank } from "../domain/rank";
 import { createInitialSession, toggleCategory } from "../domain/session";
 import type { Dataset } from "../domain/dataset";
+import { CityDrawer } from "./CityDrawer";
 import { MapView } from "./MapView";
 import { RankTable } from "./RankTable";
 import { Sidebar } from "./Sidebar";
@@ -23,7 +25,19 @@ export function App() {
 
 function Workspace({ dataset }: { dataset: Dataset }) {
   const [session, setSession] = useState(() => createInitialSession(dataset));
-  const { candidates, cut, cutCounts } = useMemo(() => rank(dataset, session), [dataset, session]);
+  const result = useMemo(() => rank(dataset, session), [dataset, session]);
+  const { candidates, cut, cutCounts } = result;
+  const [selectedCode, setSelectedCode] = useState<string | null>(null);
+  const [reveal, setReveal] = useState<{ code: string } | null>(null);
+  const detail = useMemo(
+    () => (selectedCode ? cityDetail(dataset, session, result, selectedCode) : null),
+    [dataset, session, result, selectedCode],
+  );
+  const closeDetail = useCallback(() => setSelectedCode(null), []);
+  const selectFromMap = useCallback((code: string) => {
+    setSelectedCode(code);
+    setReveal({ code });
+  }, []);
   return (
     <div className="app">
       <Sidebar
@@ -34,8 +48,22 @@ function Workspace({ dataset }: { dataset: Dataset }) {
         onToggleCategory={(id) => setSession((current) => toggleCategory(current, id))}
       />
       <SplitPane
-        top={<MapView dataset={dataset} candidates={candidates} cut={cut} />}
-        bottom={<RankTable dataset={dataset} candidates={candidates} categories={session.categories} />}
+        top={
+          <>
+            <MapView dataset={dataset} candidates={candidates} cut={cut} onSelect={selectFromMap} />
+            {detail && <CityDrawer dataset={dataset} detail={detail} onClose={closeDetail} />}
+          </>
+        }
+        bottom={
+          <RankTable
+            dataset={dataset}
+            candidates={candidates}
+            categories={session.categories}
+            selectedCode={selectedCode}
+            reveal={reveal}
+            onSelect={setSelectedCode}
+          />
+        }
       />
     </div>
   );

@@ -70,12 +70,16 @@ function addDatasetLayers(map: MapLibreMap, dataset: Dataset, candidates: Candid
   });
 }
 
-export function MapView({ dataset, candidates, cut }: { dataset: Dataset; candidates: Candidate[]; cut: CutCity[] }) {
+type MapViewProps = { dataset: Dataset; candidates: Candidate[]; cut: CutCity[]; onSelect: (code: string) => void };
+
+export function MapView({ dataset, candidates, cut, onSelect }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null);
   const [unavailable, setUnavailable] = useState(false);
   const mapRef = useRef<MapLibreMap | null>(null);
   const latest = useRef({ candidates, cut });
   latest.current = { candidates, cut };
+  const onSelectRef = useRef(onSelect);
+  onSelectRef.current = onSelect;
 
   useEffect(() => {
     let map: MapLibreMap;
@@ -91,7 +95,7 @@ export function MapView({ dataset, candidates, cut }: { dataset: Dataset; candid
       return;
     }
     mapRef.current = map;
-    map.addControl(new NavigationControl({ showCompass: false }), "top-right");
+    map.addControl(new NavigationControl({ showCompass: false }), "top-left");
 
     let basemapLoaded = false;
     map.on("load", () => {
@@ -105,6 +109,13 @@ export function MapView({ dataset, candidates, cut }: { dataset: Dataset; candid
       map.once("style.load", () => addDatasetLayers(map, dataset, latest.current.candidates, latest.current.cut));
       map.setStyle(BLANK_STYLE);
     });
+
+    map.on("click", "cities", (event) => {
+      const code = event.features?.[0]?.properties?.code;
+      if (typeof code === "string") onSelectRef.current(code);
+    });
+    map.on("mouseenter", "cities", () => (map.getCanvas().style.cursor = "pointer"));
+    map.on("mouseleave", "cities", () => (map.getCanvas().style.cursor = ""));
 
     const resize = new ResizeObserver(() => map.resize());
     resize.observe(container.current!);

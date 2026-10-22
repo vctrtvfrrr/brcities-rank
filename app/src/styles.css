@@ -447,3 +447,94 @@ dialog.info header h2 {
   display: flex;
   flex-direction: column;
 }
+
+.body .row {
+  cursor: pointer;
+}
+.body .row:hover {
+  background: var(--chip);
+}
+.body .row.selected {
+  background: var(--accent-soft);
+}
+.body .row:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+.tag.good {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.drawer {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  bottom: 10px;
+  width: 400px;
+  max-width: calc(100% - 20px);
+  z-index: 5;
+  overflow: auto;
+  padding: 14px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 4px 18px rgb(0 0 0 / 0.18);
+}
+.drawer-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.drawer h3 {
+  margin: 0;
+  font-size: 17px;
+}
+.standing {
+  margin: 8px 0;
+}
+.standing .score {
+  font-size: 16px;
+}
+.failed {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+.catblock {
+  margin-top: 10px;
+}
+.catblock.off {
+  opacity: 0.55;
+}
+.cathead {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 2px;
+  margin-bottom: 2px;
+}
+.crit {
+  display: grid;
+  grid-template-columns: 1fr auto 46px;
+  gap: 2px 8px;
+  align-items: baseline;
+  padding: 2px 0;
+}
+.crit .note {
+  text-align: right;
+  font-weight: 600;
+}
+.crit .wide {
+  grid-column: 2 / -1;
+  text-align: right;
+}
+.crit .src {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 10.5px;
+  margin-top: -2px;
+}
+.crit .src a {
+  color: inherit;
+}

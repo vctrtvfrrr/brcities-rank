@@ -3,7 +3,24 @@ import type { Dataset } from "./dataset";
 export const fixtureDataset: Dataset = {
   versao: 1,
   coleta: "2026-01-15",
-  fontes: [],
+  fontes: [
+    {
+      chave: "ssp",
+      nome: "Secretarias de Segurança",
+      edicao: "Anuário 2024",
+      ano: "2023",
+      endereco: "https://example.org/ssp",
+      credito: "SSP estaduais",
+    },
+    {
+      chave: "inmet",
+      nome: "INMET",
+      edicao: "Normais 1991-2020",
+      ano: "2020",
+      endereco: "https://example.org/inmet",
+      credito: "INMET",
+    },
+  ],
   catalogo: [
     {
       chave: "crime",
@@ -13,7 +30,7 @@ export const fixtureDataset: Dataset = {
       direcao: "menor",
       transformacao: "nenhuma",
       pontua: true,
-      fontes: [],
+      fontes: ["ssp"],
     },
     {
       chave: "rain",
@@ -23,7 +40,7 @@ export const fixtureDataset: Dataset = {
       direcao: "menor",
       transformacao: "nenhuma",
       pontua: true,
-      fontes: [],
+      fontes: ["inmet"],
     },
     {
       chave: "heat",
@@ -53,7 +70,7 @@ export const fixtureDataset: Dataset = {
       direcao: null,
       transformacao: "nenhuma",
       pontua: false,
-      fontes: [],
+      fontes: ["inmet"],
     },
     {
       chave: "koppen_alvares",
@@ -83,7 +100,7 @@ export const fixtureDataset: Dataset = {
       direcao: null,
       transformacao: "nenhuma",
       pontua: false,
-      fontes: [],
+      fontes: ["ssp"],
     },
   ],
   colunas: {
