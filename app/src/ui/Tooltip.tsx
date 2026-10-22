@@ -1,4 +1,5 @@
 import { useId, useRef, useState, type FocusEvent, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 const WIDTH = 320;
 const MARGIN = 8;
@@ -10,6 +11,7 @@ type Placement = { left: number; maxHeight: number } & ({ top: number } | { bott
 export function Tooltip({ label, children }: { label: ReactNode; children: ReactNode }) {
   const id = useId();
   const [placement, setPlacement] = useState<Placement | null>(null);
+  const tip = useRef<HTMLSpanElement>(null);
   const closing = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const open = (target: HTMLElement) => {
@@ -32,7 +34,8 @@ export function Tooltip({ label, children }: { label: ReactNode; children: React
     closing.current = setTimeout(close, CLOSE_DELAY_MS);
   };
   const closeUnlessFocusStays = (event: FocusEvent<HTMLElement>) => {
-    if (!event.currentTarget.contains(event.relatedTarget)) close();
+    const next = event.relatedTarget as Node | null;
+    if (!event.currentTarget.contains(next) && !tip.current?.contains(next)) close();
   };
 
   return (
@@ -42,23 +45,32 @@ export function Tooltip({ label, children }: { label: ReactNode; children: React
       onMouseLeave={closeSoon}
       onFocus={(event) => open(event.currentTarget)}
       onBlur={closeUnlessFocusStays}
-      onKeyDown={(event) => event.key === "Escape" && close()}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") close();
+        if (event.key === "Tab" && !event.shiftKey && event.target !== tip.current && tip.current) {
+          event.preventDefault();
+          tip.current.focus();
+        }
+      }}
     >
       <span tabIndex={0} aria-describedby={placement ? id : undefined}>
         {label}
       </span>
-      {placement && (
-        <span
-          role="tooltip"
-          id={id}
-          tabIndex={0}
-          className="tip"
-          style={{ ...placement, width: WIDTH }}
-          onMouseEnter={() => clearTimeout(closing.current)}
-        >
-          {children}
-        </span>
-      )}
+      {placement &&
+        createPortal(
+          <span
+            ref={tip}
+            role="tooltip"
+            id={id}
+            tabIndex={0}
+            className="tip"
+            style={{ ...placement, width: WIDTH }}
+            onMouseEnter={() => clearTimeout(closing.current)}
+          >
+            {children}
+          </span>,
+          document.body,
+        )}
     </span>
   );
 }
