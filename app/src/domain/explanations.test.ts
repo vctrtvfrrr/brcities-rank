@@ -24,6 +24,12 @@ describe("explainCategory", () => {
     expect(explanation.scoring).toContain("0 a 100");
   });
 
+  it("says that Candidates with the same value all get 100 and a missing value counts 0", () => {
+    const { scoring } = explainCategory(fixtureDataset, "Clima")!;
+    expect(scoring).toContain("todas valem 100");
+    expect(scoring).toContain("sem dado conta 0");
+  });
+
   it("has no explanation for a category outside the catalog", () => {
     expect(explainCategory(fixtureDataset, "Lazer")).toBeNull();
   });

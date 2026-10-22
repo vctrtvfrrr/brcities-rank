@@ -16,6 +16,7 @@ export type CategoryExplanation = {
 const SCORING =
   "Cada critério vira uma nota de 0 a 100 comparando a cidade com as outras Candidatas do Corte atual: " +
   "o valor dos 5% melhores (ou além) vale 100, o dos 5% piores (ou além) vale 0, e entre eles a nota é proporcional. " +
+  "Se todas as Candidatas com dado têm o mesmo valor, não há o que comparar e todas valem 100 nesse critério. " +
   "A nota da categoria é a média simples das notas dos seus critérios, e o critério sem dado conta 0.";
 
 const TEXTS: Record<string, { measures: string; details: string; scoring?: string }> = {
