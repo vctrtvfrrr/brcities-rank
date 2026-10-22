@@ -40,6 +40,27 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
     if (at >= 0) virtualizer.scrollToIndex(at, { align: "center" });
   }, [reveal, candidates, virtualizer]);
 
+  const refocus = useRef<{ code: string; id: string; grade: Grade } | null>(null);
+  useEffect(() => {
+    const target = refocus.current;
+    if (!target) return;
+    const at = candidates.findIndex((c) => c.code === target.code);
+    if (at < 0) {
+      refocus.current = null;
+      return;
+    }
+    virtualizer.scrollToIndex(at, { align: "auto" });
+    const frame = requestAnimationFrame(() => {
+      const button = scroller.current?.querySelector<HTMLElement>(
+        `[data-cell="${target.code}:${target.id}"] [data-grade="${target.grade}"]`,
+      );
+      if (!button) return;
+      button.focus({ preventScroll: true });
+      refocus.current = null;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [candidates, virtualizer]);
+
   const onRowKeyDown = (event: KeyboardEvent, code: string) => {
     if (event.target !== event.currentTarget) return;
     if (event.key !== "Enter" && event.key !== " ") return;
@@ -113,7 +134,11 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
                       average={candidate.gradeAverages[category.id] ?? null}
                       mine={gradeOf(session, category.id, candidate.code) ?? null}
                       evaluatorName={evaluator.name}
-                      onGrade={(grade) => onGrade(category.id, candidate.code, grade)}
+                      cellKey={`${candidate.code}:${category.id}`}
+                      onGrade={(grade, byKeyboard) => {
+                        if (byKeyboard) refocus.current = { code: candidate.code, id: category.id, grade };
+                        onGrade(category.id, candidate.code, grade);
+                      }}
                     />
                   ) : (
                     <span role="cell" key={category.id} className={category.on ? "num" : "num dim"}>
@@ -136,6 +161,7 @@ function SubjectiveCell({
   average,
   mine,
   evaluatorName,
+  cellKey,
   onGrade,
 }: {
   on: boolean;
@@ -143,10 +169,11 @@ function SubjectiveCell({
   average: number | null;
   mine: Grade | null;
   evaluatorName: string;
-  onGrade: (grade: Grade) => void;
+  cellKey: string;
+  onGrade: (grade: Grade, byKeyboard: boolean) => void;
 }) {
   return (
-    <span role="cell" className="num subcell">
+    <span role="cell" className="num subcell" data-cell={cellKey}>
       <span className={on ? undefined : "dim"}>
         {average === null ? (
           DASH
@@ -169,9 +196,10 @@ function SubjectiveCell({
             className={mine === grade ? "on" : undefined}
             aria-pressed={mine === grade}
             aria-label={`Nota ${grade}`}
+            data-grade={grade}
             onClick={(event) => {
               event.stopPropagation();
-              onGrade(grade);
+              onGrade(grade, event.detail === 0);
             }}
           >
             {grade}
