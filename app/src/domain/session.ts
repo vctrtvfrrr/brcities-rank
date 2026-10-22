@@ -175,3 +175,38 @@ export function setGrade(session: Session, id: string, code: string, grade: Grad
     return { ...evaluator, grades: { ...evaluator.grades, [id]: cityGrades } };
   });
 }
+
+const EVALUATOR_ID_PREFIX = "evaluator-";
+
+export function addEvaluator(session: Session): Session {
+  const taken = session.evaluators.map((e) => Number(e.id.slice(EVALUATOR_ID_PREFIX.length)));
+  const id = `${EVALUATOR_ID_PREFIX}${Math.max(0, ...taken) + 1}`;
+  const equal = 100 / session.categories.length;
+  const added: Evaluator = {
+    id,
+    name: `Avaliador ${session.evaluators.length + 1}`,
+    weights: Object.fromEntries(session.categories.map((c) => [c.id, equal])),
+    grades: {},
+  };
+  return { ...session, evaluators: [...session.evaluators, added], activeEvaluatorId: id };
+}
+
+export function renameEvaluator(session: Session, id: string, name: string): Session {
+  return { ...session, evaluators: session.evaluators.map((e) => (e.id === id ? { ...e, name } : e)) };
+}
+
+export function activateEvaluator(session: Session, id: string): Session {
+  return session.evaluators.some((e) => e.id === id) ? { ...session, activeEvaluatorId: id } : session;
+}
+
+export function countEvaluatorGrades(session: Session, id: string): number {
+  const grades = session.evaluators.find((e) => e.id === id)?.grades ?? {};
+  return Object.values(grades).reduce((total, cities) => total + Object.keys(cities).length, 0);
+}
+
+export function removeEvaluator(session: Session, id: string): Session {
+  if (session.evaluators.length === 1 || !session.evaluators.some((e) => e.id === id)) return session;
+  const evaluators = session.evaluators.filter((e) => e.id !== id);
+  const activeEvaluatorId = session.activeEvaluatorId === id ? evaluators[0].id : session.activeEvaluatorId;
+  return { ...session, evaluators, activeEvaluatorId };
+}

@@ -1,6 +1,7 @@
 import type { Dataset } from "../domain/dataset";
 import type { Session } from "../domain/session";
 import { CategoryPanel } from "./CategoryPanel";
+import { EvaluatorPanel } from "./EvaluatorPanel";
 import { Filters } from "./Filters";
 import { formatDate } from "./format";
 import { ScoreReadingDialog, SourcesDialog } from "./InfoDialogs";
@@ -14,7 +15,6 @@ type Props = {
 };
 
 export function Sidebar({ dataset, session, cutCounts, onChange, onToggleCategory }: Props) {
-  const active = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
   return (
     <aside className="side" aria-label="Sessão">
       <header className="brand">
@@ -31,7 +31,7 @@ export function Sidebar({ dataset, session, cutCounts, onChange, onToggleCategor
       </section>
       <section aria-labelledby="sec-evaluator">
         <h2 id="sec-evaluator">Avaliador ativo</h2>
-        <p>{active.name}</p>
+        <EvaluatorPanel session={session} onChange={onChange} />
       </section>
       <section aria-labelledby="sec-filters">
         <h2 id="sec-filters">Filtros</h2>

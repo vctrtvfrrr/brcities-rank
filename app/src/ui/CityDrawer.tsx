@@ -149,6 +149,14 @@ function Subjective({
         <span>Média das notas</span>
         <span className="wide">{subjective.average === null ? "–" : formatGrade(subjective.average)}</span>
       </div>
+      <ul className="evaluator-grades" aria-label={`Notas de ${subjective.name}`}>
+        {subjective.grades.map((entry) => (
+          <li key={entry.evaluator} className={entry.active ? "active" : undefined}>
+            <span>{entry.evaluator}</span>
+            <span>{entry.grade ?? "–"}</span>
+          </li>
+        ))}
+      </ul>
       <div className="grade-row">
         <span className="muted small">Nota de {evaluatorName}</span>
         <span className="stars show" role="group" aria-label={`Nota de ${evaluatorName} para ${subjective.name}`}>

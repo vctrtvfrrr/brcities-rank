@@ -1,8 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { fixtureDataset } from "./fixture-dataset";
 import {
+  activateEvaluator,
+  addEvaluator,
   addSubjective,
   averageWeights,
+  countEvaluatorGrades,
   countGrades,
   createInitialSession,
   deleteSubjective,
@@ -10,6 +13,8 @@ import {
   equalizeWeights,
   gradeOf,
   orderedCategories,
+  removeEvaluator,
+  renameEvaluator,
   renameSubjective,
   setGrade,
   setWeight,
@@ -388,5 +393,123 @@ describe("grades survive any change that is not deleting them", () => {
     session = setWeight(session, id, 70);
     session = equalizeWeights(session);
     expect(gradeOf(session, id, "3550308")).toBe(5);
+  });
+});
+
+describe("evaluators", () => {
+  const base = () => {
+    const withSubjective = addSubjective(createInitialSession(fixtureDataset));
+    return setGrade(withSubjective, "subjective-1", "3550308", 4);
+  };
+
+  describe("addEvaluator", () => {
+    it("adds a numbered evaluator with equal weights over every category, no grades, and makes it active", () => {
+      const session = addEvaluator(base());
+      expect(session.evaluators).toHaveLength(2);
+      const added = session.evaluators[1];
+      expect(added.name).toBe("Avaliador 2");
+      expect(session.activeEvaluatorId).toBe(added.id);
+      expect(Object.keys(added.weights)).toEqual(["Segurança", "Clima", "Porte", "subjective-1"]);
+      expect(Object.values(added.weights).every((w) => w === 25)).toBe(true);
+      expect(added.grades).toEqual({});
+    });
+
+    it("leaves the existing evaluators untouched", () => {
+      const before = base();
+      const session = addEvaluator(before);
+      expect(session.evaluators[0]).toEqual(before.evaluators[0]);
+    });
+
+    it("never reuses the id of a removed evaluator", () => {
+      const two = addEvaluator(base());
+      const three = addEvaluator(two);
+      const ids = removeEvaluator(three, two.evaluators[1].id).evaluators.map((e) => e.id);
+      const next = addEvaluator(removeEvaluator(three, two.evaluators[1].id));
+      expect(new Set([...ids, next.activeEvaluatorId]).size).toBe(3);
+    });
+
+    it("does not mutate the previous Session", () => {
+      const before = base();
+      const snapshot = structuredClone(before);
+      addEvaluator(before);
+      expect(before).toEqual(snapshot);
+    });
+  });
+
+  describe("renameEvaluator", () => {
+    it("renames only the chosen evaluator", () => {
+      const two = addEvaluator(base());
+      const session = renameEvaluator(two, two.evaluators[1].id, "Ana");
+      expect(session.evaluators.map((e) => e.name)).toEqual(["Você", "Ana"]);
+    });
+  });
+
+  describe("activateEvaluator", () => {
+    it("switches the active evaluator, so weights and grades edit the chosen one", () => {
+      const two = addEvaluator(base());
+      const first = two.evaluators[0].id;
+      const session = setWeight(activateEvaluator(two, first), "Clima", 70);
+      expect(session.activeEvaluatorId).toBe(first);
+      expect(session.evaluators[0].weights.Clima).toBe(70);
+      expect(session.evaluators[1].weights.Clima).toBe(25);
+    });
+
+    it("ignores an unknown evaluator", () => {
+      const session = base();
+      expect(activateEvaluator(session, "nobody")).toBe(session);
+    });
+  });
+
+  describe("removeEvaluator", () => {
+    it("drops the evaluator with its weights and grades", () => {
+      const two = addEvaluator(base());
+      const session = removeEvaluator(two, two.evaluators[0].id);
+      expect(session.evaluators.map((e) => e.name)).toEqual(["Avaliador 2"]);
+      expect(gradeOf(session, "subjective-1", "3550308")).toBeUndefined();
+    });
+
+    it("moves the active evaluator to the first remaining one when the active is removed", () => {
+      const two = addEvaluator(addEvaluator(base()));
+      const session = removeEvaluator(two, two.activeEvaluatorId);
+      expect(session.activeEvaluatorId).toBe(session.evaluators[0].id);
+    });
+
+    it("keeps the active evaluator when another one is removed", () => {
+      const two = addEvaluator(base());
+      const session = removeEvaluator(activateEvaluator(two, two.evaluators[0].id), two.evaluators[1].id);
+      expect(session.activeEvaluatorId).toBe(two.evaluators[0].id);
+    });
+
+    it("refuses to remove the last evaluator", () => {
+      const session = base();
+      expect(removeEvaluator(session, session.activeEvaluatorId)).toBe(session);
+    });
+  });
+
+  describe("countEvaluatorGrades", () => {
+    it("counts the grades an evaluator would lose", () => {
+      let session = setGrade(base(), "subjective-1", "3304557", 2);
+      expect(countEvaluatorGrades(session, session.activeEvaluatorId)).toBe(2);
+      session = addEvaluator(session);
+      expect(countEvaluatorGrades(session, session.activeEvaluatorId)).toBe(0);
+    });
+  });
+
+  describe("combining evaluators", () => {
+    it("averages the weights of all evaluators, counting 0 as 0", () => {
+      const two = addEvaluator(createInitialSession(fixtureDataset));
+      const session = setWeight(two, "Clima", 100);
+      expect(averageWeights(session)).toEqual({
+        Segurança: (100 / 3 + 0) / 2,
+        Clima: (100 / 3 + 100) / 2,
+        Porte: (100 / 3 + 0) / 2,
+      });
+    });
+
+    it("keeps each evaluator's grade apart", () => {
+      const two = setGrade(addEvaluator(base()), "subjective-1", "3550308", 2);
+      expect(gradeOf(two, "subjective-1", "3550308")).toBe(2);
+      expect(gradeOf(two, "subjective-1", "3550308", two.evaluators[0].id)).toBe(4);
+    });
   });
 });

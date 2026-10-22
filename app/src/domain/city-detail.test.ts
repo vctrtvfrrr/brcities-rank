@@ -4,6 +4,8 @@ import { datasetWithCities, fixtureDataset } from "./fixture-dataset";
 import { rank } from "./rank";
 import { addConstraint, editConstraint } from "./constraints";
 import {
+  activateEvaluator,
+  addEvaluator,
   addSubjective,
   createInitialSession,
   renameSubjective,
@@ -150,7 +152,15 @@ describe("cityDetail subjectives", () => {
 
   it("lists each subjective with its name, whether it is on, and no grade yet", () => {
     expect(open(fixtureDataset, base)("3550308")!.subjectives).toEqual([
-      { id: "subjective-1", name: "Lazer", on: true, average: null, note: null, mine: null },
+      {
+        id: "subjective-1",
+        name: "Lazer",
+        on: true,
+        average: null,
+        note: null,
+        mine: null,
+        grades: [{ evaluator: "Você", active: true, grade: null }],
+      },
     ]);
   });
 
@@ -161,6 +171,19 @@ describe("cityDetail subjectives", () => {
       note: 75,
       mine: 4,
     });
+  });
+
+  it("lists the grade of every evaluator and highlights the active one", () => {
+    let session = setGrade(base, "subjective-1", "3550308", 4);
+    session = addEvaluator(session);
+    session = setGrade(session, "subjective-1", "3550308", 2);
+    session = activateEvaluator(session, session.evaluators[0].id);
+    const [subjective] = open(fixtureDataset, session)("3550308")!.subjectives;
+    expect(subjective).toMatchObject({ average: 3, mine: 4 });
+    expect(subjective.grades).toEqual([
+      { evaluator: "Você", active: true, grade: 4 },
+      { evaluator: "Avaliador 2", active: false, grade: 2 },
+    ]);
   });
 
   it("lets a city outside the Corte be graded too, without a note", () => {
