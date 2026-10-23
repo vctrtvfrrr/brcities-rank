@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { datasetWithCities, fixtureDataset } from "./fixture-dataset";
-import { rank } from "./rank";
+import { isAmongFirstTen, rank, type Candidate } from "./rank";
 import { addConstraint, editConstraint } from "./constraints";
 import { addSubjective, createInitialSession, setGrade, toggleCategory, type Session } from "./session";
 
@@ -350,5 +350,18 @@ describe("subjective categories", () => {
     expect(cutB.evaluators[0].grades[id]).toEqual({ "2": 5 });
     const back = editConstraint(cutB, "crime", { max: null });
     expect(byName(rank(dataset, back))["B"].categoryScores[id]).toBe(100);
+  });
+});
+
+describe("Dez primeiras", () => {
+  const at = (position: number | null) => ({ position }) as Candidate;
+
+  it("holds the positions 1 to 10 of the Ranking", () => {
+    expect([1, 10].map((p) => isAmongFirstTen(at(p)))).toEqual([true, true]);
+    expect(isAmongFirstTen(at(11))).toBe(false);
+  });
+
+  it("leaves out a Candidate without Pontuação", () => {
+    expect(isAmongFirstTen(at(null))).toBe(false);
   });
 });

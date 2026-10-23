@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { markerColor } from "./marker-color";
 
 const LIGHT_LAND = [248, 244, 240];
+const BLACK = [0, 0, 0];
 const WCAG_NON_TEXT_CONTRAST = 3;
 
 function luminance([r, g, b]: number[]) {
@@ -24,6 +25,10 @@ describe("markerColor", () => {
     for (const position of [1, 2, 60, 119, 120]) {
       expect(contrast(channels(markerColor(position, 120)), LIGHT_LAND)).toBeGreaterThanOrEqual(WCAG_NON_TEXT_CONTRAST);
     }
+  });
+
+  it("keeps the best position clear of the black map lines", () => {
+    expect(contrast(channels(markerColor(1, 120)), BLACK)).toBeGreaterThanOrEqual(WCAG_NON_TEXT_CONTRAST);
   });
 
   it("darkens the better positions", () => {

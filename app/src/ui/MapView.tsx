@@ -3,11 +3,11 @@ import { Map as MapLibreMap, NavigationControl, type GeoJSONSource, type StyleSp
 import type { FeatureCollection, Point } from "geojson";
 import { useEffect, useRef, useState } from "react";
 import type { Dataset } from "../domain/dataset";
-import type { Candidate, CutCity } from "../domain/rank";
+import { isAmongFirstTen, type Candidate, type CutCity } from "../domain/rank";
 import stateOutlinesUrl from "../assets/state-outlines.geojson?url";
 import { citiesLayer, CUT_COLOR } from "./cities-layer";
 import { BASEMAP_STYLE_URL } from "./map-style";
-import { markerColor, rankedCount } from "./marker-color";
+import { FIRST_TEN_COLOR, markerColor, rankedCount } from "./marker-color";
 
 const BRAZIL_BOUNDS: [[number, number], [number, number]] = [
   [-74, -34],
@@ -30,19 +30,24 @@ function citiesGeoJson(dataset: Dataset, candidates: Candidate[], cut: CutCity[]
     features: [
       ...cut.map(({ index }) => ({
         type: "Feature" as const,
-        properties: { code: codigo_ibge[index], color: CUT_COLOR, order: -1, cut: true },
+        properties: { code: codigo_ibge[index], color: CUT_COLOR, order: -1, cut: true, firstTen: false },
         geometry: { type: "Point" as const, coordinates: [longitude[index], latitude[index]] },
       })),
-      ...candidates.map(({ index, position }) => ({
-        type: "Feature" as const,
-        properties: {
-          code: codigo_ibge[index],
-          color: markerColor(position, ranked),
-          order: position === null ? 0 : ranked - position + 1,
-          cut: false,
-        },
-        geometry: { type: "Point" as const, coordinates: [longitude[index], latitude[index]] },
-      })),
+      ...candidates.map((candidate) => {
+        const { index, position } = candidate;
+        const firstTen = isAmongFirstTen(candidate);
+        return {
+          type: "Feature" as const,
+          properties: {
+            code: codigo_ibge[index],
+            color: firstTen ? FIRST_TEN_COLOR : markerColor(position, ranked),
+            order: position === null ? 0 : ranked - position + 1,
+            cut: false,
+            firstTen,
+          },
+          geometry: { type: "Point" as const, coordinates: [longitude[index], latitude[index]] },
+        };
+      }),
     ],
   };
 }
@@ -123,7 +128,7 @@ export function MapView({ dataset, candidates, cut, onSelect }: MapViewProps) {
   return (
     <div className="map" ref={container} role="region" aria-label="Mapa das cidades" aria-describedby="map-description">
       <p id="map-description" className="visually-hidden">
-        {`${candidates.length} candidatas em tons de verde, mais escuro quanto melhor a posição, e ${cut.length} cidades cortadas em círculo vazio. Os marcadores não recebem foco: use a tabela, ou a busca de cidade na barra lateral (que inclui as cortadas), para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
+        {`${candidates.length} candidatas em tons de verde, mais escuro quanto melhor a posição, com as dez primeiras em vermelho e um pouco maiores, e ${cut.length} cidades cortadas em cinza-claro. Os marcadores não recebem foco: use a tabela, ou a busca de cidade na barra lateral (que inclui as cortadas), para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
       </p>
       {unavailable && (
         <p className="notice" role="alert">

@@ -22,6 +22,10 @@ _Avoid_: Ranking objetivo, Ranking final
 Valor de 0 a 100 que ordena uma Candidata no Ranking, vindo das categorias que entram na conta dela; a Candidata em que nenhuma categoria entra na conta fica sem Pontuação, que não é Pontuação 0, e vai para o fim.
 _Avoid_: nota final, score
 
+**Dez primeiras**:
+As Candidatas nas posições 1 a 10 do Ranking; só existem quando alguma Candidata tem Pontuação, e são menos de dez quando menos Candidatas a têm.
+_Avoid_: top 10, destaque
+
 **Sessão**:
 Tudo o que o visitante configurou num navegador (restrições, subjetivas, avaliadores, pesos e notas), com um nome opcional; é o que se exporta e importa.
 _Avoid_: configuração, perfil

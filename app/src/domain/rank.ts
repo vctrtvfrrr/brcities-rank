@@ -14,6 +14,12 @@ export type Candidate = {
   criterionScores: Record<string, number>;
 };
 
+const FIRST_TEN = 10;
+
+export function isAmongFirstTen(candidate: Candidate): boolean {
+  return candidate.position !== null && candidate.position <= FIRST_TEN;
+}
+
 export type CutCity = {
   index: number;
   code: string;
