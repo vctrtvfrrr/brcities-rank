@@ -1,6 +1,6 @@
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useRef, type CSSProperties, type KeyboardEvent } from "react";
-import type { Candidate } from "../domain/rank";
+import { isAmongFirstTen, type Candidate } from "../domain/rank";
 import type { Dataset } from "../domain/dataset";
 import { SCORE_READING } from "../domain/explanations";
 import { GRADES, gradeOf, type Grade, type Session } from "../domain/session";
@@ -22,7 +22,7 @@ type RankTableProps = {
 };
 
 export function RankTable({ dataset, candidates, session, selectedCode, reveal, onSelect, onGrade }: RankTableProps) {
-  const { categories } = session;
+  const categories = session.categories.filter((category) => category.on);
   const evaluator = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
   const scroller = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
@@ -110,9 +110,9 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
             </Tooltip>
           </span>
           {categories.map((category) => (
-            <span role="columnheader" key={category.id} className={category.on ? "num" : "num dim"}>
+            <span role="columnheader" key={category.id} className="num column-head">
               {category.kind === "subjective" ? (
-                category.name
+                <Tooltip label={category.name}>{category.name}</Tooltip>
               ) : (
                 <CategoryLabel dataset={dataset} id={category.id} name={category.id} />
               )}
@@ -126,7 +126,7 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
               <div
                 role="row"
                 aria-rowindex={item.index + 2}
-                className={candidate.code === selectedCode ? "row selected" : "row"}
+                className={rowClass(candidate, selectedCode)}
                 aria-selected={candidate.code === selectedCode}
                 tabIndex={0}
                 onClick={() => onSelect(candidate.code)}
@@ -148,7 +148,6 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
                   category.kind === "subjective" ? (
                     <SubjectiveCell
                       key={category.id}
-                      on={category.on}
                       label={`${category.name} de ${candidate.name}`}
                       average={candidate.gradeAverages[category.id] ?? null}
                       mine={gradeOf(session, category.id, candidate.code) ?? null}
@@ -160,7 +159,7 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
                       }}
                     />
                   ) : (
-                    <span role="cell" key={category.id} className={category.on ? "num" : "num dim"}>
+                    <span role="cell" key={category.id} className="num">
                       {formatNote(candidate.categoryScores[category.id])}
                     </span>
                   ),
@@ -174,8 +173,13 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
   );
 }
 
+function rowClass(candidate: Candidate, selectedCode: string | null): string {
+  return ["row", isAmongFirstTen(candidate) && "first-ten", candidate.code === selectedCode && "selected"]
+    .filter(Boolean)
+    .join(" ");
+}
+
 function SubjectiveCell({
-  on,
   label,
   average,
   mine,
@@ -183,7 +187,6 @@ function SubjectiveCell({
   cellKey,
   onGrade,
 }: {
-  on: boolean;
   label: string;
   average: number | null;
   mine: Grade | null;
@@ -193,7 +196,7 @@ function SubjectiveCell({
 }) {
   return (
     <span role="cell" className="num subcell" data-cell={cellKey}>
-      <span className={on ? undefined : "dim"}>
+      <span>
         {average === null ? (
           DASH
         ) : (

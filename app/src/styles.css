@@ -11,6 +11,7 @@
   --chip: #efede7;
   --sub: #7a4fb5;
   --sub-soft: #ece4f6;
+  --first-ten: #c62828;
   color-scheme: light;
 }
 * {
@@ -252,15 +253,17 @@ input[type="range"] {
   text-align: right;
   padding-right: 12px;
 }
-.dim {
-  color: var(--muted);
-}
 .table-wrap [role="table"] {
   min-width: calc(64px + 180px + 90px + var(--categories, 0) * 84px + 24px);
 }
-.row > :nth-child(2) {
+.row > :nth-child(2),
+.column-head {
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.column-head .has-tip > :focus-visible {
+  outline-offset: -2px;
 }
 
 .add-constraint {
@@ -461,6 +464,12 @@ dialog.info header h2 {
 }
 .body .row.selected {
   background: var(--accent-soft);
+}
+.body .row.first-ten {
+  box-shadow: inset 3px 0 0 var(--first-ten);
+}
+.body .row.first-ten > :nth-child(-n + 2) {
+  font-weight: 600;
 }
 .body .row:focus-visible {
   outline: 2px solid var(--accent);
