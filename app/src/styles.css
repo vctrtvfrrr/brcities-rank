@@ -11,23 +11,7 @@
   --chip: #efede7;
   --sub: #7a4fb5;
   --sub-soft: #ece4f6;
-}
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #15171b;
-    --panel: #1d2025;
-    --ink: #e8e9ec;
-    --muted: #9a9fa9;
-    --line: #2e323a;
-    --accent: #4cc3a2;
-    --accent-soft: #1d3a33;
-    --warn: #f08a62;
-    --off: #7a808b;
-    --chip: #262a31;
-    --sub: #b693e8;
-    --sub-soft: #342a47;
-    color-scheme: dark;
-  }
+  color-scheme: light;
 }
 * {
   box-sizing: border-box;
