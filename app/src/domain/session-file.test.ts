@@ -23,6 +23,8 @@ function richSession(): Session {
   session = editConstraint(session, "fibra", { value: false });
   session = addConstraint(fixtureDataset, session, "location");
   session = editConstraint(session, "location", { states: ["SP", "PR"] });
+  session = addConstraint(fixtureDataset, session, "score");
+  session = editConstraint(session, "score", { atLeast: 62.5 });
   session = toggleCategory(session, "Clima");
   session = addSubjective(session);
   session = setWeight(session, "Clima", 8);
@@ -98,6 +100,10 @@ describe("parseSession refusing invalid files", () => {
   it("refuses a Localização that accepts an unknown state", () => {
     const result = refuses((f) => (f.constraints.find((c: any) => c.criterion === "location").states = ["SP", "XY"]));
     expect(result).toMatchObject({ reason: expect.stringContaining("XY") });
+  });
+
+  it.each([[-1], [100.5], ["60"]])("refuses a Pontuação mínima of %j", (atLeast) => {
+    refuses((f) => (f.constraints.find((c: any) => c.criterion === "score").atLeast = atLeast));
   });
 
   it("refuses two constraints on the same criterion", () => {

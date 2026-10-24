@@ -235,6 +235,17 @@ describe("Régua", () => {
   });
 });
 
+describe("Pontuação mínima", () => {
+  it("compares the Pontuação as shown, with one decimal", () => {
+    const dataset = crimeCities([0, 10, 20, 30, 40, 41.1356, 50, 60, 70, 80, 90, 100]);
+    let session = withOn(createInitialSession(dataset), "Segurança");
+    session = editConstraint(addConstraint(dataset, session, "score"), "score", { atLeast: 60 });
+    const names = rank(dataset, session).candidates.map((c) => c.name);
+    expect(names).toContain("Cidade 6");
+    expect(names).not.toContain("Cidade 7");
+  });
+});
+
 describe("Pontuação", () => {
   const dataset = datasetWithCities([
     { code: "1", name: "A", population: 1000, values: { crime: 0, rain: 100, heat: 20 } },

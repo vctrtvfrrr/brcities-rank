@@ -5,8 +5,12 @@ App web público que ranqueia os municípios brasileiros pelas restrições e ca
 ## Language
 
 **Restrição**:
-Condição com um limite sobre o valor bruto de um critério, que tira do ranking a cidade que não a atinge, sem peso nem graduação.
+Condição com um limite, sobre o valor bruto de um critério ou sobre a Pontuação, que tira do ranking a cidade que não a atinge, sem peso nem graduação.
 _Avoid_: filtro
+
+**Pontuação mínima**:
+Restrição que tira do ranking a cidade com Pontuação abaixo de um valor de 0 a 100; nasce sem valor, sem cortar ninguém, e deixa passar a cidade sem Pontuação. Mexer em Pesos, notas subjetivas ou categorias ligadas pode tirar ou devolver cidades por ela. A cidade cortada por ela mostra no detalhe a Pontuação e as notas que a deixaram de fora.
+_Avoid_: filtro por pontuação, nota de corte
 
 **Localização**:
 Restrição que aceita um conjunto de estados (UFs) e tira do ranking a cidade cujo estado não está nele; nasce com todos os estados aceitos e pode ficar sem nenhum, quando corta todas as cidades.

@@ -1,4 +1,4 @@
-import { constraintOptions } from "./constraints";
+import { constraintOptions, MAX_SCORE } from "./constraints";
 import { inStateOrder, STATES } from "./regions";
 import type { Dataset } from "./dataset";
 import {
@@ -68,6 +68,13 @@ function parseConstraints(dataset: Dataset, raw: unknown): Constraint[] {
         return STATES.includes(uf) ? uf : refuse(`A Localização cita o estado "${uf}", que não existe.`);
       });
       return { criterion: "location", on, states: inStateOrder(states) };
+    }
+    if (kind === "score") {
+      const atLeast = limitOf(entry.atLeast, "A Pontuação mínima");
+      if (atLeast !== null && (atLeast < 0 || atLeast > MAX_SCORE)) {
+        refuse(`A Pontuação mínima deve ficar entre 0 e ${MAX_SCORE}.`);
+      }
+      return { criterion: "score", on, atLeast };
     }
     if (kind === "koppen") {
       const accepted = arrayOf(entry.accepted, `As classes aceitas de "${criterion}"`).map((c) =>

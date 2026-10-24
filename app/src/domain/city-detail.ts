@@ -1,11 +1,12 @@
 import type { CatalogEntry, Dataset, SourceInfo } from "./dataset";
-import type { RankResult, Ruler } from "./rank";
+import { SCORE_CRITERION } from "./constraints";
+import type { Candidate, CityScores, CutCity, RankResult, Ruler } from "./rank";
 import { gradeOf, type Constraint, type Grade, type Session } from "./session";
 
 export type Standing =
   | { kind: "ranked"; position: number; of: number; score: number }
   | { kind: "unscored" }
-  | { kind: "cut"; failed: Constraint[] };
+  | { kind: "cut"; failed: Constraint[]; score: number | null };
 
 export type CriterionDetail = {
   key: string;
@@ -60,6 +61,8 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
   const index = codigo_ibge.indexOf(code);
   if (index < 0) return null;
   const candidate = result.candidates.find((c) => c.code === code);
+  const cutCity = result.cut.find((c) => c.code === code);
+  const scores = candidate ?? scoresShownWhenCut(cutCity);
   const categoryOn = new Map(session.categories.map((c) => [c.id, c.on]));
   const sourcesOf = (...keys: string[]) => {
     const wanted = new Set(keys.flatMap((key) => dataset.catalogo.find((e) => e.chave === key)?.fontes ?? []));
@@ -77,7 +80,7 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
       unit: entry.unidade,
       value,
       missing: value === null,
-      note: candidate?.criterionScores[entry.chave] ?? null,
+      note: scores?.criterionScores[entry.chave] ?? null,
       ruler: result.rulers[entry.chave] ?? null,
       sources: sourcesOf(entry.chave),
     };
@@ -86,7 +89,7 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
   const categories = categoryIds.map<CategoryDetail>((id) => ({
     id,
     on: categoryOn.get(id) ?? false,
-    note: candidate?.categoryScores[id] ?? null,
+    note: scores?.categoryScores[id] ?? null,
     criteria: dataset.catalogo.filter((e) => e.pontua && e.categoria === id).map(criterionDetail),
   }));
 
@@ -96,8 +99,8 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
           id: category.id,
           name: category.name,
           on: category.on,
-          average: candidate?.gradeAverages[category.id] ?? null,
-          note: candidate?.categoryScores[category.id] ?? null,
+          average: scores?.gradeAverages[category.id] ?? null,
+          note: scores?.categoryScores[category.id] ?? null,
           mine: gradeOf(session, category.id, code) ?? null,
           grades: session.evaluators.map((e) => ({
             id: e.id,
@@ -115,7 +118,7 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
     name: nome[index],
     uf: uf[index],
     collected: dataset.coleta,
-    standing: standingOf(session, result, code, candidate),
+    standing: standingOf(session, result, candidate, cutCity),
     categories,
     subjectives,
     filters: {
@@ -132,13 +135,21 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
 function standingOf(
   session: Session,
   result: RankResult,
-  code: string,
-  candidate: RankResult["candidates"][number] | undefined,
+  candidate: Candidate | undefined,
+  cutCity: CutCity | undefined,
 ): Standing {
   if (candidate) {
     if (candidate.position === null || candidate.score === null) return { kind: "unscored" };
     return { kind: "ranked", position: candidate.position, of: result.candidates.length, score: candidate.score };
   }
-  const failedKeys = new Set(result.cut.find((c) => c.code === code)?.failedConstraints);
-  return { kind: "cut", failed: session.constraints.filter((c) => failedKeys.has(c.criterion)) };
+  const failedKeys = new Set(cutCity?.failedConstraints);
+  return {
+    kind: "cut",
+    failed: session.constraints.filter((c) => failedKeys.has(c.criterion)),
+    score: scoresShownWhenCut(cutCity)?.score ?? null,
+  };
+}
+
+function scoresShownWhenCut(city: CutCity | undefined): CityScores | undefined {
+  return city?.failedConstraints.includes(SCORE_CRITERION) ? city.scores : undefined;
 }

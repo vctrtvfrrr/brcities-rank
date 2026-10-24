@@ -126,6 +126,32 @@ describe("cityDetail of a cut city", () => {
     const crime = detail.categories[0].criteria[0];
     expect(crime).toMatchObject({ value: 30, note: null });
     expect(detail.categories[0].note).toBeNull();
+    expect(detail.standing).toMatchObject({ kind: "cut", score: null });
+  });
+
+  it("shows the Pontuação and notes of a city cut by the Pontuação mínima", () => {
+    const ranked = open(fixtureDataset, scored(createInitialSession(fixtureDataset)))("3304557")!;
+    let session = addConstraint(fixtureDataset, scored(createInitialSession(fixtureDataset)), "score");
+    session = editConstraint(session, "score", { atLeast: 101 });
+    const detail = open(fixtureDataset, session)("3304557")!;
+    expect(ranked.standing.kind).toBe("ranked");
+    expect(detail.standing).toMatchObject({
+      kind: "cut",
+      score: ranked.standing.kind === "ranked" ? ranked.standing.score : undefined,
+    });
+    expect(detail.categories).toEqual(ranked.categories);
+  });
+
+  it("still shows the Pontuação of a city cut by the Pontuação mínima and another Restrição", () => {
+    let session = addConstraint(fixtureDataset, scored(createInitialSession(fixtureDataset)), "score");
+    session = editConstraint(session, "score", { atLeast: 101 });
+    session = editConstraint(addConstraint(fixtureDataset, session, "crime"), "crime", { max: 15 });
+    const detail = open(fixtureDataset, session)("3304557")!;
+    expect(detail.standing.kind === "cut" && detail.standing.failed.map((c) => c.criterion)).toEqual([
+      "score",
+      "crime",
+    ]);
+    expect(detail.standing).toMatchObject({ score: expect.any(Number) });
   });
 });
 

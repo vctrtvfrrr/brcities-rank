@@ -4,6 +4,7 @@ import {
   constraintOptions,
   editConstraint,
   koppenClasses,
+  MAX_SCORE,
   numericRange,
   removeConstraint,
   toggleConstraint,
@@ -70,6 +71,7 @@ function constraintLabels(dataset: Dataset): Record<string, string> {
   const labels: Record<string, string> = Object.fromEntries(dataset.catalogo.map((c) => [c.chave, c.rotulo]));
   labels.koppen = "Clima Köppen";
   labels.location = "Localização";
+  labels.score = "Pontuação mínima";
   return labels;
 }
 
@@ -120,6 +122,8 @@ function ConstraintCard({
           accepted={constraint.accepted}
           onChange={(accepted) => edit({ accepted })}
         />
+      ) : "atLeast" in constraint ? (
+        <ScoreEditor atLeast={constraint.atLeast} onChange={(atLeast) => edit({ atLeast })} />
       ) : "value" in constraint ? (
         <BooleanEditor value={constraint.value} onChange={(value) => edit({ value })} />
       ) : (
@@ -226,6 +230,22 @@ function BooleanEditor({ value, onChange }: { value: boolean; onChange: (value: 
         </button>
       </span>
     </div>
+  );
+}
+
+function ScoreEditor({ atLeast, onChange }: { atLeast: number | null; onChange: (atLeast: number | null) => void }) {
+  return (
+    <>
+      <div className="lims">
+        <LimitInput
+          label="mín"
+          value={atLeast}
+          placeholder="sem mínimo"
+          onCommit={(value) => onChange(value === null ? null : Math.min(Math.max(value, 0), MAX_SCORE))}
+        />
+      </div>
+      <p className="muted small">De 0 a {MAX_SCORE} · a cidade sem Pontuação passa</p>
+    </>
   );
 }
 

@@ -2,16 +2,19 @@ import { numericLimits, passesConstraint, type NumericLimits } from "./constrain
 import type { CatalogEntry, Dataset } from "./dataset";
 import type { Session } from "./session";
 
-export type Candidate = {
+export type CityScores = {
+  score: number | null;
+  categoryScores: Record<string, number>;
+  gradeAverages: Record<string, number>;
+  criterionScores: Record<string, number>;
+};
+
+export type Candidate = CityScores & {
   index: number;
   code: string;
   name: string;
   uf: string;
   position: number | null;
-  score: number | null;
-  categoryScores: Record<string, number>;
-  gradeAverages: Record<string, number>;
-  criterionScores: Record<string, number>;
 };
 
 const FIRST_TEN = 10;
@@ -26,6 +29,7 @@ export type CutCity = {
   name: string;
   uf: string;
   failedConstraints: string[];
+  scores: CityScores;
 };
 
 export type RankResult = {
@@ -41,58 +45,27 @@ const collator = new Intl.Collator("pt-BR");
 
 export function rank(dataset: Dataset, session: Session): RankResult {
   const { codigo_ibge, nome, uf, populacao_2026 } = dataset.colunas;
+  const scoring = scoreCities(dataset, session);
   const checks = session.constraints.map((constraint) => ({
     criterion: constraint.criterion,
     on: constraint.on,
-    passes: passesConstraint(dataset, constraint),
+    passes: passesConstraint(dataset, constraint, (index) => scoring.cities[index].score),
   }));
   const cutCounts = Object.fromEntries(checks.map((check) => [check.criterion, 0]));
-  const candidateIndexes: number[] = [];
+  const candidates: Candidate[] = [];
   const cut: CutCity[] = [];
 
   codigo_ibge.forEach((code, index) => {
     const failed = checks.filter((check) => !check.passes(index));
     for (const check of failed) cutCounts[check.criterion]++;
     const failedConstraints = failed.filter((check) => check.on).map((check) => check.criterion);
-    if (failedConstraints.length > 0) cut.push({ index, code, name: nome[index], uf: uf[index], failedConstraints });
-    else candidateIndexes.push(index);
+    const identity = { index, code, name: nome[index], uf: uf[index] };
+    const scores = scoring.cities[index];
+    if (failedConstraints.length > 0) cut.push({ ...identity, failedConstraints, scores });
+    else candidates.push({ ...identity, ...scores, position: null });
   });
 
   const population = (index: number) => populacao_2026[index];
-  const scoring = scoreCandidates(dataset, session, candidateIndexes);
-  const participations = averageParticipations(session);
-  const subjectives = session.categories.filter((c) => c.kind === "subjective");
-  const counting = Object.keys(participations).filter((id) => participations[id] > 0);
-
-  const candidates = candidateIndexes.map<Candidate>((index, at) => {
-    const scores = { ...scoring.categories[at] };
-    const gradeAverages: Record<string, number> = {};
-    for (const category of subjectives) {
-      const average = averageGrade(session, category.id, codigo_ibge[index]);
-      if (average === null) continue;
-      gradeAverages[category.id] = average;
-      scores[category.id] = (average - 1) * 25;
-    }
-    let weighted = 0;
-    let total = 0;
-    for (const id of counting) {
-      if (scores[id] === undefined) continue;
-      weighted += participations[id] * scores[id];
-      total += participations[id];
-    }
-    return {
-      index,
-      code: codigo_ibge[index],
-      name: nome[index],
-      uf: uf[index],
-      position: null,
-      score: total > 0 ? weighted / total : null,
-      categoryScores: scores,
-      gradeAverages,
-      criterionScores: scoring.criteria[at],
-    };
-  });
-
   const byPopulationThenCode = (a: Candidate, b: Candidate) =>
     population(b.index) - population(a.index) || Number(a.code) - Number(b.code);
   candidates.sort((a, b) => {
@@ -106,6 +79,39 @@ export function rank(dataset: Dataset, session: Session): RankResult {
     if (candidate.score !== null) candidate.position = ++position;
   }
   return { candidates, cut, cutCounts, rulers: scoring.rulers };
+}
+
+function scoreCities(dataset: Dataset, session: Session) {
+  const { codigo_ibge } = dataset.colunas;
+  const objective = scoreObjectives(dataset, session);
+  const participations = averageParticipations(session);
+  const subjectives = session.categories.filter((c) => c.kind === "subjective");
+  const counting = Object.keys(participations).filter((id) => participations[id] > 0);
+
+  const cities = codigo_ibge.map<CityScores>((code, index) => {
+    const scores = { ...objective.categories[index] };
+    const gradeAverages: Record<string, number> = {};
+    for (const category of subjectives) {
+      const average = averageGrade(session, category.id, code);
+      if (average === null) continue;
+      gradeAverages[category.id] = average;
+      scores[category.id] = (average - 1) * 25;
+    }
+    let weighted = 0;
+    let total = 0;
+    for (const id of counting) {
+      if (scores[id] === undefined) continue;
+      weighted += participations[id] * scores[id];
+      total += participations[id];
+    }
+    return {
+      score: total > 0 ? weighted / total : null,
+      categoryScores: scores,
+      gradeAverages,
+      criterionScores: objective.criteria[index],
+    };
+  });
+  return { cities, rulers: objective.rulers };
 }
 
 function averageParticipations(session: Session): Record<string, number> {
@@ -132,7 +138,8 @@ type Scoring = {
   rulers: Record<string, Ruler | null>;
 };
 
-function scoreCandidates(dataset: Dataset, session: Session, indexes: number[]): Scoring {
+function scoreObjectives(dataset: Dataset, session: Session): Scoring {
+  const indexes = dataset.colunas.codigo_ibge.map((_, index) => index);
   const scoring = dataset.catalogo.filter((entry) => entry.pontua);
   const criteriaByCategory = new Map<string, CatalogEntry[]>();
   for (const entry of scoring) {

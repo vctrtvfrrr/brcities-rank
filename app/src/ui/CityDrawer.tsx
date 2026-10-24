@@ -74,6 +74,15 @@ function Standing({ dataset, detail }: { dataset: Dataset; detail: CityDetail })
     return (
       <div className="standing">
         <span className="tag warn">Fora do Corte</span>
+        {standing.score !== null && (
+          <>
+            {" "}
+            <b className="score">
+              <ScoreBadge score={standing.score} />
+            </b>{" "}
+            <span className="muted">pontos</span>
+          </>
+        )}
         <p className="small">Não passa em:</p>
         <ul className="failed">
           {standing.failed.map((constraint) => (

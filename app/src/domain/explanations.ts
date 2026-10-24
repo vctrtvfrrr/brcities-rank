@@ -76,7 +76,7 @@ export function explainCategory(dataset: Dataset, categoryId: string): CategoryE
 }
 
 export const SCORE_READING: string[] = [
-  "A Pontuação vai de 0 a 100 e serve para ordenar as Candidatas do Corte atual.",
+  "A Pontuação vai de 0 a 100 e serve para ordenar as Candidatas do Corte atual. Com a restrição Pontuação mínima, ela também corta: mudar pesos, notas subjetivas ou categorias ligadas pode tirar ou devolver cidades ao Ranking.",
   "As notas não dependem das outras Candidatas: cada critério mede a cidade numa régua que vai do limite da restrição, se houver, ao melhor do Brasil. Mudar o limite de uma restrição muda as notas daquele critério; cortar ou recortar outras cidades não muda.",
   "Dado ausente conta 0 no critério, para que a falta de dado nunca favoreça uma cidade.",
   "Cada avaliador dá a cada categoria um peso de 0 a 10, sem soma fixa. Entre as categorias ligadas, o peso vira a participação da categoria na conta daquele avaliador (o peso dividido pela soma dos pesos dele), e o Ranking usa a média das participações de todos os avaliadores; assim, quem dá 10 a tudo não pesa mais do que quem dá 2 a tudo. A Pontuação é a média das notas das categorias ligadas, ponderada por essas participações; categoria desligada ou com peso 0 fica fora da conta.",

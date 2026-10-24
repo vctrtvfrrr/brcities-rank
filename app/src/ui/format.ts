@@ -19,6 +19,11 @@ export function describeConstraint(dataset: Dataset, constraint: Constraint): st
   if ("accepted" in constraint) {
     return `Köppen ${constraint.accepted.length > 0 ? constraint.accepted.join(", ") : "(nenhuma classe aceita)"}`;
   }
+  if ("atLeast" in constraint) {
+    return constraint.atLeast === null
+      ? "Pontuação mínima (sem mínimo)"
+      : `Pontuação ≥ ${formatValue(constraint.atLeast)}`;
+  }
   const entry = dataset.catalogo.find((e) => e.chave === constraint.criterion)!;
   if ("value" in constraint) return `${entry.rotulo}: ${constraint.value ? "sim" : "não"}`;
   const limits = [

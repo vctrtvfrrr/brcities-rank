@@ -19,7 +19,17 @@ const candidateNames = (session: Session) =>
 describe("constraintOptions", () => {
   it("lists every criterion once, with Köppen as a single entry", () => {
     const keys = constraintOptions(fixtureDataset, initial).map((o) => o.criterion);
-    expect(keys).toEqual(["location", "crime", "rain", "heat", "populacao_2026", "koppen", "hospital_geral", "fibra"]);
+    expect(keys).toEqual([
+      "location",
+      "score",
+      "crime",
+      "rain",
+      "heat",
+      "populacao_2026",
+      "koppen",
+      "hospital_geral",
+      "fibra",
+    ]);
   });
 
   it("leaves out the criteria that already have a constraint", () => {
@@ -36,6 +46,7 @@ describe("constraintOptions", () => {
     expect(byKey.koppen.kind).toBe("koppen");
     expect(byKey.fibra.kind).toBe("boolean");
     expect(byKey.location).toMatchObject({ kind: "location", label: "Localização", group: "Localização" });
+    expect(byKey.score).toMatchObject({ kind: "score", label: "Pontuação mínima", group: "Pontuação" });
   });
 });
 
@@ -167,6 +178,61 @@ describe("Corte", () => {
 
     it("cuts everything when no state is accepted", () => {
       expect(candidateNames(accepting())).toEqual([]);
+    });
+  });
+
+  describe("Pontuação mínima", () => {
+    it("starts without a minimum, cutting no city", () => {
+      const session = withConstraints(add("score"));
+      expect(session.constraints).toEqual([{ criterion: "score", on: true, atLeast: null }]);
+      expect(candidateNames(session)).toHaveLength(6);
+    });
+
+    it("takes a minimum and clears it", () => {
+      const session = withConstraints(add("score"), edit("score", { atLeast: 60 }));
+      expect(session.constraints[0]).toEqual({ criterion: "score", on: true, atLeast: 60 });
+      expect(edit("score", { atLeast: null })(session).constraints[0]).toEqual({
+        criterion: "score",
+        on: true,
+        atLeast: null,
+      });
+    });
+  });
+
+  describe("Pontuação mínima as Corte", () => {
+    const safety = (s: Session) => toggleCategory(s, "Segurança");
+    const scores = (session: Session) =>
+      Object.fromEntries(rank(fixtureDataset, session).candidates.map((c) => [c.name, c.score]));
+
+    it("cuts the cities whose Pontuação is below the minimum, keeping the Pontuação of the rest", () => {
+      const all = scores(withConstraints(safety));
+      const session = withConstraints(safety, add("score"), edit("score", { atLeast: 50 }));
+      const kept = scores(session);
+      expect(Object.keys(kept).sort()).toEqual(
+        Object.keys(all)
+          .filter((name) => all[name]! >= 50)
+          .sort(),
+      );
+      expect(kept["Curitiba"]).toBe(all["Curitiba"]);
+    });
+
+    it("lets a city without Pontuação pass", () => {
+      const session = withConstraints(add("score"), edit("score", { atLeast: 90 }));
+      expect(candidateNames(session)).toHaveLength(6);
+    });
+
+    it("keeps the Pontuação and notes of a city it cuts", () => {
+      const session = withConstraints(safety, add("score"), edit("score", { atLeast: 101 }));
+      const salvador = rank(fixtureDataset, session).cut.find((c) => c.name === "Salvador")!;
+      expect(salvador.failedConstraints).toEqual(["score"]);
+      const ranked = rank(fixtureDataset, withConstraints(safety)).candidates.find((c) => c.name === "Salvador")!;
+      expect(salvador.scores.score).toBe(ranked.score);
+      expect(salvador.scores.categoryScores).toEqual(ranked.categoryScores);
+    });
+
+    it("counts the cities it cuts", () => {
+      const session = withConstraints(safety, add("score"), edit("score", { atLeast: 101 }));
+      expect(rank(fixtureDataset, session).cutCounts.score).toBe(6);
     });
   });
 

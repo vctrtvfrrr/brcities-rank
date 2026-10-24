@@ -4,11 +4,13 @@ import type { Constraint, Session } from "./session";
 
 export const KOPPEN_CRITERION = "koppen";
 export const LOCATION_CRITERION = "location";
+export const SCORE_CRITERION = "score";
+export const MAX_SCORE = 100;
 const KOPPEN_BECK = "koppen_beck";
 const KOPPEN_ALVARES = "koppen_alvares";
 const BOOLEAN_CRITERIA = ["hospital_geral", "fibra"];
 
-export type ConstraintKind = "location" | "numeric" | "koppen" | "boolean";
+export type ConstraintKind = "location" | "score" | "numeric" | "koppen" | "boolean";
 
 export type ConstraintOption = {
   criterion: string;
@@ -22,11 +24,13 @@ export type ConstraintEdit = Partial<{
   max: number | null;
   accepted: string[];
   states: string[];
+  atLeast: number | null;
   value: boolean;
 }>;
 
 export function constraintKind(criterion: string): ConstraintKind {
   if (criterion === LOCATION_CRITERION) return "location";
+  if (criterion === SCORE_CRITERION) return "score";
   if (criterion === KOPPEN_CRITERION) return "koppen";
   return BOOLEAN_CRITERIA.includes(criterion) ? "boolean" : "numeric";
 }
@@ -36,6 +40,13 @@ const LOCATION_OPTION: ConstraintOption = {
   label: "Localização",
   group: "Localização",
   kind: "location",
+};
+
+const SCORE_OPTION: ConstraintOption = {
+  criterion: SCORE_CRITERION,
+  label: "Pontuação mínima",
+  group: "Pontuação",
+  kind: "score",
 };
 
 function allOptions(dataset: Dataset): ConstraintOption[] {
@@ -50,7 +61,7 @@ function allOptions(dataset: Dataset): ConstraintOption[] {
         kind: constraintKind(criterion),
       };
     });
-  return [LOCATION_OPTION, ...fromCatalog];
+  return [LOCATION_OPTION, SCORE_OPTION, ...fromCatalog];
 }
 
 export function constraintOptions(dataset: Dataset, session: Session): ConstraintOption[] {
@@ -62,6 +73,8 @@ function neutralConstraint(option: ConstraintOption): Constraint {
   switch (option.kind) {
     case "location":
       return { criterion: LOCATION_CRITERION, on: true, states: [...STATES] };
+    case "score":
+      return { criterion: SCORE_CRITERION, on: true, atLeast: null };
     case "koppen":
       return { criterion: KOPPEN_CRITERION, on: true, accepted: [] };
     case "boolean":
@@ -84,6 +97,7 @@ function mapConstraint(session: Session, criterion: string, change: (c: Constrai
 export function editConstraint(session: Session, criterion: string, edit: ConstraintEdit): Session {
   return mapConstraint(session, criterion, (c) => {
     if ("states" in c) return edit.states ? { ...c, states: inStateOrder(edit.states) } : c;
+    if ("atLeast" in c) return edit.atLeast === undefined ? c : { ...c, atLeast: edit.atLeast };
     if ("accepted" in c) return edit.accepted ? { ...c, accepted: edit.accepted } : c;
     if ("value" in c) return edit.value === undefined ? c : { ...c, value: edit.value };
     return { ...c, min: edit.min === undefined ? c.min : edit.min, max: edit.max === undefined ? c.max : edit.max };
@@ -119,10 +133,25 @@ export function numericLimits(session: Session, criterion: string): NumericLimit
   return constraint && "min" in constraint ? constraint : { min: null, max: null };
 }
 
+function roundedAsShown(score: number): number {
+  return Math.round(score * 10) / 10;
+}
+
 export type CityPasser = (index: number) => boolean;
 
-export function passesConstraint(dataset: Dataset, constraint: Constraint): CityPasser {
+export function passesConstraint(
+  dataset: Dataset,
+  constraint: Constraint,
+  scoreOf: (index: number) => number | null,
+): CityPasser {
   const { colunas } = dataset;
+  if ("atLeast" in constraint) {
+    const { atLeast } = constraint;
+    return (i) => {
+      const score = scoreOf(i);
+      return atLeast === null || score === null || roundedAsShown(score) >= atLeast;
+    };
+  }
   if ("states" in constraint) {
     const states = new Set(constraint.states);
     return (i) => states.has(colunas.uf[i]);
