@@ -623,13 +623,6 @@ dialog.info header h2 {
 .category-actions {
   gap: 8px;
 }
-.subcell {
-  position: relative;
-}
-.subcell:hover,
-.subcell:focus-within {
-  z-index: 1;
-}
 .mean {
   color: var(--muted);
 }
@@ -647,23 +640,6 @@ dialog.info header h2 {
 .stars {
   display: inline-flex;
   gap: 2px;
-  padding: 2px;
-  border-radius: 6px;
-  background: var(--panel);
-  box-shadow: 0 1px 6px rgb(0 0 0 / 0.25);
-}
-.subcell .stars {
-  position: absolute;
-  top: 50%;
-  right: 2px;
-  transform: translateY(-50%);
-  opacity: 0;
-  pointer-events: none;
-}
-.subcell:hover .stars,
-.subcell:focus-within .stars {
-  opacity: 1;
-  pointer-events: auto;
 }
 .stars button {
   min-width: 24px;
@@ -681,10 +657,6 @@ dialog.info header h2 {
   align-items: center;
   justify-content: space-between;
   padding: 2px 0;
-}
-.grade-row .stars {
-  box-shadow: none;
-  padding: 0;
 }
 
 .evaluator-row {

@@ -164,7 +164,7 @@ function Subjective({
       </ul>
       <div className="grade-row">
         <span className="muted small">Nota de {evaluatorName}</span>
-        <span className="stars show" role="group" aria-label={`Nota de ${evaluatorName} para ${subjective.name}`}>
+        <span className="stars" role="group" aria-label={`Nota de ${evaluatorName} para ${subjective.name}`}>
           {GRADES.map((grade) => (
             <button
               type="button"

@@ -75,6 +75,9 @@ export function explainCategory(dataset: Dataset, categoryId: string): CategoryE
   return { measures: text.measures, details: text.details, scoring: text.scoring ?? SCORING, criteria };
 }
 
+export const SUBJECTIVE_GRADING =
+  "Categoria subjetiva: a coluna mostra a média das Notas subjetivas de 1 a 5 e, em destaque, a do Avaliador ativo. Para dar ou mudar uma nota, abra o Detalhe da cidade clicando na linha.";
+
 export const SCORE_READING: string[] = [
   "A Pontuação vai de 0 a 100 e serve para ordenar as Candidatas do Corte atual. Com a restrição Pontuação mínima, ela também corta: mudar pesos, notas subjetivas ou categorias ligadas pode tirar ou devolver cidades ao Ranking.",
   "As notas não dependem das outras Candidatas: cada critério mede a cidade numa régua que vai do limite da restrição, se houver, ao melhor do Brasil. Mudar o limite de uma restrição muda as notas daquele critério; cortar ou recortar outras cidades não muda.",

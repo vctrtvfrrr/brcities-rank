@@ -2,8 +2,8 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useRef, type CSSProperties, type KeyboardEvent } from "react";
 import { isAmongFirstTen, type Candidate } from "../domain/rank";
 import type { Dataset } from "../domain/dataset";
-import { SCORE_READING } from "../domain/explanations";
-import { GRADES, gradeOf, type Grade, type Session } from "../domain/session";
+import { SCORE_READING, SUBJECTIVE_GRADING } from "../domain/explanations";
+import { gradeOf, type Grade, type Session } from "../domain/session";
 import { CategoryLabel } from "./CategoryTip";
 import { formatGrade } from "./format";
 import { ScoreBadge, ScoreLegend } from "./ScoreBadge";
@@ -19,10 +19,9 @@ type RankTableProps = {
   selectedCode: string | null;
   reveal: { code: string } | null;
   onSelect: (code: string) => void;
-  onGrade: (id: string, code: string, grade: Grade) => void;
 };
 
-export function RankTable({ dataset, candidates, session, selectedCode, reveal, onSelect, onGrade }: RankTableProps) {
+export function RankTable({ dataset, candidates, session, selectedCode, reveal, onSelect }: RankTableProps) {
   const categories = session.categories.filter((category) => category.on);
   const evaluator = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
   const scroller = useRef<HTMLDivElement>(null);
@@ -40,27 +39,6 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
     const at = candidates.findIndex((c) => c.code === reveal.code);
     if (at >= 0) virtualizer.scrollToIndex(at, { align: "center" });
   }, [reveal, candidates, virtualizer]);
-
-  const refocus = useRef<{ code: string; id: string; grade: Grade } | null>(null);
-  useEffect(() => {
-    const target = refocus.current;
-    if (!target) return;
-    const at = candidates.findIndex((c) => c.code === target.code);
-    if (at < 0) {
-      refocus.current = null;
-      return;
-    }
-    virtualizer.scrollToIndex(at, { align: "auto" });
-    const frame = requestAnimationFrame(() => {
-      const button = scroller.current?.querySelector<HTMLElement>(
-        `[data-cell="${target.code}:${target.id}"] [data-grade="${target.grade}"]`,
-      );
-      if (!button) return;
-      button.focus({ preventScroll: true });
-      refocus.current = null;
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [candidates, virtualizer]);
 
   const pendingRow = useRef<number | null>(null);
   const focusRow = (index: number) => {
@@ -114,7 +92,10 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
           {categories.map((category) => (
             <span role="columnheader" key={category.id} className="num column-head">
               {category.kind === "subjective" ? (
-                <Tooltip label={category.name}>{category.name}</Tooltip>
+                <Tooltip label={category.name}>
+                  <strong>{category.name}</strong>
+                  <span className="tip-block">{SUBJECTIVE_GRADING}</span>
+                </Tooltip>
               ) : (
                 <CategoryLabel dataset={dataset} id={category.id} name={category.id} />
               )}
@@ -150,15 +131,9 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
                   category.kind === "subjective" ? (
                     <SubjectiveCell
                       key={category.id}
-                      label={`${category.name} de ${candidate.name}`}
                       average={candidate.gradeAverages[category.id] ?? null}
                       mine={gradeOf(session, category.id, candidate.code) ?? null}
                       evaluatorName={evaluator.name}
-                      cellKey={`${candidate.code}:${category.id}`}
-                      onGrade={(grade, byKeyboard) => {
-                        if (byKeyboard) refocus.current = { code: candidate.code, id: category.id, grade };
-                        onGrade(category.id, candidate.code, grade);
-                      }}
                     />
                   ) : (
                     <span role="cell" key={category.id} className="num">
@@ -182,54 +157,28 @@ function rowClass(candidate: Candidate, selectedCode: string | null): string {
 }
 
 function SubjectiveCell({
-  label,
   average,
   mine,
   evaluatorName,
-  cellKey,
-  onGrade,
 }: {
-  label: string;
   average: number | null;
   mine: Grade | null;
   evaluatorName: string;
-  cellKey: string;
-  onGrade: (grade: Grade, byKeyboard: boolean) => void;
 }) {
   return (
-    <span role="cell" className="num subcell" data-cell={cellKey}>
-      <span>
-        {average === null ? (
-          DASH
-        ) : (
-          <>
-            <span className="mean">{formatGrade(average)}</span>
-            {mine !== null && (
-              <span className="mine" title={`Nota de ${evaluatorName}`}>
-                {mine}
-              </span>
-            )}
-          </>
-        )}
-      </span>
-      <span className="stars" role="group" aria-label={`Nota de ${evaluatorName} para ${label}`}>
-        {GRADES.map((grade) => (
-          <button
-            type="button"
-            key={grade}
-            className={mine === grade ? "on" : undefined}
-            aria-pressed={mine === grade}
-            aria-label={`Nota ${grade}`}
-            data-grade={grade}
-            onClick={(event) => {
-              event.stopPropagation();
-              onGrade(grade, event.detail === 0);
-            }}
-          >
-            {grade}
-          </button>
-        ))}
-      </span>
+    <span role="cell" className="num">
+      {average === null ? (
+        DASH
+      ) : (
+        <>
+          <span className="mean">{formatGrade(average)}</span>
+          {mine !== null && (
+            <span className="mine" title={`Nota de ${evaluatorName}`}>
+              {mine}
+            </span>
+          )}
+        </>
+      )}
     </span>
   );
 }

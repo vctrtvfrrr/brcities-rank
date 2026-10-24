@@ -67,6 +67,14 @@ Pessoa da Sessão que tem os próprios Pesos e dá as próprias notas subjetivas
 **Avaliador ativo**:
 O Avaliador cujas notas e pesos o visitante está editando no momento.
 
+**Nota subjetiva**:
+Inteiro de 1 a 5 que um Avaliador dá a uma cidade numa Categoria subjetiva; dar de novo a mesma nota a retira. Só se dá no Detalhe; o Ranking apenas a mostra.
+_Avoid_: voto, votação
+
+**Detalhe**:
+Vista de uma única cidade, Candidata ou cortada, com a Pontuação, a nota de cada categoria e as Notas subjetivas de cada Avaliador; é o único lugar onde o Avaliador ativo dá Nota subjetiva.
+_Avoid_: aba, gaveta, drawer
+
 **Peso**:
 Inteiro de 0 a 10 que um avaliador dá a uma Categoria, independente dos pesos que ele dá às demais; o que conta no Ranking é a Participação que ele gera. Peso 0 tira a categoria da conta daquele avaliador. As objetivas nascem com 5 e a subjetiva nova com 0.
 _Avoid_: porcentagem, pontos (colide com Pontuação), ordem de importância

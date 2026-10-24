@@ -131,7 +131,6 @@ function Workspace({ dataset }: { dataset: Dataset }) {
             selectedCode={selectedCode}
             reveal={reveal}
             onSelect={setSelectedCode}
-            onGrade={grade}
           />
         }
       />
