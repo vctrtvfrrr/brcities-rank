@@ -80,9 +80,43 @@ p {
   padding: 12px 14px;
   border-bottom: 1px solid var(--line);
 }
-.side .fill {
+.side-sections {
   flex: 1;
+  min-height: 0;
   overflow: auto;
+}
+.side section.collapsed {
+  padding-bottom: 4px;
+}
+.side section h2 {
+  margin: 0 0 8px;
+}
+.side section.collapsed h2 {
+  margin-bottom: 0;
+}
+.section-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-transform: inherit;
+  letter-spacing: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.section-toggle::before {
+  content: "▾";
+  display: inline-block;
+  width: 10px;
+  transition: transform 0.15s;
+}
+.section-toggle[aria-expanded="false"]::before {
+  transform: rotate(-90deg);
 }
 .categories {
   list-style: none;
@@ -670,7 +704,7 @@ dialog.info header h2 {
   font-weight: 600;
 }
 
-.side section > input[type="text"] {
+.side section input[type="search"] {
   width: 100%;
   box-sizing: border-box;
 }
@@ -696,4 +730,51 @@ dialog.info header h2 {
 }
 .city-matches li {
   padding: 1px 0;
+}
+
+.link-text {
+  min-height: 90px;
+  word-break: break-all;
+}
+
+/* Faixas de Pontuação: as cores vão do vermelho (baixa) ao azul (muito alta). */
+.band {
+  display: inline-block;
+  min-width: 34px;
+  padding: 0 5px;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.band.low {
+  background: #fbe0dd;
+  color: #a1251b;
+}
+.band.mid {
+  background: #fcefc7;
+  color: #82560a;
+}
+.band.high {
+  background: #dbf0dd;
+  color: #1d6a2c;
+}
+.band.top {
+  background: #dce8fa;
+  color: #1c4e96;
+}
+.band-legend {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 3px;
+}
+.band-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.band-legend .band {
+  min-width: 64px;
 }

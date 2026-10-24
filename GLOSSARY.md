@@ -22,16 +22,26 @@ _Avoid_: Ranking objetivo, Ranking final
 Valor de 0 a 100 que ordena uma Candidata no Ranking, vindo das categorias que entram na conta dela; a Candidata em que nenhuma categoria entra na conta fica sem Pontuação, que não é Pontuação 0, e vai para o fim.
 _Avoid_: nota final, score
 
+**Faixa**:
+Uma das quatro partes da escala de 0 a 100 em que cai a Pontuação ou a nota de uma categoria: baixa (abaixo de 40, vermelho), média (40 a 60, laranja), alta (60 a 80, verde) e muito alta (80 ou mais, azul). Como as notas são relativas, a Faixa diz como a cidade se sai entre as Candidatas do Corte atual.
+
 **Dez primeiras**:
 As Candidatas nas posições 1 a 10 do Ranking; só existem quando alguma Candidata tem Pontuação, e são menos de dez quando menos Candidatas a têm.
 _Avoid_: top 10, destaque
 
 **Sessão**:
-Tudo o que o visitante configurou num navegador (restrições, subjetivas, avaliadores, pesos e notas), com um nome opcional; é o que se exporta e importa.
+Tudo o que o visitante configurou (restrições, subjetivas, avaliadores, pesos e notas), com um nome; é o que se exporta, importa e compartilha por link. O navegador guarda várias, e o nome é o que distingue uma da outra: não há duas Sessões com o mesmo nome no mesmo navegador.
 _Avoid_: configuração, perfil
+
+**Sessão ativa**:
+A Sessão que o visitante está vendo e editando no momento, entre as que o navegador guarda.
+
+**Link da Sessão**:
+Endereço do app que leva uma cópia da Sessão inteira; quem o abre recebe a Sessão como numa importação: se já tiver uma com o mesmo nome, o app pergunta antes de substituí-la, e senão ela entra ao lado das outras.
 
 **Toggle**:
 Ligar ou desligar uma Restrição ou uma Categoria sem apagá-la; a categoria desligada sai da conta do Ranking, e nada se apaga.
+_Avoid_: toggle para recolher ou expandir uma seção do painel, que é só apresentação e não muda o Ranking
 
 **Avaliador**:
 Pessoa da Sessão que tem os próprios Pesos e dá as próprias notas subjetivas; a Sessão tem sempre ao menos um, e o visitante é o primeiro.

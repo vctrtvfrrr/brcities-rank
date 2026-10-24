@@ -2,6 +2,7 @@ import { useRef } from "react";
 import type { Dataset } from "../domain/dataset";
 import { SCORE_READING } from "../domain/explanations";
 import { formatDate } from "./format";
+import { ScoreLegend } from "./ScoreBadge";
 
 function InfoDialog({ trigger, title, children }: { trigger: string; title: string; children: React.ReactNode }) {
   const dialog = useRef<HTMLDialogElement>(null);
@@ -36,6 +37,7 @@ export function ScoreReadingDialog() {
           <li key={paragraph}>{paragraph}</li>
         ))}
       </ul>
+      <ScoreLegend />
     </InfoDialog>
   );
 }

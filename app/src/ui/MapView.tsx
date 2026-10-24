@@ -22,28 +22,50 @@ const BLANK_STYLE: StyleSpecification = {
   layers: [{ id: "background", type: "background", paint: { "background-color": "#e8e6df" } }],
 };
 
-function citiesGeoJson(dataset: Dataset, candidates: Candidate[], cut: CutCity[]): FeatureCollection<Point> {
+// The selected city is drawn above every other marker.
+const SELECTED_ORDER = Number.MAX_SAFE_INTEGER;
+
+function citiesGeoJson(
+  dataset: Dataset,
+  candidates: Candidate[],
+  cut: CutCity[],
+  selectedCode: string | null,
+): FeatureCollection<Point> {
   const { codigo_ibge, latitude, longitude } = dataset.colunas;
   const ranked = rankedCount(candidates);
   return {
     type: "FeatureCollection",
     features: [
-      ...cut.map(({ index }) => ({
-        type: "Feature" as const,
-        properties: { code: codigo_ibge[index], color: CUT_COLOR, order: -1, cut: true, firstTen: false },
-        geometry: { type: "Point" as const, coordinates: [longitude[index], latitude[index]] },
-      })),
-      ...candidates.map((candidate) => {
-        const { index, position } = candidate;
-        const firstTen = isAmongFirstTen(candidate);
+      ...cut.map(({ index }) => {
+        const code = codigo_ibge[index];
+        const selected = code === selectedCode;
         return {
           type: "Feature" as const,
           properties: {
-            code: codigo_ibge[index],
+            code,
+            color: CUT_COLOR,
+            order: selected ? SELECTED_ORDER : -1,
+            cut: true,
+            firstTen: false,
+            selected,
+          },
+          geometry: { type: "Point" as const, coordinates: [longitude[index], latitude[index]] },
+        };
+      }),
+      ...candidates.map((candidate) => {
+        const { index, position } = candidate;
+        const firstTen = isAmongFirstTen(candidate);
+        const code = codigo_ibge[index];
+        const selected = code === selectedCode;
+        return {
+          type: "Feature" as const,
+          properties: {
+            code,
             color: firstTen ? FIRST_TEN_COLOR : markerColor(position, ranked),
-            order: position === null ? 0 : ranked - position + 1,
+            order: selected ? SELECTED_ORDER : position === null ? 0 : ranked - position + 1,
             cut: false,
             firstTen,
+            selected,
           },
           geometry: { type: "Point" as const, coordinates: [longitude[index], latitude[index]] },
         };
@@ -52,7 +74,9 @@ function citiesGeoJson(dataset: Dataset, candidates: Candidate[], cut: CutCity[]
   };
 }
 
-function addDatasetLayers(map: MapLibreMap, dataset: Dataset, candidates: Candidate[], cut: CutCity[]) {
+type Markers = { candidates: Candidate[]; cut: CutCity[]; selectedCode: string | null };
+
+function addDatasetLayers(map: MapLibreMap, dataset: Dataset, { candidates, cut, selectedCode }: Markers) {
   map.addSource(OUTLINES_SOURCE, { type: "geojson", data: stateOutlinesUrl });
   map.addLayer({
     id: "state-outlines",
@@ -60,18 +84,18 @@ function addDatasetLayers(map: MapLibreMap, dataset: Dataset, candidates: Candid
     source: OUTLINES_SOURCE,
     paint: { "line-color": "#5d616a", "line-width": 1 },
   });
-  map.addSource(CITIES_SOURCE, { type: "geojson", data: citiesGeoJson(dataset, candidates, cut) });
+  map.addSource(CITIES_SOURCE, { type: "geojson", data: citiesGeoJson(dataset, candidates, cut, selectedCode) });
   map.addLayer(citiesLayer(CITIES_SOURCE));
 }
 
-type MapViewProps = { dataset: Dataset; candidates: Candidate[]; cut: CutCity[]; onSelect: (code: string) => void };
+type MapViewProps = Markers & { dataset: Dataset; onSelect: (code: string) => void };
 
-export function MapView({ dataset, candidates, cut, onSelect }: MapViewProps) {
+export function MapView({ dataset, candidates, cut, selectedCode, onSelect }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null);
   const [unavailable, setUnavailable] = useState(false);
   const mapRef = useRef<MapLibreMap | null>(null);
-  const latest = useRef({ candidates, cut });
-  latest.current = { candidates, cut };
+  const latest = useRef<Markers>({ candidates, cut, selectedCode });
+  latest.current = { candidates, cut, selectedCode };
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
 
@@ -94,13 +118,13 @@ export function MapView({ dataset, candidates, cut, onSelect }: MapViewProps) {
     let basemapLoaded = false;
     map.on("load", () => {
       basemapLoaded = true;
-      addDatasetLayers(map, dataset, latest.current.candidates, latest.current.cut);
+      addDatasetLayers(map, dataset, latest.current);
     });
     // The basemap is context only (ADR 0001): if its style cannot be fetched, keep the dataset layers over a blank background.
     map.on("error", (event) => {
       if (basemapLoaded || (event as { sourceId?: string }).sourceId) return;
       basemapLoaded = true;
-      map.once("style.load", () => addDatasetLayers(map, dataset, latest.current.candidates, latest.current.cut));
+      map.once("style.load", () => addDatasetLayers(map, dataset, latest.current));
       map.setStyle(BLANK_STYLE);
     });
 
@@ -122,13 +146,13 @@ export function MapView({ dataset, candidates, cut, onSelect }: MapViewProps) {
 
   useEffect(() => {
     const source = mapRef.current?.getSource<GeoJSONSource>(CITIES_SOURCE);
-    source?.setData(citiesGeoJson(dataset, candidates, cut));
-  }, [dataset, candidates, cut]);
+    source?.setData(citiesGeoJson(dataset, candidates, cut, selectedCode));
+  }, [dataset, candidates, cut, selectedCode]);
 
   return (
     <div className="map" ref={container} role="region" aria-label="Mapa das cidades" aria-describedby="map-description">
       <p id="map-description" className="visually-hidden">
-        {`${candidates.length} candidatas em tons de verde, mais escuro quanto melhor a posição, com as dez primeiras em vermelho e um pouco maiores, e ${cut.length} cidades cortadas em cinza-claro. Os marcadores não recebem foco: use a tabela, ou a busca de cidade na barra lateral (que inclui as cortadas), para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
+        {`${candidates.length} candidatas em tons de verde, mais escuro quanto melhor a posição, com as dez primeiras em vermelho e um pouco maiores, e ${cut.length} cidades cortadas em cinza-claro; a cidade aberta no detalhe fica em roxo e bem maior. Os marcadores não recebem foco: use a tabela, ou a busca de cidade na barra lateral (que inclui as cortadas), para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
       </p>
       {unavailable && (
         <p className="notice" role="alert">

@@ -6,7 +6,7 @@ BRCities Rank é um app web que filtra todos os municípios brasileiros pelas re
 - **Categorias objetivas** (Segurança, Desastres, Saúde, Escola, Clima e Porte) dão notas automáticas às cidades que sobraram, a partir de dados públicos.
 - **Categorias subjetivas** são temas seus, como lazer ou paisagem, em que você mesmo dá a nota.
 
-Cada avaliador (uma família pode ter vários) dá os próprios pesos e notas, e o ranking combina todos. O resultado aparece num mapa do Brasil, com a tabela ordenada embaixo. A Sessão fica no navegador e pode ser exportada e importada como arquivo. O app usa um dataset montado a partir de fontes públicas (IBGE, DataSUS, INEP, Anatel e outras) pelo [pipeline da Coleta](pipeline/README.md).
+Cada avaliador (uma família pode ter vários) dá os próprios pesos e notas, e o ranking combina todos. O resultado aparece num mapa do Brasil, com a tabela ordenada embaixo. O navegador guarda várias Sessões, distinguidas pelo nome, e cada uma pode ser exportada e importada como arquivo ou compartilhada por link. O app usa um dataset montado a partir de fontes públicas (IBGE, DataSUS, INEP, Anatel e outras) pelo [pipeline da Coleta](pipeline/README.md).
 
 ## Licença
 

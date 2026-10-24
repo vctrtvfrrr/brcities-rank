@@ -1,5 +1,7 @@
+import { useId, useState, type ReactNode } from "react";
 import type { Dataset } from "../domain/dataset";
-import { renameSession, type Session } from "../domain/session";
+import type { Session } from "../domain/session";
+import type { Library } from "../domain/session-library";
 import { CategoryPanel } from "./CategoryPanel";
 import { CitySearch } from "./CitySearch";
 import { EvaluatorPanel } from "./EvaluatorPanel";
@@ -11,10 +13,12 @@ import { SessionPanel } from "./SessionPanel";
 type Props = {
   dataset: Dataset;
   session: Session;
+  library: Library;
   cutCounts: Record<string, number>;
   onChange: (update: (session: Session) => Session) => void;
   onToggleCategory: (id: string) => void;
-  onReplaceSession: (session: Session) => void;
+  onReplaceLibrary: (library: Library) => void;
+  onAdoptSession: (session: Session) => boolean;
   cutCodes: Set<string>;
   onSelectCity: (code: string) => void;
 };
@@ -22,10 +26,12 @@ type Props = {
 export function Sidebar({
   dataset,
   session,
+  library,
   cutCounts,
   onChange,
   onToggleCategory,
-  onReplaceSession,
+  onReplaceLibrary,
+  onAdoptSession,
   cutCodes,
   onSelectCity,
 }: Props) {
@@ -39,31 +45,77 @@ export function Sidebar({
           <SourcesDialog dataset={dataset} />
         </div>
       </header>
-      <section aria-labelledby="sec-session">
-        <h2 id="sec-session">Sessão</h2>
-        <SessionPanel
-          dataset={dataset}
-          session={session}
-          onReplace={onReplaceSession}
-          onRename={(name) => onChange((current) => renameSession(current, name))}
-        />
-      </section>
-      <section aria-labelledby="sec-search">
-        <h2 id="sec-search">Buscar cidade</h2>
-        <CitySearch dataset={dataset} cutCodes={cutCodes} onSelect={onSelectCity} />
-      </section>
-      <section aria-labelledby="sec-evaluator">
-        <h2 id="sec-evaluator">Avaliador ativo</h2>
-        <EvaluatorPanel session={session} onChange={onChange} />
-      </section>
-      <section aria-labelledby="sec-filters">
-        <h2 id="sec-filters">Filtros</h2>
-        <Filters dataset={dataset} session={session} cutCounts={cutCounts} onChange={onChange} />
-      </section>
-      <section className="fill" aria-labelledby="sec-categories">
-        <h2 id="sec-categories">Categorias</h2>
-        <CategoryPanel dataset={dataset} session={session} onChange={onChange} onToggleCategory={onToggleCategory} />
-      </section>
+      <div className="side-sections">
+        <Section id="session" title="Sessão">
+          <SessionPanel
+            dataset={dataset}
+            library={library}
+            onChange={onChange}
+            onReplaceLibrary={onReplaceLibrary}
+            onAdopt={onAdoptSession}
+          />
+        </Section>
+        <Section id="search" title="Buscar cidade">
+          <CitySearch dataset={dataset} cutCodes={cutCodes} onSelect={onSelectCity} />
+        </Section>
+        <Section id="evaluator" title="Avaliador ativo">
+          <EvaluatorPanel session={session} onChange={onChange} />
+        </Section>
+        <Section id="filters" title="Filtros">
+          <Filters dataset={dataset} session={session} cutCounts={cutCounts} onChange={onChange} />
+        </Section>
+        <Section id="categories" title="Categorias">
+          <CategoryPanel dataset={dataset} session={session} onChange={onChange} onToggleCategory={onToggleCategory} />
+        </Section>
+      </div>
     </aside>
+  );
+}
+
+const COLLAPSED_KEY = "brcities-rank:collapsed-sections";
+
+function readCollapsed(): string[] {
+  try {
+    const stored: unknown = JSON.parse(localStorage.getItem(COLLAPSED_KEY) ?? "[]");
+    return Array.isArray(stored) ? stored.filter((id) => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function storeCollapsed(id: string, collapsed: boolean) {
+  try {
+    const others = readCollapsed().filter((other) => other !== id);
+    localStorage.setItem(COLLAPSED_KEY, JSON.stringify(collapsed ? [...others, id] : others));
+  } catch {
+    // Remembering which sections are collapsed is a convenience; it can be lost.
+  }
+}
+
+function Section({ id, title, children }: { id: string; title: string; children: ReactNode }) {
+  const [collapsed, setCollapsed] = useState(() => readCollapsed().includes(id));
+  const bodyId = useId();
+  const toggle = () => {
+    setCollapsed(!collapsed);
+    storeCollapsed(id, !collapsed);
+  };
+  return (
+    <section aria-labelledby={`sec-${id}`} className={collapsed ? "collapsed" : undefined}>
+      <h2>
+        <button
+          type="button"
+          id={`sec-${id}`}
+          className="section-toggle"
+          aria-expanded={!collapsed}
+          aria-controls={bodyId}
+          onClick={toggle}
+        >
+          {title}
+        </button>
+      </h2>
+      <div id={bodyId} hidden={collapsed}>
+        {children}
+      </div>
+    </section>
   );
 }

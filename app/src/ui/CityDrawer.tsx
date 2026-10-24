@@ -2,15 +2,8 @@ import { useEffect, useRef } from "react";
 import type { CategoryDetail, CityDetail, CriterionDetail, SubjectiveDetail } from "../domain/city-detail";
 import type { Dataset, SourceInfo } from "../domain/dataset";
 import { GRADES, type Grade } from "../domain/session";
-import {
-  describeConstraint,
-  formatCount,
-  formatDate,
-  formatGrade,
-  formatNote,
-  formatScore,
-  formatValue,
-} from "./format";
+import { ScoreBadge } from "./ScoreBadge";
+import { describeConstraint, formatCount, formatDate, formatGrade, formatNote, formatValue } from "./format";
 
 const yesNo = (value: boolean | null) => (value === null ? null : value ? "sim" : "não");
 
@@ -103,7 +96,10 @@ function Standing({ dataset, detail }: { dataset: Dataset; detail: CityDetail })
       <span className="tag good">
         {standing.position}º de {formatCount(standing.of)}
       </span>{" "}
-      <b className="score">{formatScore(standing.score)}</b> <span className="muted">pontos</span>
+      <b className="score">
+        <ScoreBadge score={standing.score} />
+      </b>{" "}
+      <span className="muted">pontos</span>
     </div>
   );
 }
@@ -116,7 +112,7 @@ function Category({ category }: { category: CategoryDetail }) {
           {category.id}
           {category.on ? "" : " (desligada)"}
         </span>
-        <span>{category.note === null ? "" : formatNote(category.note)}</span>
+        <span>{category.note === null ? "" : <ScoreBadge score={category.note} note />}</span>
       </div>
       <div className="crit-list">
         {category.criteria.map((criterion) => (
@@ -143,7 +139,7 @@ function Subjective({
           {subjective.name} <span className="tag sub">subjetiva</span>
           {subjective.on ? "" : " (desligada)"}
         </span>
-        <span>{subjective.note === null ? "" : formatNote(subjective.note)}</span>
+        <span>{subjective.note === null ? "" : <ScoreBadge score={subjective.note} note />}</span>
       </div>
       <div className="crit">
         <span>Média das notas</span>

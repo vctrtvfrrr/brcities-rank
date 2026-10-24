@@ -5,7 +5,8 @@ import type { Dataset } from "../domain/dataset";
 import { SCORE_READING } from "../domain/explanations";
 import { GRADES, gradeOf, type Grade, type Session } from "../domain/session";
 import { CategoryLabel } from "./CategoryTip";
-import { formatGrade, formatNote, formatScore } from "./format";
+import { formatGrade } from "./format";
+import { ScoreBadge, ScoreLegend } from "./ScoreBadge";
 import { Tooltip } from "./Tooltip";
 
 const ROW_HEIGHT = 28;
@@ -107,6 +108,7 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
                   {paragraph}
                 </span>
               ))}
+              <ScoreLegend />
             </Tooltip>
           </span>
           {categories.map((category) => (
@@ -142,7 +144,7 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
                   {candidate.name} <span className="muted">{candidate.uf}</span>
                 </span>
                 <span role="cell" className="num">
-                  {candidate.score === null ? DASH : formatScore(candidate.score)}
+                  {candidate.score === null ? DASH : <ScoreBadge score={candidate.score} />}
                 </span>
                 {categories.map((category) =>
                   category.kind === "subjective" ? (
@@ -160,7 +162,7 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
                     />
                   ) : (
                     <span role="cell" key={category.id} className="num">
-                      {formatNote(candidate.categoryScores[category.id])}
+                      <ScoreBadge score={candidate.categoryScores[category.id]} note />
                     </span>
                   ),
                 )}
