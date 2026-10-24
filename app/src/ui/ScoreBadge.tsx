@@ -15,8 +15,8 @@ export function ScoreLegend() {
     <>
       <span className="tip-block tip-title">Cores</span>
       <span className="tip-block">
-        A Pontuação e a nota de cada categoria ganham a cor da faixa em que caem. Como as notas são relativas, a faixa
-        diz como a cidade se sai entre as Candidatas do Corte atual.
+        A Pontuação e a nota de cada categoria ganham a cor da faixa em que caem. Como as notas vêm da régua de cada
+        critério, a faixa diz onde a cidade fica entre o limite das suas restrições e o melhor do Brasil.
       </span>
       <ul className="band-legend">
         {SCORE_BANDS.map((band) => (

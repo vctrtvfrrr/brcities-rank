@@ -76,15 +76,15 @@ describe("cityDetail criteria", () => {
     expect(detail.categories.find((c) => c.id === "Clima")!.note).toBe(candidate.categoryScores.Clima);
   });
 
-  it("reports the vigente P5/P95 from rank", () => {
-    expect(criterion("Segurança", "crime").bounds).toEqual(result.bounds.crime);
-    expect(result.bounds.crime).not.toBeNull();
+  it("reports the Régua from rank", () => {
+    expect(criterion("Segurança", "crime").ruler).toEqual(result.rulers.crime);
+    expect(result.rulers.crime).not.toBeNull();
   });
 
-  it("gives the P5/P95 of a logarithmic criterion in raw units", () => {
-    const { bounds } = criterion("Porte", "populacao_2026");
-    expect(bounds!.low).toBeGreaterThan(22000);
-    expect(bounds!.high).toBeLessThan(12000000);
+  it("gives the Régua of a logarithmic criterion in raw units", () => {
+    const { ruler } = criterion("Porte", "populacao_2026");
+    expect(ruler!.worst).toBeGreaterThan(22000);
+    expect(ruler!.best).toBeLessThan(12000000);
   });
 
   it("flags Dado ausente, which counts 0", () => {
@@ -110,11 +110,11 @@ describe("cityDetail criteria", () => {
     ]);
   });
 
-  it("reports no P5/P95 when no Candidate has data for the criterion", () => {
+  it("reports no Régua when no city has data for the criterion", () => {
     const dataset = datasetWithCities([{ code: "1", name: "A" }]);
     const session = createInitialSession(dataset);
     const only = cityDetail(dataset, session, rank(dataset, session), "1")!;
-    expect(only.categories[0].criteria[0]).toMatchObject({ bounds: null, missing: true, note: 0 });
+    expect(only.categories[0].criteria[0]).toMatchObject({ ruler: null, missing: true, note: 0 });
   });
 });
 

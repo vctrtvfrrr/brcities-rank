@@ -1,4 +1,4 @@
-import { passesConstraint } from "./constraints";
+import { numericLimits, passesConstraint, type NumericLimits } from "./constraints";
 import type { CatalogEntry, Dataset } from "./dataset";
 import type { Session } from "./session";
 
@@ -32,10 +32,10 @@ export type RankResult = {
   candidates: Candidate[];
   cut: CutCity[];
   cutCounts: Record<string, number>;
-  bounds: Record<string, Bounds | null>;
+  rulers: Record<string, Ruler | null>;
 };
 
-export type Bounds = { low: number; high: number };
+export type Ruler = { worst: number; best: number };
 
 const collator = new Intl.Collator("pt-BR");
 
@@ -59,7 +59,7 @@ export function rank(dataset: Dataset, session: Session): RankResult {
   });
 
   const population = (index: number) => populacao_2026[index];
-  const scoring = scoreCandidates(dataset, candidateIndexes);
+  const scoring = scoreCandidates(dataset, session, candidateIndexes);
   const participations = averageParticipations(session);
   const subjectives = session.categories.filter((c) => c.kind === "subjective");
   const counting = Object.keys(participations).filter((id) => participations[id] > 0);
@@ -105,7 +105,7 @@ export function rank(dataset: Dataset, session: Session): RankResult {
   for (const candidate of candidates) {
     if (candidate.score !== null) candidate.position = ++position;
   }
-  return { candidates, cut, cutCounts, bounds: scoring.bounds };
+  return { candidates, cut, cutCounts, rulers: scoring.rulers };
 }
 
 function averageParticipations(session: Session): Record<string, number> {
@@ -129,16 +129,16 @@ function averageGrade(session: Session, id: string, code: string): number | null
 type Scoring = {
   categories: Record<string, number>[];
   criteria: Record<string, number>[];
-  bounds: Record<string, Bounds | null>;
+  rulers: Record<string, Ruler | null>;
 };
 
-function scoreCandidates(dataset: Dataset, indexes: number[]): Scoring {
+function scoreCandidates(dataset: Dataset, session: Session, indexes: number[]): Scoring {
   const scoring = dataset.catalogo.filter((entry) => entry.pontua);
   const criteriaByCategory = new Map<string, CatalogEntry[]>();
   for (const entry of scoring) {
     criteriaByCategory.set(entry.categoria, [...(criteriaByCategory.get(entry.categoria) ?? []), entry]);
   }
-  const scored = new Map(scoring.map((entry) => [entry.chave, scoreCriterion(dataset, entry, indexes)]));
+  const scored = new Map(scoring.map((entry) => [entry.chave, scoreCriterion(dataset, session, entry, indexes)]));
   return {
     categories: indexes.map((_, position) =>
       Object.fromEntries(
@@ -151,22 +151,43 @@ function scoreCandidates(dataset: Dataset, indexes: number[]): Scoring {
     criteria: indexes.map((_, position) =>
       Object.fromEntries(scoring.map((entry) => [entry.chave, scored.get(entry.chave)!.notes[position]])),
     ),
-    bounds: Object.fromEntries(scoring.map((entry) => [entry.chave, scored.get(entry.chave)!.bounds])),
+    rulers: Object.fromEntries(scoring.map((entry) => [entry.chave, scored.get(entry.chave)!.ruler])),
   };
 }
 
-function scoreCriterion(dataset: Dataset, entry: CatalogEntry, indexes: number[]) {
+function scoreCriterion(dataset: Dataset, session: Session, entry: CatalogEntry, indexes: number[]) {
   const column = dataset.colunas[entry.chave] as (number | null)[];
-  const transformed = indexes.map((index) => transform(entry, column[index]));
-  const bounds = trimBounds(transformed.filter((v): v is number => v !== null));
-  const notes = transformed.map((value) => {
-    if (value === null || bounds === null) return 0;
-    if (bounds.low === bounds.high) return 100;
-    const note = ((Math.min(Math.max(value, bounds.low), bounds.high) - bounds.low) / (bounds.high - bounds.low)) * 100;
-    return entry.direcao === "menor" ? 100 - note : note;
+  const ruler = measureRuler(column, entry, numericLimits(session, entry.chave));
+  const notes = indexes.map((index) => {
+    const value = transform(entry, column[index]);
+    if (value === null || ruler === null) return 0;
+    if (ruler.worst === ruler.best) return 100;
+    const note = (value - ruler.worst) / (ruler.best - ruler.worst);
+    return Math.min(Math.max(note, 0), 1) * 100;
   });
-  const raw = bounds && { low: untransform(entry, bounds.low), high: untransform(entry, bounds.high) };
-  return { notes, bounds: raw };
+  const rawRuler = ruler && { worst: untransform(entry, ruler.worst), best: untransform(entry, ruler.best) };
+  return { notes, ruler: rawRuler };
+}
+
+function measureRuler(column: (number | null)[], entry: CatalogEntry, limits: NumericLimits): Ruler | null {
+  const values = column.map((value) => transform(entry, value)).filter((v): v is number => v !== null);
+  if (values.length === 0) return null;
+  const sorted = Float64Array.from(values).sort();
+  const min = transform(entry, limits.min);
+  const max = transform(entry, limits.max);
+  const low = min ?? lowEndWithoutLimit(sorted, max);
+  const high = max ?? highEndWithoutLimit(sorted, min);
+  return entry.direcao === "menor" ? { worst: high, best: low } : { worst: low, best: high };
+}
+
+function lowEndWithoutLimit(sorted: Float64Array, max: number | null): number {
+  const p5 = percentile(sorted, 0.05);
+  return max !== null && p5 >= max ? sorted[0] : p5;
+}
+
+function highEndWithoutLimit(sorted: Float64Array, min: number | null): number {
+  const p95 = percentile(sorted, 0.95);
+  return min !== null && p95 <= min ? sorted[sorted.length - 1] : p95;
 }
 
 function untransform(entry: CatalogEntry, value: number): number {
@@ -175,13 +196,8 @@ function untransform(entry: CatalogEntry, value: number): number {
 
 function transform(entry: CatalogEntry, value: number | null): number | null {
   if (value === null) return null;
-  return entry.transformacao === "logaritmo" ? Math.log(value) : value;
-}
-
-function trimBounds(values: number[]): Bounds | null {
-  if (values.length === 0) return null;
-  const sorted = Float64Array.from(values).sort();
-  return { low: percentile(sorted, 0.05), high: percentile(sorted, 0.95) };
+  if (entry.transformacao !== "logaritmo") return value;
+  return value > 0 ? Math.log(value) : null;
 }
 
 function percentile(sorted: Float64Array, fraction: number): number {

@@ -60,11 +60,11 @@ Seis Categorias, treze critérios. Os critérios só pontuam.
 
 ## Normalização
 
-**Min-max aparado.** Cada indicador é aparado no 5º e no 95º percentil das Candidatas (no app, as do Corte vigente do visitante; no [`criterios.md`](criterios.md), as do Corte de referência) e esticado de 0 a 100, invertido nos critérios em que menor é melhor: o valor no P5 ou além dele vale 100 (ou 0), o do P95 ou além vale 0 (ou 100), e entre eles a nota é linear.
+**Min-max aparado.** Cada indicador é aparado no 5º e no 95º percentil das Candidatas do Corte de referência, no [`criterios.md`](criterios.md), e esticado de 0 a 100, invertido nos critérios em que menor é melhor: o valor no P5 ou além dele vale 100 (ou 0), o do P95 ou além vale 0 (ou 100), e entre eles a nota é linear. O app não usa essa normalização: nele a nota vem da Régua do Critério, com as pontas nos limites das Restrições do visitante ou nos percentis de todos os municípios do Brasil (ver o [`GLOSSARY.md`](../GLOSSARY.md)).
 
 - **População:** passa por logaritmo antes do min-max, de modo que cada vez que ela dobra a nota sobe o mesmo tanto.
 - **Desastres:** a Candidata sem nenhum registro, mas presente na lista de municípios suscetíveis da Casa Civil ou com setor de risco alto ou muito alto do SGB, conta no critério de anos como se tivesse 1 ano com registro da família chuva. Os danos humanos dela continuam zero.
-- **Critério sem variação** (P5 igual a P95): todas as Candidatas valem 100 nele.
+- **Critério sem variação** (P5 igual a P95): todas as Candidatas valem 100 nele. Na Régua do app vale o mesmo quando as duas pontas coincidem.
 
 **Anos das fontes.** Cada critério usa a edição vigente da sua fonte na data da Coleta, com o ano registrado, sem alinhar anos entre critérios: a normalização compara cidades dentro do mesmo critério.
 

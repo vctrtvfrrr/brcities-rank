@@ -112,6 +112,13 @@ export function koppenClasses(dataset: Dataset): string[] {
   return [...classes].sort();
 }
 
+export type NumericLimits = { min: number | null; max: number | null };
+
+export function numericLimits(session: Session, criterion: string): NumericLimits {
+  const constraint = session.constraints.find((c) => c.criterion === criterion && c.on);
+  return constraint && "min" in constraint ? constraint : { min: null, max: null };
+}
+
 export type CityPasser = (index: number) => boolean;
 
 export function passesConstraint(dataset: Dataset, constraint: Constraint): CityPasser {

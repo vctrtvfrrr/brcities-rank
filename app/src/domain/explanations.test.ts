@@ -24,9 +24,9 @@ describe("explainCategory", () => {
     expect(explanation.scoring).toContain("0 a 100");
   });
 
-  it("says that Candidates with the same value all get 100 and a missing value counts 0", () => {
+  it("says that a city right on the limit of a restrição gets 0 and a missing value counts 0", () => {
     const { scoring } = explainCategory(fixtureDataset, "Clima")!;
-    expect(scoring).toContain("todas valem 100");
+    expect(scoring).toContain("no limite da restrição vale 0");
     expect(scoring).toContain("sem dado conta 0");
   });
 
@@ -47,9 +47,9 @@ describe("explainCategory", () => {
 describe("SCORE_READING", () => {
   const text = SCORE_READING.join(" ");
 
-  it("says the notes are relative to the Candidates of the current Corte", () => {
-    expect(text).toContain("Candidatas");
-    expect(text).toContain("relativas");
+  it("says the notes come from the régua, not from the other Candidates", () => {
+    expect(text).toContain("não dependem das outras Candidatas");
+    expect(text).toContain("limite da restrição");
   });
 
   it("says a missing value counts 0, and how weights and subjective grades enter", () => {

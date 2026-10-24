@@ -25,12 +25,19 @@ Cidade que passou no Corte.
 A única lista ordenada das Candidatas, pelas categorias ligadas, sempre combinando todos os Avaliadores.
 _Avoid_: Ranking objetivo, Ranking final
 
+**Critério**:
+Medida de uma Categoria objetiva, tirada de uma fonte pública, com uma direção (maior ou menor é melhor); vira nota de 0 a 100 pela posição do valor da cidade na Régua.
+
+**Régua**:
+Intervalo de um Critério entre a ponta ruim, que vale nota 0, e a ponta boa, que vale 100, com nota linear no meio e presa a 0 e 100 fora dele. Cada ponta é o limite da Restrição ligada naquele lado, ou, sem ele, o 5º ou 95º percentil do Critério entre todos os municípios do Brasil; quando esse percentil fica do lado errado do limite, a ponta vai ao extremo real do dado. Não depende das outras Candidatas, e a Candidata exatamente no limite ruim passa no Corte com nota 0; se as duas pontas coincidem, todas valem 100.
+_Avoid_: alvo, meta, critério selecionado
+
 **Pontuação**:
 Valor de 0 a 100 que ordena uma Candidata no Ranking, vindo das categorias que entram na conta dela; a Candidata em que nenhuma categoria entra na conta fica sem Pontuação, que não é Pontuação 0, e vai para o fim.
 _Avoid_: nota final, score
 
 **Faixa**:
-Uma das quatro partes da escala de 0 a 100 em que cai a Pontuação ou a nota de uma categoria: baixa (abaixo de 40, vermelho), média (40 a 60, laranja), alta (60 a 80, verde) e muito alta (80 ou mais, azul). Como as notas são relativas, a Faixa diz como a cidade se sai entre as Candidatas do Corte atual.
+Uma das quatro partes da escala de 0 a 100 em que cai a Pontuação ou a nota de uma categoria: baixa (abaixo de 40, vermelho), média (40 a 60, laranja), alta (60 a 80, verde) e muito alta (80 ou mais, azul). Como as notas dos Critérios vêm da Régua, a Faixa diz onde a cidade fica entre o que o visitante tolera e o melhor do Brasil, e não muda quando outras cidades entram ou saem do Corte.
 
 **Dez primeiras**:
 As Candidatas nas posições 1 a 10 do Ranking; só existem quando alguma Candidata tem Pontuação, e são menos de dez quando menos Candidatas a têm.

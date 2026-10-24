@@ -241,7 +241,7 @@ describe("Corte and the notes", () => {
     rank(fixtureDataset, toggleCategory(session, "Segurança")).candidates.find((c) => c.name === "Salvador")!
       .categoryScores["Segurança"];
 
-  it("normalizes the objective notes among the Candidates of the Corte only", () => {
+  it("gives 0 to a Candidate right on the limit of a Restrição", () => {
     const cut = withConstraints(add("crime"), edit("crime", { max: 20 }));
     expect(salvadorSafetyNote(cut)).toBe(0);
     expect(salvadorSafetyNote(initial)).toBeGreaterThan(0);

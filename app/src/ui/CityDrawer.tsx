@@ -175,7 +175,7 @@ function Subjective({
 }
 
 function Criterion({ criterion }: { criterion: CriterionDetail }) {
-  const { bounds } = criterion;
+  const { ruler } = criterion;
   return (
     <div className="crit">
       <span>{criterion.label}</span>
@@ -189,7 +189,7 @@ function Criterion({ criterion }: { criterion: CriterionDetail }) {
       <span className="note">{criterion.note === null ? "–" : formatNote(criterion.note)}</span>
       <span className="src">
         <Sources sources={criterion.sources} />
-        {bounds && ` · P5 ${formatValue(bounds.low)} / P95 ${formatValue(bounds.high)}`}
+        {ruler && ` · 0 em ${formatValue(ruler.worst)} / 100 em ${formatValue(ruler.best)}`}
       </span>
     </div>
   );

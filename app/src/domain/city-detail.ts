@@ -1,5 +1,5 @@
 import type { CatalogEntry, Dataset, SourceInfo } from "./dataset";
-import type { Bounds, RankResult } from "./rank";
+import type { RankResult, Ruler } from "./rank";
 import { gradeOf, type Constraint, type Grade, type Session } from "./session";
 
 export type Standing =
@@ -14,7 +14,7 @@ export type CriterionDetail = {
   value: number | null;
   missing: boolean;
   note: number | null;
-  bounds: Bounds | null;
+  ruler: Ruler | null;
   sources: SourceInfo[];
 };
 
@@ -78,7 +78,7 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
       value,
       missing: value === null,
       note: candidate?.criterionScores[entry.chave] ?? null,
-      bounds: result.bounds[entry.chave] ?? null,
+      ruler: result.rulers[entry.chave] ?? null,
       sources: sourcesOf(entry.chave),
     };
   };

@@ -1,6 +1,6 @@
-# Localização é uma Restrição, e as notas ficam relativas ao recorte
+# Localização é uma Restrição
 
-Recortar por região ou estado entra no app como mais uma Restrição, a Localização, que aceita um conjunto de estados. Como toda Restrição, ela participa do Corte: as cidades fora dos estados aceitos são cortadas, e as notas, a Pontuação, as Faixas e as posições passam a ser calculadas só entre as Candidatas de dentro. Quem recorta "Sul" vê o melhor do Sul comparado ao Sul, não a posição nacional de cada cidade. Escolhemos assim porque o modelo já tem um único mecanismo para tirar cidades do Ranking, a Sessão já o guarda e compartilha, e um segundo mecanismo de exclusão confundiria o que é Candidata.
+Recortar por região ou estado entra no app como mais uma Restrição, a Localização, que aceita um conjunto de estados. Como toda Restrição, ela participa do Corte: as cidades fora dos estados aceitos são cortadas, e as posições passam a contar só as Candidatas de dentro. Quem recorta "Sul" vê o Sul em ordem, de 1 em diante, sem a posição nacional de cada cidade. As notas não mudam com o recorte, porque vêm da Régua de cada Critério (ADR 0006). Escolhemos assim porque o modelo já tem um único mecanismo para tirar cidades do Ranking, a Sessão já o guarda e compartilha, e um segundo mecanismo de exclusão confundiria o que é Candidata.
 
 ## Considered Options
 
@@ -10,4 +10,4 @@ Recortar por região ou estado entra no app como mais uma Restrição, a Localiz
 ## Consequences
 
 - O formato da Sessão ganha mais um tipo de Restrição; a Sessão guarda só os estados aceitos, nunca as regiões.
-- Ligar ou mudar a Localização mexe nas notas de todas as Candidatas, como qualquer Restrição.
+- Ligar ou mudar a Localização muda as posições, mas não as notas: a Localização não tem limite numérico e não entra em nenhuma Régua.
