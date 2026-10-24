@@ -1,12 +1,14 @@
 import type { Dataset } from "./dataset";
+import { inStateOrder, STATES } from "./regions";
 import type { Constraint, Session } from "./session";
 
 export const KOPPEN_CRITERION = "koppen";
+export const LOCATION_CRITERION = "location";
 const KOPPEN_BECK = "koppen_beck";
 const KOPPEN_ALVARES = "koppen_alvares";
 const BOOLEAN_CRITERIA = ["hospital_geral", "fibra"];
 
-export type ConstraintKind = "numeric" | "koppen" | "boolean";
+export type ConstraintKind = "location" | "numeric" | "koppen" | "boolean";
 
 export type ConstraintOption = {
   criterion: string;
@@ -15,15 +17,29 @@ export type ConstraintOption = {
   kind: ConstraintKind;
 };
 
-export type ConstraintEdit = Partial<{ min: number | null; max: number | null; accepted: string[]; value: boolean }>;
+export type ConstraintEdit = Partial<{
+  min: number | null;
+  max: number | null;
+  accepted: string[];
+  states: string[];
+  value: boolean;
+}>;
 
 export function constraintKind(criterion: string): ConstraintKind {
+  if (criterion === LOCATION_CRITERION) return "location";
   if (criterion === KOPPEN_CRITERION) return "koppen";
   return BOOLEAN_CRITERIA.includes(criterion) ? "boolean" : "numeric";
 }
 
+const LOCATION_OPTION: ConstraintOption = {
+  criterion: LOCATION_CRITERION,
+  label: "Localização",
+  group: "Localização",
+  kind: "location",
+};
+
 function allOptions(dataset: Dataset): ConstraintOption[] {
-  return dataset.catalogo
+  const fromCatalog = dataset.catalogo
     .filter((entry) => entry.chave !== KOPPEN_ALVARES)
     .map((entry) => {
       const criterion = entry.chave === KOPPEN_BECK ? KOPPEN_CRITERION : entry.chave;
@@ -34,6 +50,7 @@ function allOptions(dataset: Dataset): ConstraintOption[] {
         kind: constraintKind(criterion),
       };
     });
+  return [LOCATION_OPTION, ...fromCatalog];
 }
 
 export function constraintOptions(dataset: Dataset, session: Session): ConstraintOption[] {
@@ -43,6 +60,8 @@ export function constraintOptions(dataset: Dataset, session: Session): Constrain
 
 function neutralConstraint(option: ConstraintOption): Constraint {
   switch (option.kind) {
+    case "location":
+      return { criterion: LOCATION_CRITERION, on: true, states: [...STATES] };
     case "koppen":
       return { criterion: KOPPEN_CRITERION, on: true, accepted: [] };
     case "boolean":
@@ -64,6 +83,7 @@ function mapConstraint(session: Session, criterion: string, change: (c: Constrai
 
 export function editConstraint(session: Session, criterion: string, edit: ConstraintEdit): Session {
   return mapConstraint(session, criterion, (c) => {
+    if ("states" in c) return edit.states ? { ...c, states: inStateOrder(edit.states) } : c;
     if ("accepted" in c) return edit.accepted ? { ...c, accepted: edit.accepted } : c;
     if ("value" in c) return edit.value === undefined ? c : { ...c, value: edit.value };
     return { ...c, min: edit.min === undefined ? c.min : edit.min, max: edit.max === undefined ? c.max : edit.max };
@@ -96,6 +116,10 @@ export type CityPasser = (index: number) => boolean;
 
 export function passesConstraint(dataset: Dataset, constraint: Constraint): CityPasser {
   const { colunas } = dataset;
+  if ("states" in constraint) {
+    const states = new Set(constraint.states);
+    return (i) => states.has(colunas.uf[i]);
+  }
   if ("accepted" in constraint) {
     const accepted = new Set(constraint.accepted);
     const beck = colunas[KOPPEN_BECK];

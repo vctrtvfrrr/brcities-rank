@@ -13,6 +13,9 @@ export const formatCount = (n: number) => integer.format(n);
 export const formatDate = (iso: string) => iso.split("-").reverse().join("/");
 
 export function describeConstraint(dataset: Dataset, constraint: Constraint): string {
+  if ("states" in constraint) {
+    return `Localização ${constraint.states.length > 0 ? constraint.states.join(", ") : "(nenhum estado aceito)"}`;
+  }
   if ("accepted" in constraint) {
     return `Köppen ${constraint.accepted.length > 0 ? constraint.accepted.join(", ") : "(nenhuma classe aceita)"}`;
   }

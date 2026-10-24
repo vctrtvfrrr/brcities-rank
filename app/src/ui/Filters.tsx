@@ -10,6 +10,7 @@ import {
   type ConstraintEdit,
 } from "../domain/constraints";
 import type { CatalogEntry, Dataset } from "../domain/dataset";
+import { REGIONS, regionSelection, toggleRegion } from "../domain/regions";
 import type { Constraint, Session } from "../domain/session";
 
 type Props = {
@@ -68,6 +69,7 @@ export function Filters({ dataset, session, cutCounts, onChange }: Props) {
 function constraintLabels(dataset: Dataset): Record<string, string> {
   const labels: Record<string, string> = Object.fromEntries(dataset.catalogo.map((c) => [c.chave, c.rotulo]));
   labels.koppen = "Clima Köppen";
+  labels.location = "Localização";
   return labels;
 }
 
@@ -110,7 +112,9 @@ function ConstraintCard({
           ✕
         </button>
       </div>
-      {"accepted" in constraint ? (
+      {"states" in constraint ? (
+        <StatesEditor states={constraint.states} onChange={(states) => edit({ states })} />
+      ) : "accepted" in constraint ? (
         <KoppenEditor
           classes={koppenClasses(dataset)}
           accepted={constraint.accepted}
@@ -164,6 +168,42 @@ function KoppenEditor({
             ))}
         </div>
       ))}
+    </>
+  );
+}
+
+function StatesEditor({ states, onChange }: { states: string[]; onChange: (states: string[]) => void }) {
+  const toggle = (state: string) =>
+    onChange(states.includes(state) ? states.filter((s) => s !== state) : [...states, state]);
+  return (
+    <>
+      <p className="muted small">Passa a cidade do estado marcado. A região marca ou desmarca todos os estados dela.</p>
+      {REGIONS.map((region) => {
+        const selection = regionSelection(states, region);
+        return (
+          <div className="kchips" key={region.name}>
+            <button
+              type="button"
+              className={`kchip region ${selection}`}
+              aria-pressed={selection === "all" ? true : selection === "some" ? "mixed" : false}
+              onClick={() => onChange(toggleRegion(states, region))}
+            >
+              {region.name}
+            </button>
+            {region.states.map((state) => (
+              <button
+                type="button"
+                key={state}
+                className={states.includes(state) ? "kchip on" : "kchip"}
+                aria-pressed={states.includes(state)}
+                onClick={() => toggle(state)}
+              >
+                {state}
+              </button>
+            ))}
+          </div>
+        );
+      })}
     </>
   );
 }

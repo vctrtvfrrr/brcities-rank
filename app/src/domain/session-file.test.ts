@@ -21,6 +21,8 @@ function richSession(): Session {
   session = editConstraint(session, "koppen", { accepted: ["Cfa", "Aw"] });
   session = addConstraint(fixtureDataset, session, "fibra");
   session = editConstraint(session, "fibra", { value: false });
+  session = addConstraint(fixtureDataset, session, "location");
+  session = editConstraint(session, "location", { states: ["SP", "PR"] });
   session = toggleCategory(session, "Clima");
   session = addSubjective(session);
   session = setWeight(session, "Clima", 8);
@@ -91,6 +93,11 @@ describe("parseSession refusing invalid files", () => {
 
   it("refuses a constraint whose shape does not match its criterion", () => {
     refuses((f) => (f.constraints[0] = { criterion: "crime", on: true, value: true }));
+  });
+
+  it("refuses a Localização that accepts an unknown state", () => {
+    const result = refuses((f) => (f.constraints.find((c: any) => c.criterion === "location").states = ["SP", "XY"]));
+    expect(result).toMatchObject({ reason: expect.stringContaining("XY") });
   });
 
   it("refuses two constraints on the same criterion", () => {

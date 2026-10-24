@@ -19,7 +19,7 @@ const candidateNames = (session: Session) =>
 describe("constraintOptions", () => {
   it("lists every criterion once, with Köppen as a single entry", () => {
     const keys = constraintOptions(fixtureDataset, initial).map((o) => o.criterion);
-    expect(keys).toEqual(["crime", "rain", "heat", "populacao_2026", "koppen", "hospital_geral", "fibra"]);
+    expect(keys).toEqual(["location", "crime", "rain", "heat", "populacao_2026", "koppen", "hospital_geral", "fibra"]);
   });
 
   it("leaves out the criteria that already have a constraint", () => {
@@ -35,6 +35,7 @@ describe("constraintOptions", () => {
     expect(byKey.crime).toMatchObject({ kind: "numeric", label: "Crime", group: "Segurança" });
     expect(byKey.koppen.kind).toBe("koppen");
     expect(byKey.fibra.kind).toBe("boolean");
+    expect(byKey.location).toMatchObject({ kind: "location", label: "Localização", group: "Localização" });
   });
 });
 
@@ -141,6 +142,30 @@ describe("Corte", () => {
 
     it("cuts the city with neither class, and everything when nothing is accepted", () => {
       expect(candidateNames(accepting("Cfa", "Aw", "Am", "Af", "Cfb"))).not.toContain("Recife");
+      expect(candidateNames(accepting())).toEqual([]);
+    });
+  });
+
+  describe("Localização", () => {
+    const accepting = (...states: string[]) => withConstraints(add("location"), edit("location", { states }));
+
+    it("starts accepting all 27 states, so it cuts nothing", () => {
+      const session = withConstraints(add("location"));
+      const [location] = session.constraints;
+      expect("states" in location && location.states).toHaveLength(27);
+      expect(candidateNames(session)).toHaveLength(6);
+    });
+
+    it("passes the cities whose state is accepted", () => {
+      expect(candidateNames(accepting("SP", "PR"))).toEqual(["Curitiba", "São Paulo"]);
+    });
+
+    it("keeps the accepted states in a fixed order, without repeats", () => {
+      const [location] = accepting("PR", "SP", "PR").constraints;
+      expect(location).toEqual({ criterion: "location", on: true, states: ["SP", "PR"] });
+    });
+
+    it("cuts everything when no state is accepted", () => {
       expect(candidateNames(accepting())).toEqual([]);
     });
   });

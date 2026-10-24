@@ -8,6 +8,13 @@ App web público que ranqueia os municípios brasileiros pelas restrições e ca
 Condição com um limite sobre o valor bruto de um critério, que tira do ranking a cidade que não a atinge, sem peso nem graduação.
 _Avoid_: filtro
 
+**Localização**:
+Restrição que aceita um conjunto de estados (UFs) e tira do ranking a cidade cujo estado não está nele; nasce com todos os estados aceitos e pode ficar sem nenhum, quando corta todas as cidades.
+_Avoid_: filtro por região, filtro por estado
+
+**Região**:
+Uma das cinco grandes regiões do IBGE (Norte, Nordeste, Centro-Oeste, Sudeste e Sul), cada uma um grupo fixo de estados; na Localização é só um atalho que aceita ou recusa todos os estados dela, e não se guarda na Sessão.
+
 **Corte**:
 A aplicação conjunta das restrições ligadas, sem ordem, que separa as Candidatas das cidades cortadas.
 

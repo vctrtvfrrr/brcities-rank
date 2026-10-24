@@ -1,4 +1,5 @@
 import { constraintOptions } from "./constraints";
+import { inStateOrder, STATES } from "./regions";
 import type { Dataset } from "./dataset";
 import {
   createInitialSession,
@@ -61,6 +62,13 @@ function parseConstraints(dataset: Dataset, raw: unknown): Constraint[] {
     if (seen.has(criterion)) refuse(`O critério "${criterion}" tem mais de uma restrição.`);
     seen.add(criterion);
     const on = booleanOf(entry.on, `O estado da restrição "${criterion}"`);
+    if (kind === "location") {
+      const states = arrayOf(entry.states, "Os estados aceitos da Localização").map((state) => {
+        const uf = stringOf(state, "Cada estado da Localização");
+        return STATES.includes(uf) ? uf : refuse(`A Localização cita o estado "${uf}", que não existe.`);
+      });
+      return { criterion: "location", on, states: inStateOrder(states) };
+    }
     if (kind === "koppen") {
       const accepted = arrayOf(entry.accepted, `As classes aceitas de "${criterion}"`).map((c) =>
         stringOf(c, "Cada classe Köppen"),

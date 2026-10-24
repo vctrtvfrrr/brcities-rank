@@ -372,6 +372,19 @@ input[type="range"] {
   color: var(--accent);
   font-weight: 600;
 }
+.kchip.region {
+  font-weight: 600;
+}
+.kchip.region.all {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+.kchip.region.some {
+  border-style: dashed;
+  border-color: var(--accent);
+  color: var(--accent);
+}
 .seg {
   display: inline-flex;
   border: 1px solid var(--line);
