@@ -1,6 +1,6 @@
 import { passesConstraint } from "./constraints";
 import type { CatalogEntry, Dataset } from "./dataset";
-import { averageWeights, type Session } from "./session";
+import type { Session } from "./session";
 
 export type Candidate = {
   index: number;
@@ -60,9 +60,9 @@ export function rank(dataset: Dataset, session: Session): RankResult {
 
   const population = (index: number) => populacao_2026[index];
   const scoring = scoreCandidates(dataset, candidateIndexes);
-  const weights = averageWeights(session);
+  const participations = averageParticipations(session);
   const subjectives = session.categories.filter((c) => c.kind === "subjective");
-  const counting = session.categories.filter((c) => c.on && (weights[c.id] ?? 0) > 0).map((c) => c.id);
+  const counting = Object.keys(participations).filter((id) => participations[id] > 0);
 
   const candidates = candidateIndexes.map<Candidate>((index, at) => {
     const scores = { ...scoring.categories[at] };
@@ -77,8 +77,8 @@ export function rank(dataset: Dataset, session: Session): RankResult {
     let total = 0;
     for (const id of counting) {
       if (scores[id] === undefined) continue;
-      weighted += weights[id] * scores[id];
-      total += weights[id];
+      weighted += participations[id] * scores[id];
+      total += participations[id];
     }
     return {
       index,
@@ -106,6 +106,19 @@ export function rank(dataset: Dataset, session: Session): RankResult {
     if (candidate.score !== null) candidate.position = ++position;
   }
   return { candidates, cut, cutCounts, bounds: scoring.bounds };
+}
+
+function averageParticipations(session: Session): Record<string, number> {
+  const on = session.categories.filter((c) => c.on).map((c) => c.id);
+  const byEvaluator = session.evaluators.flatMap((evaluator) => {
+    const weights = on.map((id) => evaluator.weights[id] ?? 0);
+    const total = weights.reduce((sum, w) => sum + w, 0);
+    return total > 0 ? [weights.map((w) => w / total)] : [];
+  });
+  if (byEvaluator.length === 0) return {};
+  return Object.fromEntries(
+    on.map((id, at) => [id, byEvaluator.reduce((sum, shares) => sum + shares[at], 0) / byEvaluator.length]),
+  );
 }
 
 function averageGrade(session: Session, id: string, code: string): number | null {

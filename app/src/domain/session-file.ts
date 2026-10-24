@@ -2,6 +2,7 @@ import { constraintOptions } from "./constraints";
 import type { Dataset } from "./dataset";
 import {
   createInitialSession,
+  MAX_WEIGHT,
   SESSION_VERSION,
   type Category,
   type Constraint,
@@ -105,21 +106,56 @@ function parseCategories(dataset: Dataset, raw: unknown): Category[] {
   return categories;
 }
 
-function parseWeights(raw: unknown, categories: Category[], who: string): Record<string, number> {
+type WeightsParser = (raw: unknown, categories: Category[], who: string) => Record<string, number>;
+
+function weightEntries(
+  raw: unknown,
+  categories: Category[],
+  who: string,
+  isValid: (value: unknown) => value is number,
+  range: string,
+) {
   const entry = objectOf(raw, `Os pesos de "${who}"`);
   const weights: Record<string, number> = {};
   for (const { id } of categories) {
     const value = entry[id];
-    if (typeof value !== "number" || !Number.isFinite(value) || value < 0 || value > 100) {
-      refuse(`O peso de "${id}" para "${who}" deve ser um número de 0 a 100.`);
-    }
+    if (!isValid(value)) refuse(`O peso de "${id}" para "${who}" deve ser ${range}.`);
     weights[id] = value;
   }
   if (Object.keys(entry).length !== categories.length) refuse(`"${who}" tem peso para categoria desconhecida.`);
-  const total = Object.values(weights).reduce((sum, w) => sum + w, 0);
-  if (Math.abs(total - 100) > WEIGHT_SUM_TOLERANCE) refuse(`Os pesos de "${who}" não somam 100.`);
   return weights;
 }
+
+const parseWeights: WeightsParser = (raw, categories, who) =>
+  weightEntries(
+    raw,
+    categories,
+    who,
+    (value): value is number =>
+      typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= MAX_WEIGHT,
+    `um inteiro de 0 a ${MAX_WEIGHT}`,
+  );
+
+const PERCENTAGE_WEIGHTS_VERSION = 1;
+
+const parsePercentageWeights: WeightsParser = (raw, categories, who) => {
+  const percentages = weightEntries(
+    raw,
+    categories,
+    who,
+    (value): value is number => typeof value === "number" && Number.isFinite(value) && value >= 0 && value <= 100,
+    "um número de 0 a 100",
+  );
+  const total = Object.values(percentages).reduce((sum, w) => sum + w, 0);
+  if (Math.abs(total - 100) > WEIGHT_SUM_TOLERANCE) refuse(`Os pesos de "${who}" não somam 100.`);
+  const largest = Math.max(...Object.values(percentages));
+  return Object.fromEntries(
+    Object.entries(percentages).map(([id, percentage]) => [
+      id,
+      percentage > 0 ? Math.max(1, Math.round((percentage / largest) * MAX_WEIGHT)) : 0,
+    ]),
+  );
+};
 
 function parseGrades(raw: unknown, categories: Category[], who: string): Evaluator["grades"] {
   const entry = objectOf(raw, `As notas de "${who}"`);
@@ -136,7 +172,7 @@ function parseGrades(raw: unknown, categories: Category[], who: string): Evaluat
   return grades;
 }
 
-function parseEvaluators(raw: unknown, categories: Category[]): Evaluator[] {
+function parseEvaluators(raw: unknown, categories: Category[], weightsOf: WeightsParser): Evaluator[] {
   const list = arrayOf(raw, "Os avaliadores");
   if (list.length === 0) refuse("A Sessão precisa de ao menos um avaliador.");
   const seen = new Set<string>();
@@ -150,7 +186,7 @@ function parseEvaluators(raw: unknown, categories: Category[]): Evaluator[] {
     return {
       id,
       name,
-      weights: parseWeights(entry.weights, categories, name),
+      weights: weightsOf(entry.weights, categories, name),
       grades: parseGrades(entry.grades, categories, name),
     };
   });
@@ -164,12 +200,18 @@ function parse(dataset: Dataset, text: string): Session {
     return refuse("O conteúdo não é um JSON válido.");
   }
   const file = objectOf(raw, "A Sessão");
-  if (file.version !== SESSION_VERSION) {
+  if (file.version !== SESSION_VERSION && file.version !== PERCENTAGE_WEIGHTS_VERSION) {
     const found = typeof file.version === "number" ? ` ${file.version}` : "";
-    refuse(`Versão de formato${found} desconhecida; este app lê a versão ${SESSION_VERSION}.`);
+    refuse(
+      `Versão de formato${found} desconhecida; este app lê as versões ${PERCENTAGE_WEIGHTS_VERSION} e ${SESSION_VERSION}.`,
+    );
   }
   const categories = parseCategories(dataset, file.categories);
-  const evaluators = parseEvaluators(file.evaluators, categories);
+  const evaluators = parseEvaluators(
+    file.evaluators,
+    categories,
+    file.version === PERCENTAGE_WEIGHTS_VERSION ? parsePercentageWeights : parseWeights,
+  );
   const activeEvaluatorId = stringOf(file.activeEvaluatorId, "O avaliador ativo");
   if (!evaluators.some((e) => e.id === activeEvaluatorId)) refuse("O avaliador ativo não existe na Sessão.");
   return {

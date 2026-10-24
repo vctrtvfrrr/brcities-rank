@@ -79,7 +79,7 @@ export const SCORE_READING: string[] = [
   "A Pontuação vai de 0 a 100 e serve para ordenar as Candidatas do Corte atual.",
   "As notas são relativas: cada cidade é comparada com as outras Candidatas. Se você muda uma restrição, as notas mudam, e uma cidade que valia 100 num Corte pode valer menos em outro.",
   "Dado ausente conta 0 no critério, para que a falta de dado nunca favoreça uma cidade.",
-  "Cada avaliador distribui 100 pontos de peso entre as categorias, e o Ranking usa a média dos pesos de todos os avaliadores. A Pontuação é a média das notas das categorias ligadas, ponderada por esses pesos; categoria desligada ou com peso 0 fica fora da conta.",
+  "Cada avaliador dá a cada categoria um peso de 0 a 10, sem soma fixa. Entre as categorias ligadas, o peso vira a participação da categoria na conta daquele avaliador (o peso dividido pela soma dos pesos dele), e o Ranking usa a média das participações de todos os avaliadores; assim, quem dá 10 a tudo não pesa mais do que quem dá 2 a tudo. A Pontuação é a média das notas das categorias ligadas, ponderada por essas participações; categoria desligada ou com peso 0 fica fora da conta.",
   "Numa categoria subjetiva, vale a média das notas de 1 a 5 de quem avaliou a cidade, passada para 0 a 100 (1 vale 0 e 5 vale 100). Se ninguém avaliou, a subjetiva sai da conta daquela cidade e o peso dela se reparte entre as demais.",
   "A cidade em que nenhuma categoria entra na conta fica sem Pontuação (–) e vai para o fim da lista. Empates se desfazem pela maior população e, depois, pelo código IBGE.",
 ];

@@ -50,8 +50,11 @@ Pessoa da Sessão que tem os próprios Pesos e dá as próprias notas subjetivas
 O Avaliador cujas notas e pesos o visitante está editando no momento.
 
 **Peso**:
-Porcentagem de 0 a 100 que um avaliador dá a uma Categoria; os pesos de cada avaliador somam sempre 100.
-_Avoid_: ordem de importância
+Inteiro de 0 a 10 que um avaliador dá a uma Categoria, independente dos pesos que ele dá às demais; o que conta no Ranking é a Participação que ele gera. Peso 0 tira a categoria da conta daquele avaliador. As objetivas nascem com 5 e a subjetiva nova com 0.
+_Avoid_: porcentagem, pontos (colide com Pontuação), ordem de importância
+
+**Participação**:
+Fração do Peso de uma categoria ligada sobre a soma dos Pesos que o avaliador dá às categorias ligadas. O Ranking usa a média das Participações dos avaliadores; o avaliador cujos Pesos nas ligadas são todos 0 fica fora dessa média.
 
 **Dado ausente**:
 Valor de um critério que a Coleta não obteve para uma cidade; nunca passa numa Restrição e vale nota 0 no critério.

@@ -9,7 +9,6 @@ import {
   countGrades,
   createInitialSession,
   deleteSubjective,
-  displayWeights,
   equalizeWeights,
   gradeOf,
   orderedCategories,
@@ -43,14 +42,12 @@ describe("createInitialSession", () => {
     expect(session.categories.map((c) => c.id)).not.toContain("Internet");
   });
 
-  it("has the single evaluator 'Você', active, with equal weights summing 100", () => {
+  it("has the single evaluator 'Você', active, with weight 5 on every category", () => {
     expect(session.evaluators).toHaveLength(1);
     const [evaluator] = session.evaluators;
     expect(evaluator.name).toBe("Você");
     expect(session.activeEvaluatorId).toBe(evaluator.id);
-    expect(Object.keys(evaluator.weights)).toEqual(["Segurança", "Clima", "Porte"]);
-    expect(Object.values(evaluator.weights).every((w) => w === 100 / 3)).toBe(true);
-    expect(Object.values(evaluator.weights).reduce((a, b) => a + b, 0)).toBeCloseTo(100);
+    expect(evaluator.weights).toEqual({ Segurança: 5, Clima: 5, Porte: 5 });
     expect(evaluator.grades).toEqual({});
   });
 });
@@ -79,128 +76,74 @@ const withActiveWeights = (session: Session, weights: Record<string, number>): S
   evaluators: session.evaluators.map((e) => (e.id === session.activeEvaluatorId ? { ...e, weights } : e)),
 });
 
-const sum = (weights: Record<string, number>) => Object.values(weights).reduce((a, b) => a + b, 0);
-
 describe("setWeight", () => {
   const session = createInitialSession(fixtureDataset);
 
-  it("makes the other categories absorb the difference in their current proportion", () => {
-    const start = withActiveWeights(session, { Segurança: 50, Clima: 30, Porte: 20 });
-    const weights = activeWeights(setWeight(start, "Segurança", 60));
-    expect(weights.Segurança).toBe(60);
-    expect(weights.Clima).toBeCloseTo(24);
-    expect(weights.Porte).toBeCloseTo(16);
+  it("changes only the chosen category, leaving the others where they were", () => {
+    const start = withActiveWeights(session, { Segurança: 8, Clima: 3, Porte: 2 });
+    expect(activeWeights(setWeight(start, "Segurança", 10))).toEqual({ Segurança: 10, Clima: 3, Porte: 2 });
   });
 
-  it("keeps the sum at 100 with full precision", () => {
-    const weights = activeWeights(setWeight(session, "Clima", 7));
-    expect(sum(weights)).toBeCloseTo(100, 10);
-    expect(weights.Segurança).toBeCloseTo(46.5);
-    expect(weights.Porte).toBeCloseTo(46.5);
+  it("lets every category sit at 0", () => {
+    let next = setWeight(session, "Segurança", 0);
+    next = setWeight(next, "Clima", 0);
+    next = setWeight(next, "Porte", 0);
+    expect(activeWeights(next)).toEqual({ Segurança: 0, Clima: 0, Porte: 0 });
   });
 
-  it("keeps a category at 0 at 0", () => {
-    const start = withActiveWeights(session, { Segurança: 60, Clima: 0, Porte: 40 });
-    const weights = activeWeights(setWeight(start, "Segurança", 80));
-    expect(weights).toEqual({ Segurança: 80, Clima: 0, Porte: 20 });
-  });
-
-  it("splits the remainder equally when every other category is at 0", () => {
-    const start = withActiveWeights(session, { Segurança: 100, Clima: 0, Porte: 0 });
-    const weights = activeWeights(setWeight(start, "Segurança", 70));
-    expect(weights).toEqual({ Segurança: 70, Clima: 15, Porte: 15 });
-  });
-
-  it("gives everything to the category set to 100", () => {
-    expect(activeWeights(setWeight(session, "Porte", 100))).toEqual({ Segurança: 0, Clima: 0, Porte: 100 });
-  });
-
-  it("clamps the value into 0..100", () => {
-    expect(activeWeights(setWeight(session, "Porte", 140)).Porte).toBe(100);
+  it("clamps the value into 0..10", () => {
+    expect(activeWeights(setWeight(session, "Porte", 14)).Porte).toBe(10);
     expect(activeWeights(setWeight(session, "Porte", -5)).Porte).toBe(0);
   });
 
-  it("keeps a lone category at 100", () => {
-    const [only] = session.categories;
-    const single = {
-      ...session,
-      categories: [only],
-      evaluators: session.evaluators.map((e) => ({ ...e, weights: { [only.id]: 100 } })),
-    };
-    expect(activeWeights(setWeight(single, only.id, 70))).toEqual({ [only.id]: 100 });
+  it("rounds the value to an integer", () => {
+    expect(activeWeights(setWeight(session, "Porte", 6.6)).Porte).toBe(7);
   });
 
   it("changes only the active evaluator", () => {
-    const other = { id: "evaluator-2", name: "Outra", weights: { Segurança: 100, Clima: 0, Porte: 0 }, grades: {} };
+    const other = { id: "evaluator-2", name: "Outra", weights: { Segurança: 10, Clima: 0, Porte: 0 }, grades: {} };
     const two = { ...session, evaluators: [...session.evaluators, other] };
-    const next = setWeight({ ...two, activeEvaluatorId: "evaluator-2" }, "Clima", 50);
+    const next = setWeight({ ...two, activeEvaluatorId: "evaluator-2" }, "Clima", 4);
     expect(next.evaluators[0]).toEqual(session.evaluators[0]);
-    expect(next.evaluators[1].weights).toEqual({ Segurança: 50, Clima: 50, Porte: 0 });
+    expect(next.evaluators[1].weights).toEqual({ Segurança: 10, Clima: 4, Porte: 0 });
   });
 
   it("does not mutate the previous Session", () => {
     setWeight(session, "Clima", 7);
-    expect(Object.values(activeWeights(session)).every((w) => w === 100 / 3)).toBe(true);
-  });
-});
-
-describe("displayWeights", () => {
-  const session = createInitialSession(fixtureDataset);
-  const display = (weights: Record<string, number>) =>
-    displayWeights(withActiveWeights(session, weights).evaluators[0], session.categories);
-
-  it("rounds to integers that add up to 100 by the largest remainder", () => {
-    const shown = display({ Segurança: 100 / 3, Clima: 100 / 3, Porte: 100 / 3 });
-    expect(Object.values(shown).sort()).toEqual([33, 33, 34]);
-    expect(sum(shown)).toBe(100);
-  });
-
-  it("gives the extra point to the larger remainder, then to the catalog order", () => {
-    expect(display({ Segurança: 10.4, Clima: 40.5, Porte: 49.1 })).toEqual({ Segurança: 10, Clima: 41, Porte: 49 });
-    expect(display({ Segurança: 33.5, Clima: 33.5, Porte: 33 })).toEqual({ Segurança: 34, Clima: 33, Porte: 33 });
-  });
-
-  it("shows exact integers unchanged", () => {
-    expect(display({ Segurança: 70, Clima: 30, Porte: 0 })).toEqual({ Segurança: 70, Clima: 30, Porte: 0 });
-  });
-
-  it("is not thrown off by float noise just below an integer", () => {
-    const shown = display({ Segurança: 29.999999999999996, Clima: 40, Porte: 30.000000000000004 });
-    expect(shown).toEqual({ Segurança: 30, Clima: 40, Porte: 30 });
+    expect(activeWeights(session)).toEqual({ Segurança: 5, Clima: 5, Porte: 5 });
   });
 });
 
 describe("equalizeWeights", () => {
-  const session = createInitialSession(fixtureDataset);
+  const session = addSubjective(createInitialSession(fixtureDataset));
 
-  it("returns the active evaluator to 100/n on every category", () => {
-    const skewed = setWeight(session, "Clima", 90);
-    const weights = activeWeights(equalizeWeights(skewed));
-    expect(Object.keys(weights)).toEqual(["Segurança", "Clima", "Porte"]);
-    expect(Object.values(weights).every((w) => w === 100 / 3)).toBe(true);
+  it("returns every category of the active evaluator to 5, subjectives included", () => {
+    const skewed = setWeight(setWeight(session, "Clima", 9), "subjective-1", 2);
+    expect(activeWeights(equalizeWeights(skewed))).toEqual({ Segurança: 5, Clima: 5, Porte: 5, "subjective-1": 5 });
   });
 
   it("leaves the other evaluators alone", () => {
-    const other = { id: "evaluator-2", name: "Outra", weights: { Segurança: 100, Clima: 0, Porte: 0 }, grades: {} };
+    const other = {
+      id: "evaluator-2",
+      name: "Outra",
+      weights: { Segurança: 10, Clima: 0, Porte: 0, "subjective-1": 0 },
+      grades: {},
+    };
     const two = { ...session, evaluators: [...session.evaluators, other] };
-    expect(equalizeWeights(setWeight(two, "Clima", 90)).evaluators[1]).toEqual(other);
+    expect(equalizeWeights(setWeight(two, "Clima", 9)).evaluators[1]).toEqual(other);
   });
 });
 
 describe("averageWeights", () => {
   const session = createInitialSession(fixtureDataset);
 
-  it("averages the percentages of all evaluators, counting a weight of 0 as 0", () => {
-    const other = { id: "evaluator-2", name: "Outra", weights: { Segurança: 100, Clima: 0, Porte: 0 }, grades: {} };
+  it("averages the weights of all evaluators, counting a weight of 0 as 0", () => {
+    const other = { id: "evaluator-2", name: "Outra", weights: { Segurança: 10, Clima: 0, Porte: 0 }, grades: {} };
     const two = withActiveWeights(
       { ...session, evaluators: [...session.evaluators, other] },
-      {
-        Segurança: 20,
-        Clima: 50,
-        Porte: 30,
-      },
+      { Segurança: 2, Clima: 5, Porte: 3 },
     );
-    expect(averageWeights(two)).toEqual({ Segurança: 60, Clima: 25, Porte: 15 });
+    expect(averageWeights(two)).toEqual({ Segurança: 6, Clima: 2.5, Porte: 1.5 });
   });
 });
 
@@ -213,12 +156,12 @@ describe("orderedCategories", () => {
   });
 
   it("sorts by the active evaluator's weight, descending", () => {
-    const next = withActiveWeights(session, { Segurança: 20, Clima: 30, Porte: 50 });
+    const next = withActiveWeights(session, { Segurança: 2, Clima: 3, Porte: 5 });
     expect(ids(next)).toEqual(["Porte", "Clima", "Segurança"]);
   });
 
   it("breaks a tie by the catalog order", () => {
-    const next = withActiveWeights(session, { Segurança: 25, Clima: 50, Porte: 25 });
+    const next = withActiveWeights(session, { Segurança: 2, Clima: 5, Porte: 2 });
     expect(ids(next)).toEqual(["Clima", "Segurança", "Porte"]);
   });
 });
@@ -241,11 +184,10 @@ describe("addSubjective", () => {
     expect(session.evaluators.map((e) => e.weights[added.id])).toEqual([0, 0]);
   });
 
-  it("keeps the existing weights untouched, still summing 100", () => {
+  it("keeps the existing weights untouched", () => {
     const session = addSubjective(start);
     for (const evaluator of session.evaluators) {
-      expect(evaluator.weights.Clima).toBeCloseTo(100 / 3);
-      expect(sum(evaluator.weights)).toBeCloseTo(100);
+      expect(evaluator.weights).toMatchObject({ Segurança: 5, Clima: 5, Porte: 5 });
     }
   });
 
@@ -257,7 +199,7 @@ describe("addSubjective", () => {
   });
 
   it("orders a subjective after the objectives when the weights tie", () => {
-    const session = addSubjective(withActiveWeights(start, { Segurança: 40, Clima: 40, Porte: 20 }));
+    const session = addSubjective(withActiveWeights(start, { Segurança: 4, Clima: 4, Porte: 0 }));
     expect(
       orderedCategories(session)
         .map((c) => c.id)
@@ -330,7 +272,7 @@ describe("deleteSubjective", () => {
       ...added,
       evaluators: added.evaluators.map((e) => ({
         ...e,
-        weights: { Segurança: 30, Clima: 15, Porte: 15, [first.id]: 40, [second.id]: 0 },
+        weights: { Segurança: 6, Clima: 3, Porte: 3, [first.id]: 8, [second.id]: 0 },
       })),
     };
     session = setGrade(session, first.id, "3550308", 5);
@@ -353,14 +295,10 @@ describe("deleteSubjective", () => {
     }
   });
 
-  it("renormalizes the remaining weights of each evaluator in proportion", () => {
+  it("keeps the remaining weights of each evaluator as they were", () => {
     const session = deleteSubjective(withLoad(), first.id);
     for (const evaluator of session.evaluators) {
-      expect(evaluator.weights.Segurança).toBeCloseTo(50);
-      expect(evaluator.weights.Clima).toBeCloseTo(25);
-      expect(evaluator.weights.Porte).toBeCloseTo(25);
-      expect(evaluator.weights[second.id]).toBe(0);
-      expect(sum(evaluator.weights)).toBeCloseTo(100);
+      expect(evaluator.weights).toEqual({ Segurança: 6, Clima: 3, Porte: 3, [second.id]: 0 });
     }
   });
 
@@ -368,19 +306,6 @@ describe("deleteSubjective", () => {
     const graded = setGrade(withLoad(), second.id, "3550308", 4);
     const session = deleteSubjective(graded, first.id);
     expect(gradeOf(session, second.id, "3550308")).toBe(4);
-  });
-
-  it("splits the weight equally when everything left was at 0", () => {
-    const session: Session = {
-      ...added,
-      evaluators: added.evaluators.map((e) => ({
-        ...e,
-        weights: { Segurança: 0, Clima: 0, Porte: 0, [first.id]: 100, [second.id]: 0 },
-      })),
-    };
-    const result = deleteSubjective(session, first.id);
-    expect(result.evaluators[0].weights.Clima).toBeCloseTo(25);
-    expect(result.evaluators[0].weights[second.id]).toBeCloseTo(25);
   });
 });
 
@@ -390,7 +315,7 @@ describe("grades survive any change that is not deleting them", () => {
     const id = base.categories.at(-1)!.id;
     let session = setGrade(base, id, "3550308", 5);
     session = toggleCategory(toggleCategory(session, id), id);
-    session = setWeight(session, id, 70);
+    session = setWeight(session, id, 7);
     session = equalizeWeights(session);
     expect(gradeOf(session, id, "3550308")).toBe(5);
   });
@@ -403,14 +328,13 @@ describe("evaluators", () => {
   };
 
   describe("addEvaluator", () => {
-    it("adds a numbered evaluator with equal weights over every category, no grades, and makes it active", () => {
+    it("adds a numbered evaluator with weight 5 on every category, no grades, and makes it active", () => {
       const session = addEvaluator(base());
       expect(session.evaluators).toHaveLength(2);
       const added = session.evaluators[1];
       expect(added.name).toBe("Avaliador 2");
       expect(session.activeEvaluatorId).toBe(added.id);
-      expect(Object.keys(added.weights)).toEqual(["Segurança", "Clima", "Porte", "subjective-1"]);
-      expect(Object.values(added.weights).every((w) => w === 25)).toBe(true);
+      expect(added.weights).toEqual({ Segurança: 5, Clima: 5, Porte: 5, "subjective-1": 5 });
       expect(added.grades).toEqual({});
     });
 
@@ -448,10 +372,10 @@ describe("evaluators", () => {
     it("switches the active evaluator, so weights and grades edit the chosen one", () => {
       const two = addEvaluator(base());
       const first = two.evaluators[0].id;
-      const session = setWeight(activateEvaluator(two, first), "Clima", 70);
+      const session = setWeight(activateEvaluator(two, first), "Clima", 7);
       expect(session.activeEvaluatorId).toBe(first);
-      expect(session.evaluators[0].weights.Clima).toBe(70);
-      expect(session.evaluators[1].weights.Clima).toBe(25);
+      expect(session.evaluators[0].weights.Clima).toBe(7);
+      expect(session.evaluators[1].weights.Clima).toBe(5);
     });
 
     it("ignores an unknown evaluator", () => {
@@ -498,12 +422,8 @@ describe("evaluators", () => {
   describe("combining evaluators", () => {
     it("averages the weights of all evaluators, counting 0 as 0", () => {
       const two = addEvaluator(createInitialSession(fixtureDataset));
-      const session = setWeight(two, "Clima", 100);
-      expect(averageWeights(session)).toEqual({
-        Segurança: (100 / 3 + 0) / 2,
-        Clima: (100 / 3 + 100) / 2,
-        Porte: (100 / 3 + 0) / 2,
-      });
+      const session = setWeight(setWeight(two, "Clima", 10), "Porte", 0);
+      expect(averageWeights(session)).toEqual({ Segurança: 5, Clima: 7.5, Porte: 2.5 });
     });
 
     it("keeps each evaluator's grade apart", () => {

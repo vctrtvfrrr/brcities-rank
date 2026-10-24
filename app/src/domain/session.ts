@@ -1,6 +1,9 @@
 import type { Dataset } from "./dataset";
 
-export const SESSION_VERSION = 1;
+export const SESSION_VERSION = 2;
+
+export const MAX_WEIGHT = 10;
+export const DEFAULT_WEIGHT = 5;
 
 export type Constraint =
   | { criterion: string; on: boolean; min: number | null; max: number | null }
@@ -35,7 +38,6 @@ const FIRST_EVALUATOR_ID = "evaluator-1";
 
 export function createInitialSession(dataset: Dataset): Session {
   const objectiveIds = [...new Set(dataset.catalogo.filter((c) => c.pontua).map((c) => c.categoria))];
-  const equalWeight = 100 / objectiveIds.length;
   return {
     version: SESSION_VERSION,
     name: "",
@@ -45,7 +47,7 @@ export function createInitialSession(dataset: Dataset): Session {
       {
         id: FIRST_EVALUATOR_ID,
         name: "Você",
-        weights: Object.fromEntries(objectiveIds.map((id) => [id, equalWeight])),
+        weights: Object.fromEntries(objectiveIds.map((id) => [id, DEFAULT_WEIGHT])),
         grades: {},
       },
     ],
@@ -66,8 +68,6 @@ export function toggleCategory(session: Session, id: string): Session {
   };
 }
 
-const FLOAT_NOISE = 1e-9;
-
 function updateActiveEvaluator(session: Session, update: (evaluator: Evaluator) => Evaluator): Session {
   return {
     ...session,
@@ -76,37 +76,17 @@ function updateActiveEvaluator(session: Session, update: (evaluator: Evaluator) 
 }
 
 export function setWeight(session: Session, id: string, value: number): Session {
-  const others = session.categories.map((c) => c.id).filter((other) => other !== id);
-  const clamped = others.length === 0 ? 100 : Math.min(100, Math.max(0, value));
-  return updateActiveEvaluator(session, (evaluator) => {
-    const othersTotal = others.reduce((total, other) => total + evaluator.weights[other], 0);
-    const remainder = 100 - clamped;
-    const weights: Record<string, number> = {};
-    for (const category of session.categories) {
-      if (category.id === id) weights[id] = clamped;
-      else if (othersTotal > 0) weights[category.id] = (evaluator.weights[category.id] * remainder) / othersTotal;
-      else weights[category.id] = remainder / others.length;
-    }
-    return { ...evaluator, weights };
-  });
-}
-
-export function equalizeWeights(session: Session): Session {
-  const equal = 100 / session.categories.length;
+  const weight = Math.round(Math.min(MAX_WEIGHT, Math.max(0, value)));
   return updateActiveEvaluator(session, (evaluator) => ({
     ...evaluator,
-    weights: Object.fromEntries(session.categories.map((c) => [c.id, equal])),
+    weights: { ...evaluator.weights, [id]: weight },
   }));
 }
 
-export function displayWeights(evaluator: Evaluator, categories: Category[]): Record<string, number> {
-  const floors = categories.map((c) => Math.floor(evaluator.weights[c.id] + FLOAT_NOISE));
-  const byLargestRemainder = categories
-    .map((c, at) => ({ at, remainder: evaluator.weights[c.id] - floors[at] }))
-    .sort((a, b) => b.remainder - a.remainder || a.at - b.at);
-  const missing = 100 - floors.reduce((total, floor) => total + floor, 0);
-  for (const { at } of byLargestRemainder.slice(0, Math.max(0, missing))) floors[at]++;
-  return Object.fromEntries(categories.map((c, at) => [c.id, floors[at]]));
+const defaultWeights = (categories: Category[]) => Object.fromEntries(categories.map((c) => [c.id, DEFAULT_WEIGHT]));
+
+export function equalizeWeights(session: Session): Session {
+  return updateActiveEvaluator(session, (evaluator) => ({ ...evaluator, weights: defaultWeights(session.categories) }));
 }
 
 export function averageWeights(session: Session): Record<string, number> {
@@ -153,18 +133,16 @@ export function countGrades(session: Session, id: string): number {
 }
 
 export function deleteSubjective(session: Session, id: string): Session {
-  const categories = session.categories.filter((c) => c.id !== id);
+  const without = <T>(record: Record<string, T>) =>
+    Object.fromEntries(Object.entries(record).filter(([category]) => category !== id));
   return {
     ...session,
-    categories,
-    evaluators: session.evaluators.map((evaluator) => {
-      const total = categories.reduce((sum, c) => sum + evaluator.weights[c.id], 0);
-      const weights = Object.fromEntries(
-        categories.map((c) => [c.id, total > 0 ? (evaluator.weights[c.id] * 100) / total : 100 / categories.length]),
-      );
-      const grades = Object.fromEntries(Object.entries(evaluator.grades).filter(([category]) => category !== id));
-      return { ...evaluator, weights, grades };
-    }),
+    categories: session.categories.filter((c) => c.id !== id),
+    evaluators: session.evaluators.map((evaluator) => ({
+      ...evaluator,
+      weights: without(evaluator.weights),
+      grades: without(evaluator.grades),
+    })),
   };
 }
 
@@ -185,11 +163,10 @@ const EVALUATOR_ID_PREFIX = "evaluator-";
 export function addEvaluator(session: Session): Session {
   const taken = session.evaluators.map((e) => Number(e.id.slice(EVALUATOR_ID_PREFIX.length)));
   const id = `${EVALUATOR_ID_PREFIX}${Math.max(0, ...taken) + 1}`;
-  const equal = 100 / session.categories.length;
   const added: Evaluator = {
     id,
     name: `Avaliador ${session.evaluators.length + 1}`,
-    weights: Object.fromEntries(session.categories.map((c) => [c.id, equal])),
+    weights: defaultWeights(session.categories),
     grades: {},
   };
   return { ...session, evaluators: [...session.evaluators, added], activeEvaluatorId: id };

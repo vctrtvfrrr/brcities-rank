@@ -158,37 +158,53 @@ describe("Pontuação", () => {
   ]);
   const base = createInitialSession(dataset);
 
-  it("is the average of the categories that are on, weighted by the average weight", () => {
-    const session = withWeights(withOn(base, "Segurança", "Clima"), { Segurança: 75, Clima: 25, Porte: 0 });
+  it("is the average of the categories that are on, weighted by the Participação of each one", () => {
+    const session = withWeights(withOn(base, "Segurança", "Clima"), { Segurança: 3, Clima: 1, Porte: 0 });
     const c = byName(rank(dataset, session))["C"];
     const { Segurança, Clima } = c.categoryScores;
-    expect(c.score).toBeCloseTo((75 * Segurança + 25 * Clima) / 100);
+    expect(c.score).toBeCloseTo(0.75 * Segurança + 0.25 * Clima);
   });
 
-  it("averages the weights of all evaluators, counting a missing weight as 0", () => {
-    const first = withWeights(withOn(base, "Segurança", "Clima"), { Segurança: 100, Clima: 0, Porte: 0 });
-    const session: Session = {
-      ...first,
-      evaluators: [...first.evaluators, { id: "e2", name: "Outra", weights: { Clima: 100 }, grades: {} }],
-    };
-    const c = byName(rank(dataset, session))["C"];
-    expect(c.score).toBeCloseTo((c.categoryScores["Segurança"] + c.categoryScores["Clima"]) / 2);
+  const withEvaluators = (session: Session, ...weights: Record<string, number>[]): Session => ({
+    ...session,
+    evaluators: weights.map((w, at) => ({ id: `e${at + 1}`, name: `Avaliador ${at + 1}`, weights: w, grades: {} })),
+  });
+  const safeButHarsh = datasetWithCities([
+    { code: "1", name: "A", values: { crime: 0, rain: 200, heat: 30 } },
+    { code: "2", name: "B", values: { crime: 100, rain: 100, heat: 20 } },
+  ]);
+  const scoreOfA = (session: Session) => byName(rank(safeButHarsh, session))["A"].score;
+  const bothOn = withOn(createInitialSession(safeButHarsh), "Segurança", "Clima");
+
+  it("averages the Participações of the evaluators, so larger weights do not make an evaluator count more", () => {
+    const session = withEvaluators(bothOn, { Segurança: 10, Clima: 10 }, { Segurança: 1 });
+    expect(scoreOfA(session)).toBeCloseTo(75);
   });
 
-  it("leaves a category that is off out of the calculation, sharing its weight among the others", () => {
-    const session = withWeights(withOn(base, "Segurança"), { Segurança: 20, Clima: 50, Porte: 30 });
+  it("takes the Participação over the categories that are on, so weight on a category that is off dilutes nothing", () => {
+    const session = withEvaluators(bothOn, { Segurança: 2, Clima: 2, Porte: 10 }, { Segurança: 0, Clima: 1, Porte: 0 });
+    expect(scoreOfA(session)).toBeCloseTo(25);
+  });
+
+  it("leaves out an evaluator whose weights on the categories that are on are all 0", () => {
+    const session = withEvaluators(bothOn, { Segurança: 3, Clima: 1, Porte: 0 }, { Segurança: 0, Clima: 0, Porte: 10 });
+    expect(scoreOfA(session)).toBeCloseTo(75);
+  });
+
+  it("leaves a category that is off out of the calculation", () => {
+    const session = withWeights(withOn(base, "Segurança"), { Segurança: 2, Clima: 5, Porte: 3 });
     const c = byName(rank(dataset, session))["C"];
     expect(c.score).toBeCloseTo(c.categoryScores["Segurança"]);
   });
 
-  it("leaves a category with average weight 0 out of the calculation", () => {
-    const session = withWeights(withOn(base, "Segurança", "Clima"), { Segurança: 100, Clima: 0, Porte: 0 });
+  it("leaves a category that every evaluator weighs 0 out of the calculation", () => {
+    const session = withWeights(withOn(base, "Segurança", "Clima"), { Segurança: 10, Clima: 0, Porte: 0 });
     const c = byName(rank(dataset, session))["C"];
     expect(c.score).toBeCloseTo(c.categoryScores["Segurança"]);
   });
 
-  it("leaves a Candidate without Pontuação when no category enters the calculation", () => {
-    const session = withWeights(withOn(base, "Clima"), { Segurança: 100, Clima: 0, Porte: 0 });
+  it("leaves a Candidate without Pontuação when every evaluator weighs the categories that are on 0", () => {
+    const session = withWeights(withOn(base, "Clima"), { Segurança: 10, Clima: 0, Porte: 0 });
     const { candidates } = rank(dataset, session);
     expect(candidates.every((c) => c.score === null && c.position === null)).toBe(true);
     expect(candidates.map((c) => c.name)).toEqual(["A", "B", "C"]);
@@ -313,26 +329,26 @@ describe("subjective categories", () => {
     session = {
       ...session,
       evaluators: session.evaluators.map((e) =>
-        e.id === "e2" ? { ...e, weights: { Segurança: 0, Clima: 0, Porte: 0, [id]: 100 } } : e,
+        e.id === "e2" ? { ...e, weights: { Segurança: 0, Clima: 0, Porte: 0, [id]: 10 } } : e,
       ),
     };
     session = gradeAs(session, "evaluator-1", id, "1", 5);
     expect(byName(rank(dataset, session))["A"].score).toBe(100);
   });
 
-  it("leaves a subjective without a grade out of the calculation, sharing its weight among the rest", () => {
+  it("leaves a subjective without a grade out of the calculation of that city only", () => {
     const { session: base, id } = withSubjective();
     let session = toggleCategory(base, "Segurança");
-    session = withWeights(session, { Segurança: 50, Clima: 0, Porte: 0, [id]: 50 });
+    session = withWeights(session, { Segurança: 5, Clima: 0, Porte: 0, [id]: 5 });
     session = setGrade(session, id, "1", 1);
     const scores = byName(rank(dataset, session));
-    expect(scores.A.score).toBeCloseTo((scores.A.categoryScores["Segurança"] * 50 + 0 * 50) / 100);
+    expect(scores.A.score).toBeCloseTo(0.5 * scores.A.categoryScores["Segurança"] + 0.5 * 0);
     expect(scores.B.score).toBeCloseTo(scores.B.categoryScores["Segurança"]);
   });
 
   it("leaves a Candidate without Pontuação when only an ungraded subjective weighs", () => {
     const { session: base, id } = withSubjective();
-    const session = setGrade(withWeights(base, { Segurança: 0, Clima: 0, Porte: 0, [id]: 100 }), id, "1", 4);
+    const session = setGrade(withWeights(base, { Segurança: 0, Clima: 0, Porte: 0, [id]: 10 }), id, "1", 4);
     const { candidates } = rank(dataset, session);
     expect(candidates.map((c) => [c.name, c.score])).toEqual([
       ["A", 75],

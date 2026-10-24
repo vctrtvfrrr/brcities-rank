@@ -5,8 +5,9 @@ import {
   averageWeights,
   countGrades,
   deleteSubjective,
-  displayWeights,
+  DEFAULT_WEIGHT,
   equalizeWeights,
+  MAX_WEIGHT,
   orderedCategories,
   renameSubjective,
   setWeight,
@@ -31,7 +32,6 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
   const [frozenOrder, setFrozenOrder] = useState<string[] | null>(null);
   const usingPointer = useRef(false);
   const active = session.evaluators.find((e) => e.id === session.activeEvaluatorId)!;
-  const shown = displayWeights(active, session.categories);
   const averages = averageWeights(session);
   const categories = frozenOrder
     ? frozenOrder.map((id) => session.categories.find((c) => c.id === id)!)
@@ -65,7 +65,7 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
     const evaluators = session.evaluators.length;
     if (
       window.confirm(
-        `Apagar a subjetiva "${categoryName(category)}"? Saem ${lost} ${lost === 1 ? "nota" : "notas"} e o peso dela em ${evaluators} ${evaluators === 1 ? "avaliador" : "avaliadores"}; o peso vai para as demais categorias na proporção atual.`,
+        `Apagar a subjetiva "${categoryName(category)}"? Saem ${lost} ${lost === 1 ? "nota" : "notas"} e o peso dela em ${evaluators} ${evaluators === 1 ? "avaliador" : "avaliadores"}; os pesos das demais categorias não mudam.`,
       )
     ) {
       setFrozenOrder(null);
@@ -76,7 +76,7 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
   const equalize = () => {
     if (
       window.confirm(
-        `Igualar os pesos de "${active.name}"? Todas as ${categories.length} categorias voltam a ${formatAverage(100 / categories.length)}%.`,
+        `Igualar os pesos de "${active.name}"? Todas as ${categories.length} categorias voltam a ${DEFAULT_WEIGHT}.`,
       )
     ) {
       setFrozenOrder(null);
@@ -124,16 +124,15 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
                     </button>
                   </>
                 )}
-                <span className="pct">{shown[category.id]}%</span>
+                <span className="weight">{active.weights[category.id]}</span>
               </div>
               <input
                 type="range"
                 min={0}
-                max={100}
+                max={MAX_WEIGHT}
                 step={1}
                 value={active.weights[category.id]}
                 aria-label={`Peso de ${name}`}
-                aria-valuetext={`${shown[category.id]}%`}
                 onPointerDown={() => {
                   usingPointer.current = true;
                 }}
@@ -142,7 +141,7 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
                 }}
                 onChange={(event) => changeWeight(category.id, Number(event.target.value))}
               />
-              <p className="muted small">média da Sessão: {formatAverage(averages[category.id])}%</p>
+              <p className="muted small">média da Sessão: {formatAverage(averages[category.id])}</p>
             </li>
           );
         })}

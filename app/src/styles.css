@@ -148,7 +148,7 @@ p {
   margin: 2px 0 0;
   accent-color: var(--accent);
 }
-.pct {
+.weight {
   min-width: 36px;
   text-align: right;
   font-weight: 600;

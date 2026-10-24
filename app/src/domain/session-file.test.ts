@@ -23,11 +23,11 @@ function richSession(): Session {
   session = editConstraint(session, "fibra", { value: false });
   session = toggleCategory(session, "Clima");
   session = addSubjective(session);
-  session = setWeight(session, "Clima", 37.123456789);
+  session = setWeight(session, "Clima", 8);
   session = setGrade(session, "subjective-1", "3550308", 4);
   session = addEvaluator(session);
   session = renameEvaluator(session, "evaluator-2", "Ana");
-  session = setWeight(session, "subjective-1", 20);
+  session = setWeight(session, "subjective-1", 2);
   session = setGrade(session, "subjective-1", "3304557", 2);
   return { ...session, name: "Família Silva" };
 }
@@ -120,19 +120,18 @@ describe("parseSession refusing invalid files", () => {
     refuses((f) => (f.activeEvaluatorId = "evaluator-99"));
   });
 
-  it("refuses weights that do not sum 100", () => {
-    refuses((f) => (f.evaluators[0].weights.Porte += 10));
-  });
-
   it("refuses weights that miss a category", () => {
     refuses((f) => delete f.evaluators[0].weights.Porte);
   });
 
-  it("refuses a negative weight", () => {
-    refuses((f) => {
-      f.evaluators[0].weights.Porte = -5;
-      f.evaluators[0].weights.Clima += 5;
-    });
+  it.each([[-1], [11], [2.5], ["5"]])("refuses the weight %j, which is not an integer from 0 to 10", (weight) => {
+    refuses((f) => (f.evaluators[0].weights.Porte = weight));
+  });
+
+  it("accepts weights that are all 0", () => {
+    const file = valid();
+    for (const id of Object.keys(file.evaluators[0].weights)) file.evaluators[0].weights[id] = 0;
+    expect(parseSession(fixtureDataset, JSON.stringify(file)).ok).toBe(true);
   });
 
   it("refuses a grade outside 1 to 5", () => {
@@ -145,6 +144,48 @@ describe("parseSession refusing invalid files", () => {
 
   it("refuses duplicated evaluator ids", () => {
     refuses((f) => (f.evaluators[1].id = f.evaluators[0].id));
+  });
+});
+
+describe("parseSession converting a version 1 Session, whose weights are percentages", () => {
+  const versionOne = (...weights: Record<string, number>[]) => {
+    const file = JSON.parse(serializeSession(createInitialSession(fixtureDataset)));
+    file.version = 1;
+    file.evaluators = weights.map((w, at) => ({
+      id: `evaluator-${at + 1}`,
+      name: `Avaliador ${at + 1}`,
+      weights: w,
+      grades: {},
+    }));
+    return JSON.stringify(file);
+  };
+  const converted = (text: string) => {
+    const result = parseSession(fixtureDataset, text);
+    if (!result.ok) throw new Error(result.reason);
+    return result.session;
+  };
+
+  it("turns the largest percentage of each evaluator into 10 and scales the others along, rounded", () => {
+    const session = converted(
+      versionOne({ Segurança: 50, Clima: 30, Porte: 20 }, { Segurança: 10, Clima: 20, Porte: 70 }),
+    );
+    expect(session.evaluators.map((e) => e.weights)).toEqual([
+      { Segurança: 10, Clima: 6, Porte: 4 },
+      { Segurança: 1, Clima: 3, Porte: 10 },
+    ]);
+  });
+
+  it("never turns a percentage above 0 into 0, and keeps 0 at 0", () => {
+    const session = converted(versionOne({ Segurança: 98, Clima: 2, Porte: 0 }));
+    expect(session.evaluators[0].weights).toEqual({ Segurança: 10, Clima: 1, Porte: 0 });
+  });
+
+  it("brings the Session to the current version", () => {
+    expect(converted(versionOne({ Segurança: 50, Clima: 30, Porte: 20 })).version).toBe(2);
+  });
+
+  it("still refuses version 1 weights that do not sum 100", () => {
+    expect(parseSession(fixtureDataset, versionOne({ Segurança: 50, Clima: 30, Porte: 30 })).ok).toBe(false);
   });
 });
 
