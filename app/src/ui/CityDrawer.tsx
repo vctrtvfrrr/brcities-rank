@@ -229,6 +229,21 @@ function Filters({ detail }: { detail: CityDetail }) {
         <span>Só filtram</span>
       </div>
       <div className="crit-list">
+        {filters.voltage !== null && (
+          <div className="crit">
+            <span>Tensão</span>
+            <span className="wide">
+              {filters.voltage.length ? (
+                filters.voltage.map((pair) => `${pair} V`).join(" e ")
+              ) : (
+                <span className="tag warn">Tensão desconhecida · Dado ausente</span>
+              )}
+            </span>
+            <span className="src">
+              <Sources sources={filters.voltageSources} />
+            </span>
+          </div>
+        )}
         {filters.terrain.map((entry) => (
           <div className="crit" key={entry.key}>
             <span>{entry.label}</span>

@@ -250,3 +250,27 @@ describe("terrain Session files", () => {
     if (!result.ok) expect(result.reason).toMatch(/classe|mínimo|máximo/);
   });
 });
+
+it.each([[], [127], [220], [127, 220]].map((voltages) => ({ voltages })))(
+  "round-trips voltage selection %j without changing old Sessions",
+  ({ voltages }) => {
+    const session = {
+      ...createInitialSession(fixtureDataset),
+      constraints: [{ criterion: "tensao", on: false, voltages }],
+    } as Session;
+    expect(parseSession(fixtureDataset, serializeSession(session))).toEqual({ ok: true, session });
+  },
+);
+
+it.each([[110], ["127"], [127, 230], [null], null, "220"].map((voltages) => ({ voltages })))(
+  "refuses invalid voltages %j clearly",
+  ({ voltages }) => {
+    const session = {
+      ...createInitialSession(fixtureDataset),
+      constraints: [{ criterion: "tensao", on: true, voltages }],
+    };
+    const result = parseSession(fixtureDataset, JSON.stringify(session));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toMatch(/Tensão.*127.*220/);
+  },
+);

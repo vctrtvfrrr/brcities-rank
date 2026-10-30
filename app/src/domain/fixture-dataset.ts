@@ -20,7 +20,7 @@ export const fixtureDataset: Dataset = {
       endereco: "https://example.org/inmet",
       credito: "INMET",
     },
-    ...["anadem", "ibge-setores"].map((key) => ({
+    ...["anadem", "ibge-setores", "aneel-tensoes"].map((key) => ({
       chave: key,
       nome: key,
       edicao: "2024",
@@ -110,6 +110,16 @@ export const fixtureDataset: Dataset = {
       pontua: false,
       fontes: ["ssp"],
     },
+    {
+      chave: "tensao",
+      categoria: "Tensão",
+      rotulo: "Tensão",
+      unidade: "V",
+      direcao: null,
+      transformacao: "nenhuma",
+      pontua: false,
+      fontes: ["aneel-tensoes"],
+    },
     ...[
       { chave: "altitude", rotulo: "Altitude", unidade: "m" },
       { chave: "declividade_urbana", rotulo: "Declividade urbana", unidade: "%" },
@@ -129,6 +139,7 @@ export const fixtureDataset: Dataset = {
     uf: ["SP", "RJ", "RO", "BA", "PR", "PE"],
     latitude: [-23.55, -22.91, -11.93, -12.97, -25.43, -8.05],
     longitude: [-46.63, -43.2, -62.0, -38.5, -49.27, -34.88],
+    tensao: ["220/127", "220/127;380/220", "230/115", "380/220", "240/120", null],
     altitude: [760, 5, 340, 8, 934, null],
     declividade_urbana: [10, 20, 3, 8, 5, null],
     classe_relevo: ["ondulado", "montanhoso", "plano", "forte ondulado", "suave ondulado", null],

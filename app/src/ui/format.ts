@@ -13,6 +13,9 @@ export const formatCount = (n: number) => integer.format(n);
 export const formatDate = (iso: string) => iso.split("-").reverse().join("/");
 
 export function describeConstraint(dataset: Dataset, constraint: Constraint): string {
+  if ("voltages" in constraint) {
+    return `Tensão ${constraint.voltages.length ? constraint.voltages.map((v) => `${v} V`).join(" ou ") : "(nenhuma tensão aceita)"}`;
+  }
   if ("states" in constraint) {
     return `Localização ${constraint.states.length > 0 ? constraint.states.join(", ") : "(nenhum estado aceito)"}`;
   }

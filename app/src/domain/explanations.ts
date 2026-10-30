@@ -86,3 +86,14 @@ export const SCORE_READING: string[] = [
   "Numa categoria subjetiva, vale a média das notas de 1 a 5 de quem avaliou a cidade, passada para 0 a 100 (1 vale 0 e 5 vale 100). Se ninguém avaliou, a subjetiva sai da conta daquela cidade e o peso dela se reparte entre as demais.",
   "A cidade em que nenhuma categoria entra na conta fica sem Pontuação (–) e vai para o fim da lista. Empates se desfazem pela maior população e, depois, pelo código IBGE.",
 ];
+
+const CONSTRAINT_EXPLANATIONS: Record<string, string> = {
+  tensao:
+    "Olha a tensão da tomada comum (fase-neutro). Basta uma das tensões da cidade estar aceita. " +
+    "Tensões raras contam na mais próxima de 127 V ou 220 V. Sem tensão conhecida, a cidade não passa. " +
+    "A Tensão nunca entra na Pontuação.",
+};
+
+export function explainConstraint(criterion: string): string | null {
+  return CONSTRAINT_EXPLANATIONS[criterion] ?? null;
+}

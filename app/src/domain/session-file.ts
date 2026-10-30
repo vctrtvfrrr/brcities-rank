@@ -2,6 +2,7 @@ import { constraintOptions, MAX_SCORE } from "./constraints";
 import { inStateOrder, STATES } from "./regions";
 import type { Dataset } from "./dataset";
 import { inTerrainOrder, TERRAIN_CLASSES, TERRAIN_CRITERION } from "./terrain";
+import { VOLTAGES, VOLTAGE_CRITERION } from "./voltage";
 import {
   createInitialSession,
   MAX_WEIGHT,
@@ -63,6 +64,13 @@ function parseConstraints(dataset: Dataset, raw: unknown): Constraint[] {
     if (seen.has(criterion)) refuse(`O critério "${criterion}" tem mais de uma restrição.`);
     seen.add(criterion);
     const on = booleanOf(entry.on, `O estado da restrição "${criterion}"`);
+    if (kind === "voltage") {
+      const rawVoltages = entry.voltages;
+      if (!Array.isArray(rawVoltages) || !rawVoltages.every((value) => value === 127 || value === 220)) {
+        refuse("A Tensão deve conter uma lista de tensões aceitas: 127 V ou 220 V.");
+      }
+      return { criterion: VOLTAGE_CRITERION, on, voltages: VOLTAGES.filter((value) => rawVoltages.includes(value)) };
+    }
     if (kind === "location") {
       const states = arrayOf(entry.states, "Os estados aceitos da Localização").map((state) => {
         const uf = stringOf(state, "Cada estado da Localização");

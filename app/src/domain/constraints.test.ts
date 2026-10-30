@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { addConstraint, constraintOptions, editConstraint, removeConstraint, toggleConstraint } from "./constraints";
-import { fixtureDataset } from "./fixture-dataset";
+import { datasetWithCities, fixtureDataset } from "./fixture-dataset";
 import { rank } from "./rank";
 import { createInitialSession, toggleCategory, type Session } from "./session";
 
@@ -29,6 +29,7 @@ describe("constraintOptions", () => {
       "koppen",
       "hospital_geral",
       "fibra",
+      "tensao",
       "altitude",
       "declividade_urbana",
       "classe_relevo",
@@ -395,4 +396,72 @@ describe("terrain Corte", () => {
       result.candidates,
     );
   });
+});
+
+describe("Tensão commands", () => {
+  it("offers its own group, starts with both voltages, and keeps the selection through toggling", () => {
+    expect(constraintOptions(fixtureDataset, initial).find((o) => o.criterion === "tensao")).toEqual({
+      criterion: "tensao",
+      label: "Tensão",
+      group: "Tensão",
+      kind: "voltage",
+    });
+    const added = addConstraint(fixtureDataset, initial, "tensao");
+    expect(added.constraints).toEqual([{ criterion: "tensao", on: true, voltages: [127, 220] }]);
+    const selected = editConstraint(added, "tensao", { voltages: [220] });
+    const off = toggleConstraint(selected, "tensao");
+    expect(off.constraints).toEqual([{ criterion: "tensao", on: false, voltages: [220] }]);
+    expect(toggleConstraint(off, "tensao")).toEqual(selected);
+    expect(constraintOptions(fixtureDataset, selected).some((o) => o.criterion === "tensao")).toBe(false);
+    expect(
+      constraintOptions(fixtureDataset, removeConstraint(selected, "tensao")).some((o) => o.criterion === "tensao"),
+    ).toBe(true);
+  });
+});
+
+it.each([
+  { voltages: [127, 220], names: ["Alta Floresta D'Oeste", "Curitiba", "Rio de Janeiro", "Salvador", "São Paulo"] },
+  { voltages: [127], names: ["Alta Floresta D'Oeste", "Curitiba", "Rio de Janeiro", "São Paulo"] },
+  { voltages: [220], names: ["Rio de Janeiro", "Salvador"] },
+  { voltages: [], names: [] },
+] as const)(
+  "cuts by accepted outlet voltages $voltages, including rare pairs and missing data",
+  ({ voltages, names }) => {
+    const session = editConstraint(addConstraint(fixtureDataset, initial, "tensao"), "tensao", {
+      voltages: [...voltages],
+    });
+    expect(candidateNames(session)).toEqual(names);
+    expect(candidateNames(toggleConstraint(session, "tensao"))).toHaveLength(6);
+  },
+);
+
+it("voltage never changes rulers, criterion notes, category notes or Pontuação", () => {
+  const session = ["Segurança", "Clima", "Porte"].reduce(toggleCategory, initial);
+  const before = rank(fixtureDataset, session);
+  const after = rank(
+    fixtureDataset,
+    editConstraint(addConstraint(fixtureDataset, session, "tensao"), "tensao", { voltages: [220] }),
+  );
+  expect(after.rulers).toEqual(before.rulers);
+  for (const city of after.candidates) {
+    const original = before.candidates.find((c) => c.code === city.code)!;
+    expect(city.score).toBe(original.score);
+    expect(city.categoryScores).toEqual(original.categoryScores);
+    expect(city.criterionScores).toEqual(original.criterionScores);
+  }
+});
+
+it("groups the exact 173.5 V midpoint with 220 V through the Corte", () => {
+  const dataset = datasetWithCities([
+    { code: "1", name: "Midpoint", values: { tensao: "347/173,5" } },
+    { code: "2", name: "Below", values: { tensao: "347/173.49" } },
+    { code: "3", name: "Above", values: { tensao: "347/173.51" } },
+  ]);
+  const added = addConstraint(dataset, createInitialSession(dataset), "tensao");
+  const names = (voltages: (127 | 220)[]) =>
+    rank(dataset, editConstraint(added, "tensao", { voltages }))
+      .candidates.map((city) => city.name)
+      .sort();
+  expect(names([220])).toEqual(["Above", "Midpoint"]);
+  expect(names([127])).toEqual(["Below"]);
 });

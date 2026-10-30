@@ -40,3 +40,19 @@ it("carries terrain constraints in a Session link and refuses an unknown class",
   const result = await decodeSessionLink(fixtureDataset, sessionLinkPayload(await encodeSessionLink(invalid))!);
   expect(result).toEqual({ ok: false, reason: 'A classe de relevo "inexistente" não existe.' });
 });
+
+it("round-trips Tensão through a link and refuses a voltage outside 127/220", async () => {
+  const session = editConstraint(
+    addConstraint(fixtureDataset, createInitialSession(fixtureDataset), "tensao"),
+    "tensao",
+    { voltages: [220] },
+  );
+  const hash = await encodeSessionLink(session);
+  expect(await decodeSessionLink(fixtureDataset, sessionLinkPayload(hash)!)).toEqual({ ok: true, session });
+  const invalid = {
+    ...session,
+    constraints: [{ criterion: "tensao", on: true, voltages: [110] }],
+  } as unknown as typeof session;
+  const result = await decodeSessionLink(fixtureDataset, sessionLinkPayload(await encodeSessionLink(invalid))!);
+  expect(result).toEqual({ ok: false, reason: "A Tensão deve conter uma lista de tensões aceitas: 127 V ou 220 V." });
+});

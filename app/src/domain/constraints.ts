@@ -2,6 +2,7 @@ import type { Dataset } from "./dataset";
 import { inStateOrder, STATES } from "./regions";
 import type { Constraint, Session } from "./session";
 import { inTerrainOrder, TERRAIN_CLASSES, TERRAIN_CRITERION } from "./terrain";
+import { outletVoltage, voltagePairs, VOLTAGES, VOLTAGE_CRITERION, type Voltage } from "./voltage";
 
 export const KOPPEN_CRITERION = "koppen";
 export const LOCATION_CRITERION = "location";
@@ -11,7 +12,7 @@ const KOPPEN_BECK = "koppen_beck";
 const KOPPEN_ALVARES = "koppen_alvares";
 const BOOLEAN_CRITERIA = ["hospital_geral", "fibra"];
 
-export type ConstraintKind = "location" | "score" | "numeric" | "koppen" | "terrain" | "boolean";
+export type ConstraintKind = "location" | "score" | "numeric" | "koppen" | "terrain" | "boolean" | "voltage";
 
 export type ConstraintOption = {
   criterion: string;
@@ -21,6 +22,7 @@ export type ConstraintOption = {
 };
 
 export type ConstraintEdit = Partial<{
+  voltages: Voltage[];
   min: number | null;
   max: number | null;
   accepted: string[];
@@ -30,6 +32,7 @@ export type ConstraintEdit = Partial<{
 }>;
 
 export function constraintKind(criterion: string): ConstraintKind {
+  if (criterion === VOLTAGE_CRITERION) return "voltage";
   if (criterion === LOCATION_CRITERION) return "location";
   if (criterion === SCORE_CRITERION) return "score";
   if (criterion === KOPPEN_CRITERION) return "koppen";
@@ -73,6 +76,8 @@ export function constraintOptions(dataset: Dataset, session: Session): Constrain
 
 function neutralConstraint(option: ConstraintOption): Constraint {
   switch (option.kind) {
+    case "voltage":
+      return { criterion: VOLTAGE_CRITERION, on: true, voltages: [...VOLTAGES] };
     case "location":
       return { criterion: LOCATION_CRITERION, on: true, states: [...STATES] };
     case "score":
@@ -100,6 +105,8 @@ function mapConstraint(session: Session, criterion: string, change: (c: Constrai
 
 export function editConstraint(session: Session, criterion: string, edit: ConstraintEdit): Session {
   return mapConstraint(session, criterion, (c) => {
+    if ("voltages" in c)
+      return edit.voltages ? { ...c, voltages: VOLTAGES.filter((v) => edit.voltages!.includes(v)) } : c;
     if ("states" in c) return edit.states ? { ...c, states: inStateOrder(edit.states) } : c;
     if ("atLeast" in c) return edit.atLeast === undefined ? c : { ...c, atLeast: edit.atLeast };
     if ("accepted" in c)
@@ -152,6 +159,10 @@ export function passesConstraint(
   scoreOf: (index: number) => number | null,
 ): CityPasser {
   const { colunas } = dataset;
+  if ("voltages" in constraint) {
+    return (i) =>
+      voltagePairs(colunas[VOLTAGE_CRITERION]?.[i]).some((pair) => constraint.voltages.includes(outletVoltage(pair)));
+  }
   if ("atLeast" in constraint) {
     const { atLeast } = constraint;
     return (i) => {

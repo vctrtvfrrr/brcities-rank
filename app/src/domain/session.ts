@@ -1,4 +1,5 @@
 import type { Dataset } from "./dataset";
+import type { Voltage } from "./voltage";
 
 export const SESSION_VERSION = 2;
 
@@ -6,6 +7,7 @@ export const MAX_WEIGHT = 10;
 export const DEFAULT_WEIGHT = 5;
 
 export type Constraint =
+  | { criterion: "tensao"; on: boolean; voltages: Voltage[] }
   | { criterion: string; on: boolean; min: number | null; max: number | null }
   | { criterion: "koppen" | "classe_relevo"; on: boolean; accepted: string[] }
   | { criterion: "location"; on: boolean; states: string[] }

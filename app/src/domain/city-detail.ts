@@ -2,6 +2,7 @@ import type { CatalogEntry, Dataset, SourceInfo } from "./dataset";
 import { SCORE_CRITERION } from "./constraints";
 import type { Candidate, CityScores, CutCity, RankResult, Ruler } from "./rank";
 import { gradeOf, type Constraint, type Grade, type Session } from "./session";
+import { voltagePairs, VOLTAGE_CRITERION } from "./voltage";
 
 export type Standing =
   | { kind: "ranked"; position: number; of: number; score: number }
@@ -37,6 +38,8 @@ export type SubjectiveDetail = {
 };
 
 export type FiltersDetail = {
+  voltage: string[] | null;
+  voltageSources: SourceInfo[];
   terrain: { key: string; label: string; unit: string; value: string | number | null; sources: SourceInfo[] }[];
   koppen: { beck: string | null; alvares: string | null; diverge: boolean };
   koppenSources: SourceInfo[];
@@ -123,6 +126,10 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
     categories,
     subjectives,
     filters: {
+      voltage: dataset.catalogo.some((entry) => entry.chave === VOLTAGE_CRITERION)
+        ? voltagePairs(dataset.colunas[VOLTAGE_CRITERION]?.[index])
+        : null,
+      voltageSources: sourcesOf(VOLTAGE_CRITERION),
       terrain: dataset.catalogo
         .filter((entry) => entry.categoria === "Relevo" && !entry.pontua)
         .map((entry) => ({

@@ -14,6 +14,9 @@ import type { CatalogEntry, Dataset } from "../domain/dataset";
 import { REGIONS, regionSelection, toggleRegion } from "../domain/regions";
 import type { Constraint, Session } from "../domain/session";
 import { TERRAIN_CLASSES, TERRAIN_CRITERION } from "../domain/terrain";
+import { VOLTAGES, type Voltage } from "../domain/voltage";
+import { Tooltip } from "./Tooltip";
+import { explainConstraint } from "../domain/explanations";
 
 type Props = {
   dataset: Dataset;
@@ -90,6 +93,7 @@ function ConstraintCard({
   onChange: Props["onChange"];
 }) {
   const { criterion, on } = constraint;
+  const explanation = explainConstraint(criterion);
   const edit = (change: ConstraintEdit) => onChange((s) => editConstraint(s, criterion, change));
   return (
     <div className={on ? "restr" : "restr off"}>
@@ -102,7 +106,7 @@ function ConstraintCard({
           aria-label={`Ligar ou desligar a restrição ${label}`}
           onClick={() => onChange((s) => toggleConstraint(s, criterion))}
         />
-        <b className="grow">{label}</b>
+        <b className="grow">{explanation ? <Tooltip label={label}>{explanation}</Tooltip> : label}</b>
         <span className={cuts > 0 ? "tag warn" : "tag"} title="Cidades que esta restrição corta sozinha, ligada ou não">
           corta {cuts.toLocaleString("pt-BR")}
         </span>
@@ -115,7 +119,9 @@ function ConstraintCard({
           ✕
         </button>
       </div>
-      {"states" in constraint ? (
+      {"voltages" in constraint ? (
+        <VoltageEditor voltages={constraint.voltages} onChange={(voltages) => edit({ voltages })} />
+      ) : "states" in constraint ? (
         <StatesEditor states={constraint.states} onChange={(states) => edit({ states })} />
       ) : "accepted" in constraint ? (
         criterion === TERRAIN_CRITERION ? (
@@ -139,6 +145,26 @@ function ConstraintCard({
           onEdit={edit}
         />
       )}
+    </div>
+  );
+}
+
+function VoltageEditor({ voltages, onChange }: { voltages: Voltage[]; onChange: (voltages: Voltage[]) => void }) {
+  return (
+    <div className="kchips" role="group" aria-label="Tensões aceitas">
+      {VOLTAGES.map((voltage) => (
+        <button
+          type="button"
+          key={voltage}
+          className={voltages.includes(voltage) ? "kchip on" : "kchip"}
+          aria-pressed={voltages.includes(voltage)}
+          onClick={() =>
+            onChange(voltages.includes(voltage) ? voltages.filter((v) => v !== voltage) : [...voltages, voltage])
+          }
+        >
+          {voltage} V
+        </button>
+      ))}
     </div>
   );
 }

@@ -225,20 +225,20 @@ describe("cityDetail terrain", () => {
   it("shows the three raw values with units and sources outside scoring categories", () => {
     const detail = open()("4106902")!;
     expect(detail.filters.terrain).toEqual([
-      { key: "altitude", label: "Altitude", unit: "m", value: 934, sources: fixtureDataset.fontes.slice(2) },
+      { key: "altitude", label: "Altitude", unit: "m", value: 934, sources: fixtureDataset.fontes.slice(2, 4) },
       {
         key: "declividade_urbana",
         label: "Declividade urbana",
         unit: "%",
         value: 5,
-        sources: fixtureDataset.fontes.slice(2),
+        sources: fixtureDataset.fontes.slice(2, 4),
       },
       {
         key: "classe_relevo",
         label: "Classe de relevo",
         unit: "",
         value: "suave ondulado",
-        sources: fixtureDataset.fontes.slice(2),
+        sources: fixtureDataset.fontes.slice(2, 4),
       },
     ]);
     expect(detail.categories.map((c) => c.id)).not.toContain("Relevo");
@@ -254,4 +254,29 @@ describe("cityDetail terrain", () => {
       failed: [{ criterion: "altitude", on: true, min: 900, max: null }],
     });
   });
+});
+
+it("shows ANEEL voltage pairs, missing voltage, source edition and the reason for a voltage cut", () => {
+  const dataset = fixtureDataset;
+  const session = editConstraint(addConstraint(dataset, createInitialSession(dataset), "tensao"), "tensao", {
+    voltages: [220],
+  });
+  const result = rank(dataset, session);
+  const detail = cityDetail(dataset, session, result, "3304557")!;
+  expect(detail.filters.voltage).toEqual(["220/127", "380/220"]);
+  expect(detail.filters.voltageSources).toEqual([dataset.fontes.find((s) => s.chave === "aneel-tensoes")]);
+  expect(cityDetail(dataset, session, result, "2611606")!.filters.voltage).toEqual([]);
+  expect(cityDetail(dataset, session, result, "3550308")!.standing).toMatchObject({
+    kind: "cut",
+    failed: [{ criterion: "tensao", on: true, voltages: [220] }],
+  });
+});
+
+it("does not claim missing voltage when the dataset has no voltage catalog entry", () => {
+  const dataset = {
+    ...fixtureDataset,
+    catalogo: fixtureDataset.catalogo.filter((entry) => entry.chave !== "tensao"),
+  };
+  const session = createInitialSession(dataset);
+  expect(cityDetail(dataset, session, rank(dataset, session), "3550308")!.filters.voltage).toBeNull();
 });
