@@ -8,7 +8,7 @@ from pathlib import Path
 
 from coleta import dataset
 from coleta.corte import CutResult, Restriction
-from coleta.criterios import FILTERS, Bounds, Criterion
+from coleta.criterios import FILTERS, Bounds, Criterion, Filter, available_filters
 from coleta.extraidos import CODE, IDENTITY, ExtractedSource
 
 GENERATED = "> Gerado pela Coleta (`uv run python -m coleta montar`, em `pipeline/`). Não edite: rode a Coleta de novo."
@@ -26,21 +26,21 @@ def write(
 ) -> None:
     app_dataset = dataset.render(municipalities, criteria, sources, collected_on)
     (pipeline_dir / "dados").mkdir(exist_ok=True)
-    _write_csv(pipeline_dir / "dados" / "municipios.csv", municipalities, restrictions, result, criteria)
+    _write_csv(pipeline_dir / "dados" / "municipios.csv", municipalities, restrictions, result, criteria, sources)
     _write_text(pipeline_dir / "dados" / "dataset.json", app_dataset)
     _write_text(pipeline_dir / "corte.md", render_cut(municipalities, result))
     _write_text(pipeline_dir / "criterios.md", render_criteria(criteria, bounds, sources, len(result.candidates)))
 
 
-def data_columns(restrictions: Sequence[Restriction], criteria: Sequence[Criterion]) -> list[str]:
+def data_columns(restrictions: Sequence[Restriction], criteria: Sequence[Criterion], filters: Sequence[Filter]) -> list[str]:
     columns = [column for restriction in restrictions for column in restriction.columns]
     columns += [column for criterion in criteria for column in (criterion.column, *criterion.extra_columns)]
-    columns += [entry.column for entry in FILTERS]
+    columns += [entry.column for entry in filters]
     return list(dict.fromkeys(columns))
 
 
-def _write_csv(path, municipalities, restrictions, result, criteria) -> None:
-    columns = data_columns(restrictions, criteria)
+def _write_csv(path, municipalities, restrictions, result, criteria, sources) -> None:
+    columns = data_columns(restrictions, criteria, available_filters(source.name for source in sources))
     with path.open("w", encoding="utf-8", newline="") as output:
         writer = csv.writer(output, lineterminator="\n")
         writer.writerow((CODE, *IDENTITY, "cortada_por", "a_conferir", *columns))

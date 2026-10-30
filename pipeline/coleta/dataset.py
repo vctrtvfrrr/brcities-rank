@@ -4,12 +4,12 @@ import json
 from collections.abc import Mapping, Sequence
 from datetime import date
 
-from coleta.criterios import FILTERS, Criterion
+from coleta.criterios import Criterion, Filter, available_filters
 from coleta.extraidos import CODE, IDENTITY, ExtractedSource
-from coleta.fontes import SOURCES, anatel, cnes
+from coleta.fontes import SOURCES, anatel, aneel_tensoes, cnes
 
 CONTRACT_VERSION = 1
-TEXT_COLUMNS = ("nome", "uf", "koppen_beck", "koppen_alvares", "classe_relevo")
+TEXT_COLUMNS = ("nome", "uf", "koppen_beck", "koppen_alvares", "classe_relevo", "tensao")
 YES_NO_COLUMNS = (cnes.HOSPITAL_COLUMN, anatel.COLUMN)
 YES = "sim"
 NO = "não"
@@ -23,12 +23,13 @@ def render(
     sources: Sequence[ExtractedSource],
     collected_on: date,
 ) -> str:
-    columns = [column for column in _column_names(criteria) if column != CODE]
+    filters = available_filters(source.name for source in sources)
+    columns = [column for column in _column_names(criteria, filters) if column != CODE]
     dataset = {
         "versao": CONTRACT_VERSION,
         "coleta": collected_on.isoformat(),
         "fontes": [_source(source) for source in sources],
-        "catalogo": _catalog(criteria),
+        "catalogo": _catalog(criteria, filters),
         "colunas": {
             CODE: sorted(municipalities),
             **{column: [_value(code, column, municipalities[code].get(column, "")) for code in sorted(municipalities)] for column in columns},
@@ -37,8 +38,8 @@ def render(
     return json.dumps(dataset, ensure_ascii=False, separators=(",", ":")) + "\n"
 
 
-def _column_names(criteria: Sequence[Criterion]) -> list[str]:
-    return [CODE, *IDENTITY, *(criterion.column for criterion in criteria), *(entry.column for entry in FILTERS)]
+def _column_names(criteria: Sequence[Criterion], filters: Sequence[Filter]) -> list[str]:
+    return [CODE, *IDENTITY, *(criterion.column for criterion in criteria), *(entry.column for entry in filters)]
 
 
 def _value(code: str, column: str, text: str):
@@ -55,7 +56,7 @@ def _value(code: str, column: str, text: str):
     return int(text) if text.lstrip("-").isdigit() else float(text)
 
 
-def _catalog(criteria: Sequence[Criterion]) -> list[dict]:
+def _catalog(criteria: Sequence[Criterion], filters: Sequence[Filter]) -> list[dict]:
     scoring = [
         {
             "chave": criterion.column,
@@ -80,18 +81,21 @@ def _catalog(criteria: Sequence[Criterion]) -> list[dict]:
             "pontua": False,
             "fontes": [entry.source, *entry.other_sources],
         }
-        for entry in FILTERS
+        for entry in filters
     ]
     return scoring + filtering
 
 
 def _source(source: ExtractedSource) -> dict:
     module = SOURCES[source.name]
+    year = module.YEAR_LABEL
+    if source.name == aneel_tensoes.NAME:
+        year = " a ".join(dict.fromkeys(value[:4] for value in source.edition.split(" a ")))
     return {
         "chave": source.name,
         "nome": source.title,
         "edicao": source.edition,
-        "ano": module.YEAR_LABEL,
+        "ano": year,
         "endereco": module.LANDING_URL,
         "credito": module.CREDIT,
     }

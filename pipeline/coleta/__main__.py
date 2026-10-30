@@ -6,7 +6,7 @@ from types import ModuleType
 from coleta import EXTRACTED_DIR, PIPELINE_DIR, SOURCES_DIR, extraidos, registro, validacao
 from coleta.corte import RESTRICTIONS, run_cut
 from coleta.criterios import CRITERIA, freeze
-from coleta.fontes import BASE, SOURCES
+from coleta.fontes import BASE, OPTIONAL_SOURCES, SOURCES
 from coleta.fontes.base import missing_files, provenance
 
 
@@ -27,6 +27,9 @@ def extrair(names: list[str]) -> int:
     for source in _select(names):
         folder = SOURCES_DIR / source.NAME
         if absent := missing_files(folder, source.FILES):
+            if not names and source.NAME in OPTIONAL_SOURCES:
+                print(f"{source.NAME}: arquivo manual ausente; fonte opcional ignorada")
+                continue
             print(f"{source.NAME}: faltam {', '.join(remote.name for remote in absent)}; rode baixar antes")
             return 1
         extraction = source.extract(folder)
@@ -36,13 +39,18 @@ def extrair(names: list[str]) -> int:
 
 
 def montar() -> int:
-    if absent := [name for name in SOURCES if not extraidos.exists(EXTRACTED_DIR, name)]:
+    available = [name for name in SOURCES if extraidos.exists(EXTRACTED_DIR, name)]
+    if absent := [name for name in SOURCES if name not in available and name not in OPTIONAL_SOURCES]:
         print(f"Faltam extraídos de {', '.join(absent)}; rode extrair antes")
         return 1
-    sources = [extraidos.read(EXTRACTED_DIR, name) for name in SOURCES]
+    sources = [extraidos.read(EXTRACTED_DIR, name) for name in available]
     base = next(source for source in sources if source.name == BASE)
+    for source in sources:
+        if source.name in OPTIONAL_SOURCES and source.rows.keys() != base.rows.keys():
+            raise SystemExit(f"{source.name}: cobertura diferente da base do IBGE; rode extrair antes de montar")
     municipalities = extraidos.merge(base, [source for source in sources if source is not base])
-    for module in SOURCES.values():
+    for name in available:
+        module = SOURCES[name]
         if derive := getattr(module, "derive", None):
             for row in municipalities.values():
                 row.update(derive(row))

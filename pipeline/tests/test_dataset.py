@@ -14,7 +14,7 @@ SCORING = (
     "ideb_anos_iniciais", "ideb_anos_finais", "ideb_ensino_medio", "umidade_relativa", "orvalho_dez_fev",
     "dias_de_chuva", "temp_mes_mais_quente", "populacao_2026",
 )
-FILTERING = ("koppen_beck", "koppen_alvares", "hospital_geral", "fibra", "altitude", "declividade_urbana", "classe_relevo")
+FILTERING = ("koppen_beck", "koppen_alvares", "hospital_geral", "fibra", "altitude", "declividade_urbana", "classe_relevo", "tensao")
 COLUMNS = ("codigo_ibge", "nome", "uf", "latitude", "longitude", *SCORING, *FILTERING)
 COLLECTED_ON = date(2026, 10, 22)
 
@@ -23,7 +23,7 @@ FULL = {
     "pediatras_por_mil_criancas": "0.2161", "esgoto_pct": "18.28", "ideb_anos_iniciais": "5.7",
     "ideb_anos_finais": "4.9", "ideb_ensino_medio": "4.1", "umidade_relativa": "76.4", "orvalho_dez_fev": "17.2",
     "dias_de_chuva": "130.5", "temp_mes_mais_quente": "27.8", "populacao_2026": "1832183",
-    "koppen_beck": "Cfb", "koppen_alvares": "Cfa", "hospital_geral": "sim", "fibra": "não", "altitude": "934", "declividade_urbana": "5.25", "classe_relevo": "suave ondulado",
+    "koppen_beck": "Cfb", "koppen_alvares": "Cfa", "hospital_geral": "sim", "fibra": "não", "altitude": "934", "declividade_urbana": "5.25", "classe_relevo": "suave ondulado", "tensao": "220/127;230/115",
 }
 MUNICIPALITIES = {
     "4106902": {"nome": "Curitiba", "uf": "PR", "latitude": "-25.4133", "longitude": "-49.2679", **FULL},
@@ -37,7 +37,7 @@ MUNICIPALITIES = {
 def sources():
     return [
         ExtractedSource(
-            name, module.TITLE, f"Edição de {name}",
+            name, module.TITLE, "2026-10-30" if name == "aneel-tensoes" else f"Edição de {name}",
             [{"arquivo": remote.name, "endereco": remote.url, "baixado_em": "2026-10-21"} for remote in module.FILES],
             (), {},
         )
@@ -63,7 +63,7 @@ def test_dataset_is_deterministic(tmp_path):
     assert write(tmp_path).read_bytes() == first
 
 
-def test_dataset_has_exactly_the_25_columns_sorted_by_code(tmp_path):
+def test_dataset_has_exactly_the_contract_columns_sorted_by_code(tmp_path):
     columns = read(tmp_path)["colunas"]
 
     assert tuple(columns) == COLUMNS
@@ -90,11 +90,11 @@ def test_dataset_leaves_the_cut_and_the_components_out(tmp_path):
         assert left_out not in text
 
 
-def test_catalog_lists_the_13_scoring_and_the_7_filtering_criteria(tmp_path):
+def test_catalog_lists_scoring_and_filtering_criteria(tmp_path):
     catalog = read(tmp_path)["catalogo"]
 
     assert [entry["chave"] for entry in catalog] == [*SCORING, *FILTERING]
-    assert [entry["pontua"] for entry in catalog] == [True] * 13 + [False] * 7
+    assert [entry["pontua"] for entry in catalog] == [True] * 13 + [False] * 8
     assert all(
         set(entry) == {"chave", "categoria", "rotulo", "unidade", "direcao", "transformacao", "pontua", "fontes"}
         for entry in catalog
@@ -159,3 +159,34 @@ def test_terrain_is_published_with_sources_and_never_changes_the_reference_cut(t
     original = run_cut(MUNICIPALITIES, RESTRICTIONS)
     changed = {code: {**row, "altitude": "-20", "declividade_urbana": "90", "classe_relevo": "escarpado"} for code, row in MUNICIPALITIES.items()}
     assert run_cut(changed, RESTRICTIONS) == original
+
+
+def test_voltage_is_text_with_source_and_no_score(tmp_path):
+    data = read(tmp_path)
+    assert data["colunas"]["tensao"] == [None, "220/127;230/115"]
+    assert next(entry for entry in data["catalogo"] if entry["chave"] == "tensao") == {
+        "chave": "tensao", "categoria": "Tensão", "rotulo": "Tensão", "unidade": "V",
+        "direcao": None, "transformacao": "nenhuma", "pontua": False, "fontes": ["aneel-tensoes"],
+    }
+
+
+def test_voltage_is_omitted_until_the_manual_source_is_extracted(tmp_path):
+    from coleta import dataset
+    data = json.loads(dataset.render(
+        MUNICIPALITIES, CRITERIA, [source for source in sources() if source.name != "aneel-tensoes"], COLLECTED_ON,
+    ))
+    assert "tensao" not in data["colunas"]
+    assert all(entry["chave"] != "tensao" for entry in data["catalogo"])
+    assert all(source["chave"] != "aneel-tensoes" for source in data["fontes"])
+
+
+@pytest.mark.parametrize("edition, year", [
+    ("2026-10-30", "2026"),
+    ("2026-12-31 a 2027-01-01", "2026 a 2027"),
+])
+def test_voltage_source_year_comes_from_query_dates(edition, year):
+    from dataclasses import replace
+    from coleta import dataset
+    origins = [replace(source, edition=edition) if source.name == "aneel-tensoes" else source for source in sources()]
+    data = json.loads(dataset.render(MUNICIPALITIES, CRITERIA, origins, COLLECTED_ON))
+    assert next(source for source in data["fontes"] if source["chave"] == "aneel-tensoes")["ano"] == year

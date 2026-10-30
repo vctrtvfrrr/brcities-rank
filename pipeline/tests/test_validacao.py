@@ -131,3 +131,22 @@ def test_missing_counts_empty_cells_by_column():
     rows = {"1": {"a": "", "b": "1"}, "2": {"a": "", "b": ""}}
 
     assert missing_by_column(rows, ["a", "b"]) == {"a": 2, "b": 1}
+
+
+def test_voltage_report_counts_absent_and_multiple_outlet_voltages():
+    from coleta.validacao import render_voltage
+
+    report = render_voltage({
+        "1200401": {"tensao": "220/127;230/115"},
+        "4106902": {"tensao": "380/220"},
+        "3550308": {"tensao": "220/127;380/220"},
+        "1600303": {"tensao": ""},
+        "1100015": {},
+    })
+    assert "Sem tensão conhecida: 2" in report
+    assert "Com 127 V e 220 V: 1" in report
+
+
+def test_voltage_report_is_omitted_before_the_source_is_extracted():
+    from coleta.validacao import render_voltage
+    assert render_voltage({"1200401": {"nome": "Rio Branco"}}) == ""

@@ -110,6 +110,7 @@ def run() -> Path:
     sections = [
         render_counts(municipalities),
         render_missing(municipalities),
+        render_voltage(municipalities),
         *(render_comparison(comparison) for comparison in climate_comparisons(municipalities, stations, matched)),
         render_homicides(municipalities, atlas_homicides(json.loads((ATLAS_DIR / RECORDED_HOMICIDES.name).read_text(
             encoding="utf-8")))),
@@ -262,6 +263,27 @@ def render_missing(municipalities: Mapping[str, Mapping[str, str]]) -> str:
         ),
     ]
     return "\n".join(lines) + "\n"
+
+
+def render_voltage(municipalities: Mapping[str, Mapping[str, str]]) -> str:
+    if not any("tensao" in row for row in municipalities.values()):
+        return ""
+    values = [row.get("tensao", "") for row in municipalities.values()]
+    missing = sum(not value for value in values)
+    multiple = sum(len(_outlet_voltages(value)) > 1 for value in values if value)
+    return (
+        "## Tensão\n\n"
+        f"- Sem tensão conhecida: {_integer(missing)}.\n"
+        f"- Com 127 V e 220 V: {_integer(multiple)}.\n"
+    )
+
+
+def _outlet_voltages(value: str) -> set[int]:
+    voltages = set()
+    for pair in value.split(";"):
+        neutral = min(float(part.replace(",", ".")) for part in pair.split("/"))
+        voltages.add(127 if abs(neutral - 127) < abs(neutral - 220) else 220)
+    return voltages
 
 
 def render_comparison(comparison: Comparison) -> str:

@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from coleta.fontes import alvares, anatel, atlas_desastres, beck, casa_civil, cnes, ibge_censo_esgoto, ibge_estimativas, inep_ideb, sgb, sim
-from coleta.fontes import br_dwgd, anadem, ibge_setores
+from coleta.fontes import OPTIONAL_SOURCES, br_dwgd, anadem, ibge_setores, aneel_tensoes
 
 
 class Direction(Enum):
@@ -271,4 +271,10 @@ FILTERS = (
     Filter("Relevo", "Altitude", anadem.NAME, anadem.ALTITUDE_COLUMN, "m", scope="Altitude do pixel ANADEM de 30 m que contém a sede; sem dado, usa o pixel válido mais próximo, sem interpolação"),
     Filter("Relevo", "Declividade urbana", anadem.NAME, anadem.SLOPE_COLUMN, "%", (ibge_setores.NAME,), "Média da declividade dos pixels nos setores urbanos (CD_SIT 1, 2 ou 3) do distrito que contém a sede, Censo 2022"),
     Filter("Relevo", "Classe de relevo", anadem.NAME, anadem.CLASS_COLUMN, None, (ibge_setores.NAME,), "Classe Embrapa de maior área na parte terrestre do município, excluídos os setores de massa d’água (CD_SIT 9): 0–3%, 3–8%, 8–20%, 20–45%, 45–75%, acima de 75%; empate pela mais plana"),
+    Filter("Tensão", "Tensão", aneel_tensoes.NAME, aneel_tensoes.COLUMN, "V", scope="Pares fase-fase/fase-neutro distintos, na ordem da ANEEL, separados por ponto e vírgula; vazio sem tensão conhecida"),
 )
+
+
+def available_filters(source_names: Iterable[str]) -> tuple[Filter, ...]:
+    available = set(source_names)
+    return tuple(entry for entry in FILTERS if entry.source not in OPTIONAL_SOURCES or entry.source in available)
