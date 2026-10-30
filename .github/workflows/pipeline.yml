@@ -4,11 +4,11 @@ on:
   push:
     paths:
       - "pipeline/**"
-      - ".gitea/workflows/pipeline.yml"
+      - ".github/workflows/pipeline.yml"
   pull_request:
     paths:
       - "pipeline/**"
-      - ".gitea/workflows/pipeline.yml"
+      - ".github/workflows/pipeline.yml"
 
 jobs:
   test:

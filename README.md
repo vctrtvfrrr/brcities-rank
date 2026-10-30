@@ -1,5 +1,7 @@
 # BRCities Rank
 
+[![app](https://github.com/vctrtvfrrr/brcities-rank/actions/workflows/app.yml/badge.svg)](https://github.com/vctrtvfrrr/brcities-rank/actions/workflows/app.yml) [![pipeline](https://github.com/vctrtvfrrr/brcities-rank/actions/workflows/pipeline.yml/badge.svg)](https://github.com/vctrtvfrrr/brcities-rank/actions/workflows/pipeline.yml)
+
 BRCities Rank é um app web que filtra todos os municípios brasileiros pelas restrições que você exige e ordena os que sobram pelas categorias que importam para você.
 
 - **Restrições** (população, clima, segurança, hospital, acesso à internet e outras) cortam as cidades que não atendem ao que você exige.

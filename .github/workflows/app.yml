@@ -5,12 +5,12 @@ on:
     paths:
       - "app/**"
       - "pipeline/dados/dataset.json"
-      - ".gitea/workflows/app.yml"
+      - ".github/workflows/app.yml"
   pull_request:
     paths:
       - "app/**"
       - "pipeline/dados/dataset.json"
-      - ".gitea/workflows/app.yml"
+      - ".github/workflows/app.yml"
 
 concurrency:
   group: app-${{ github.ref }}

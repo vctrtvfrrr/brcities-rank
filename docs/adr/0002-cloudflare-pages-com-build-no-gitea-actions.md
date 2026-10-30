@@ -1,5 +1,7 @@
 # Cloudflare Pages com build no Gitea Actions
 
+> Substituído em parte pelo ADR 0009: o CI e o deploy agora rodam no GitHub Actions, pelo espelho. A escolha do Cloudflare Pages continua valendo.
+
 O site é publicado no Cloudflare Pages, em `brcities-rank.pages.dev`. O build roda no Gitea Actions e sobe por upload direto com `wrangler pages deploy`. Já existe um espelho do repositório no GitHub, e o GitHub Pages pareceria o caminho natural. Só que o GitHub Pages fixa `Cache-Control: max-age=600` e não deixa configurar cabeçalhos. Assim, o `dataset.json` com hash no nome nunca teria cache longo, e esse é um critério de aceite da publicação. O Cloudflare Pages aceita um arquivo `_headers` e comprime em brotli sozinho. O CI e o deploy ficam no Gitea, e o espelho no GitHub fica só como backup, sem Actions nem Pages.
 
 ## Considered Options
