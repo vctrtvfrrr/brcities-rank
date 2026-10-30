@@ -16,6 +16,10 @@ _Avoid_: filtro por pontuação, nota de corte
 Restrição que aceita um conjunto de estados (UFs) e tira do ranking a cidade cujo estado não está nele; nasce com todos os estados aceitos e pode ficar sem nenhum, quando corta todas as cidades.
 _Avoid_: filtro por região, filtro por estado
 
+**Tensão**:
+Restrição que aceita 127 V, 220 V ou as duas, pela tensão da tomada comum (fase-neutro) da rede de distribuição do município, com as tensões raras contadas na mais próxima das duas; a cidade com mais de uma tensão passa se alguma delas for aceita. Nasce com as duas aceitas, mas, como todo Dado ausente, a cidade sem tensão conhecida não passa. Nunca entra na Pontuação; no Detalhe aparece como a ANEEL a publica, no par fase-fase/fase-neutro (ex.: 230/115 V).
+_Avoid_: voltagem
+
 **Região**:
 Uma das cinco grandes regiões do IBGE (Norte, Nordeste, Centro-Oeste, Sudeste e Sul), cada uma um grupo fixo de estados; na Localização é só um atalho que aceita ou recusa todos os estados dela, e não se guarda na Sessão.
 
