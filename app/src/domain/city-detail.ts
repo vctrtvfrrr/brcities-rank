@@ -78,7 +78,7 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
     return {
       key: entry.chave,
       label: entry.rotulo,
-      unit: entry.unidade,
+      unit: entry.unidade ?? "",
       value,
       missing: value === null,
       note: scores?.criterionScores[entry.chave] ?? null,
@@ -128,7 +128,7 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
         .map((entry) => ({
           key: entry.chave,
           label: entry.rotulo,
-          unit: entry.unidade,
+          unit: entry.unidade ?? "",
           value: cell(entry.chave) as string | number | null,
           sources: sourcesOf(entry.chave),
         })),

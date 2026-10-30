@@ -299,14 +299,14 @@ function NumericEditor({
         <LimitInput
           label="mín"
           value={constraint.min}
-          max={constraint.max}
+          max={entry.pontua ? null : constraint.max}
           placeholder={range && number.format(range[0])}
           onCommit={(min) => onEdit({ min })}
         />
         <LimitInput
           label="máx"
           value={constraint.max}
-          min={constraint.min}
+          min={entry.pontua ? null : constraint.min}
           placeholder={range && number.format(range[1])}
           onCommit={(max) => onEdit({ max })}
         />

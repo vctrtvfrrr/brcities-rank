@@ -32,7 +32,7 @@ Restrição sobre a declividade média do terreno, em %, nos setores urbanos do 
 _Avoid_: relevo, inclinação
 
 **Classe de relevo**:
-Restrição que aceita um conjunto de classes da Embrapa (plano, suave ondulado, ondulado, forte ondulado, montanhoso, escarpado) e tira do ranking a cidade cuja classe não está nele. A classe é a que cobre a maior área do território do município, e não só da sede; no empate, vale a mais plana. Nasce com todas as classes aceitas, pode ficar sem nenhuma e nunca entra na Pontuação.
+Restrição que aceita um conjunto de classes da Embrapa (plano, suave ondulado, ondulado, forte ondulado, montanhoso, escarpado) e tira do ranking a cidade cuja classe não está nele. A classe é a que cobre a maior área da parte terrestre do município, excluídos os setores de massa d’água do IBGE, e não só da sede; no empate, vale a mais plana. Nasce com todas as classes aceitas, pode ficar sem nenhuma e nunca entra na Pontuação.
 _Avoid_: relevo, topografia
 
 **Corte**:

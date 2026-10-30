@@ -71,7 +71,7 @@ export function explainCategory(dataset: Dataset, categoryId: string): CategoryE
   if (!text) return null;
   const criteria = dataset.catalogo
     .filter((entry) => entry.pontua && entry.categoria === categoryId && entry.direcao !== null)
-    .map((entry) => ({ label: entry.rotulo, unit: entry.unidade, direction: entry.direcao! }));
+    .map((entry) => ({ label: entry.rotulo, unit: entry.unidade ?? "", direction: entry.direcao! }));
   return { measures: text.measures, details: text.details, scoring: text.scoring ?? SCORING, criteria };
 }
 

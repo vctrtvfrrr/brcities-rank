@@ -62,11 +62,16 @@ def areas(folder: Path, seats: dict[str, dict[str, str]]):
         if code not in seat_districts and len(districts) == 1:
             seat_districts[code] = next(iter(districts))
     urban = {}
+    water = {}
     with fiona.open(_vector_path(folder, SECTORS)) as features:
         project = Transformer.from_crs(features.crs, 4326, always_xy=True).transform
         for feature in features:
             props = feature["properties"]
             code = str(props["CD_MUN"])
+            if code in territories and str(props["CD_SIT"]) == "9":
+                water.setdefault(code, []).append(transform(shape(feature["geometry"]), project, interleaved=False))
             if str(props["CD_DIST"]) == seat_districts.get(code) and str(props["CD_SIT"]) in {"1", "2", "3"}:
                 urban.setdefault(code, []).append(transform(shape(feature["geometry"]), project, interleaved=False))
+    for code, polygons in water.items():
+        territories[code] = territories[code].difference(unary_union(polygons))
     return territories, {code: unary_union(polygons) for code, polygons in urban.items()}

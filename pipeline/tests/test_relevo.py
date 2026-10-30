@@ -156,3 +156,20 @@ def test_single_district_city_keeps_urban_data_when_the_seat_point_falls_just_ou
     vector(folder.parent / "ibge-setores" / ibge_setores.DISTRICTS.name, [feature((0, 0, 74, 150), CD_MUN="1", CD_DIST="101")], {"CD_MUN": "str", "CD_DIST": "str"})
 
     assert anadem.extract(folder).rows["1"]["declividade_urbana"] == "10.00"
+
+
+def test_water_sectors_do_not_make_a_hilly_municipality_flat(tmp_path, monkeypatch):
+    elevation = np.zeros((5, 11), dtype="float32")
+    elevation[:, :7] = 100
+    elevation[:, 7] = -9999
+    elevation[:, 8:] = np.arange(3) * 6 + 100
+    sectors = [
+        feature((0, 0, 210, 150), CD_MUN="1", CD_DIST="101", CD_SIT="9"),
+        feature((240, 0, 330, 150), CD_MUN="1", CD_DIST="101", CD_SIT="1"),
+    ]
+    folder = terrain_source(tmp_path, monkeypatch, elevation, sectors=sectors)
+
+    result = anadem.extract(folder).rows["1"]
+
+    assert result["classe_relevo"] == "ondulado"
+    assert result["declividade_urbana"] == "20.00"

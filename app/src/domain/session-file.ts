@@ -99,7 +99,12 @@ function parseConstraints(dataset: Dataset, raw: unknown): Constraint[] {
     }
     const min = limitOf(entry.min, `O mínimo de "${criterion}"`);
     const max = limitOf(entry.max, `O máximo de "${criterion}"`);
-    if (["altitude", "declividade_urbana"].includes(criterion) && min !== null && max !== null && min > max) {
+    if (
+      dataset.catalogo.some((entry) => entry.chave === criterion && !entry.pontua) &&
+      min !== null &&
+      max !== null &&
+      min > max
+    ) {
       refuse(`O mínimo de "${criterion}" não pode superar o máximo.`);
     }
     return { criterion, on, min, max };

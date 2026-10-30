@@ -270,5 +270,5 @@ FILTERS = (
     Filter("Internet", "Acesso de fibra", anatel.NAME, anatel.COLUMN),
     Filter("Relevo", "Altitude", anadem.NAME, anadem.ALTITUDE_COLUMN, "m", scope="Altitude do pixel ANADEM de 30 m que contém a sede; sem dado, usa o pixel válido mais próximo, sem interpolação"),
     Filter("Relevo", "Declividade urbana", anadem.NAME, anadem.SLOPE_COLUMN, "%", (ibge_setores.NAME,), "Média da declividade dos pixels nos setores urbanos (CD_SIT 1, 2 ou 3) do distrito que contém a sede, Censo 2022"),
-    Filter("Relevo", "Classe de relevo", anadem.NAME, anadem.CLASS_COLUMN, "", (ibge_setores.NAME,), "Classe Embrapa de maior área no território municipal: 0–3%, 3–8%, 8–20%, 20–45%, 45–75%, acima de 75%; empate pela mais plana"),
+    Filter("Relevo", "Classe de relevo", anadem.NAME, anadem.CLASS_COLUMN, None, (ibge_setores.NAME,), "Classe Embrapa de maior área na parte terrestre do município, excluídos os setores de massa d’água (CD_SIT 9): 0–3%, 3–8%, 8–20%, 20–45%, 45–75%, acima de 75%; empate pela mais plana"),
 )

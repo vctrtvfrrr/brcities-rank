@@ -144,7 +144,7 @@ def test_terrain_is_published_with_sources_and_never_changes_the_reference_cut(t
     assert data["colunas"]["altitude"] == [None, 934]
     assert data["colunas"]["declividade_urbana"] == [None, 5.25]
     assert data["colunas"]["classe_relevo"] == [None, "suave ondulado"]
-    for key, unit in (("altitude", "m"), ("declividade_urbana", "%"), ("classe_relevo", "")):
+    for key, unit in (("altitude", "m"), ("declividade_urbana", "%"), ("classe_relevo", None)):
         assert catalog[key]["categoria"] == "Relevo"
         assert catalog[key]["pontua"] is False
         assert catalog[key]["direcao"] is None

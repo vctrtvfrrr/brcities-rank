@@ -265,7 +265,7 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Campo | Valor |
 | --- | --- |
 | Fonte | ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul<br>IBGE, Malhas de municípios, distritos e setores censitários do Censo 2022 |
-| Recorte | Classe Embrapa de maior área no território municipal: 0–3%, 3–8%, 8–20%, 20–45%, 45–75%, acima de 75%; empate pela mais plana |
+| Recorte | Classe Embrapa de maior área na parte terrestre do município, excluídos os setores de massa d’água (CD_SIT 9): 0–3%, 3–8%, 8–20%, 20–45%, 45–75%, acima de 75%; empate pela mais plana |
 | Edição | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022<br>Malha Municipal 2022 e malhas definitivas de distritos e setores do Censo 2022 |
 | Coluna no CSV | `classe_relevo` |
 | Unidade | Classe |

@@ -6,7 +6,7 @@ export type CatalogEntry = {
   chave: string;
   categoria: string;
   rotulo: string;
-  unidade: string;
+  unidade: string | null;
   direcao: "maior" | "menor" | null;
   transformacao: "nenhuma" | "logaritmo";
   pontua: boolean;
