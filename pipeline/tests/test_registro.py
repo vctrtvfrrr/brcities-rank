@@ -44,9 +44,9 @@ def test_csv_is_sorted_by_code_with_cut_and_marks(tmp_path):
 
     lines = (tmp_path / "dados" / "municipios.csv").read_text(encoding="utf-8").splitlines()
 
-    assert lines[0] == "codigo_ibge,nome,uf,latitude,longitude,cortada_por,a_conferir,populacao_2026"
+    assert lines[0] == "codigo_ibge,nome,uf,latitude,longitude,cortada_por,a_conferir,populacao_2026,koppen_beck,koppen_alvares,hospital_geral,fibra,altitude,declividade_urbana,classe_relevo"
     assert [line.split(",")[0] for line in lines[1:]] == ["1100015", "2800308", "4106902"]
-    assert lines[1].endswith(",populacao,,21000")
+    assert lines[1].split(",")[5:8] == ["populacao", "", "21000"]
     assert "populacao (falta o dado)" in lines[2]
 
 

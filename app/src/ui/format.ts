@@ -17,7 +17,8 @@ export function describeConstraint(dataset: Dataset, constraint: Constraint): st
     return `Localização ${constraint.states.length > 0 ? constraint.states.join(", ") : "(nenhum estado aceito)"}`;
   }
   if ("accepted" in constraint) {
-    return `Köppen ${constraint.accepted.length > 0 ? constraint.accepted.join(", ") : "(nenhuma classe aceita)"}`;
+    const label = constraint.criterion === "classe_relevo" ? "Classe de relevo" : "Köppen";
+    return `${label} ${constraint.accepted.length > 0 ? constraint.accepted.join(", ") : "(nenhuma classe aceita)"}`;
   }
   if ("atLeast" in constraint) {
     return constraint.atLeast === null

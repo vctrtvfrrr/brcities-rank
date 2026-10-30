@@ -29,6 +29,9 @@ describe("constraintOptions", () => {
       "koppen",
       "hospital_geral",
       "fibra",
+      "altitude",
+      "declividade_urbana",
+      "classe_relevo",
     ]);
   });
 
@@ -311,5 +314,85 @@ describe("Corte and the notes", () => {
     const cut = withConstraints(add("crime"), edit("crime", { max: 20 }));
     expect(salvadorSafetyNote(cut)).toBe(0);
     expect(salvadorSafetyNote(initial)).toBeGreaterThan(0);
+  });
+});
+
+describe("terrain constraints", () => {
+  it("offers three independent non-scoring constraints in Relevo, with neutral defaults", () => {
+    expect(constraintOptions(fixtureDataset, initial).filter((o) => o.group === "Relevo")).toEqual([
+      { criterion: "altitude", label: "Altitude", group: "Relevo", kind: "numeric" },
+      { criterion: "declividade_urbana", label: "Declividade urbana", group: "Relevo", kind: "numeric" },
+      { criterion: "classe_relevo", label: "Classe de relevo", group: "Relevo", kind: "terrain" },
+    ]);
+    const session = withConstraints(add("altitude"), add("declividade_urbana"), add("classe_relevo"));
+    expect(session.constraints).toEqual([
+      { criterion: "altitude", on: true, min: null, max: null },
+      { criterion: "declividade_urbana", on: true, min: null, max: null },
+      {
+        criterion: "classe_relevo",
+        on: true,
+        accepted: ["plano", "suave ondulado", "ondulado", "forte ondulado", "montanhoso", "escarpado"],
+      },
+    ]);
+    expect(candidateNames(session)).toHaveLength(5);
+    expect(constraintOptions(fixtureDataset, session).filter((o) => o.group === "Relevo")).toEqual([]);
+    expect(addConstraint(fixtureDataset, session, "classe_relevo")).toBe(session);
+  });
+});
+
+describe("terrain Corte", () => {
+  it.each([
+    ["altitude", { min: 760 }, ["Curitiba", "São Paulo"]],
+    ["altitude", { max: 8 }, ["Rio de Janeiro", "Salvador"]],
+    ["declividade_urbana", { min: 8 }, ["Rio de Janeiro", "Salvador", "São Paulo"]],
+    ["declividade_urbana", { max: 5 }, ["Alta Floresta D'Oeste", "Curitiba"]],
+  ])("applies inclusive limits for %s", (criterion, limits, names) => {
+    expect(candidateNames(withConstraints(add(criterion), edit(criterion, limits)))).toEqual(names);
+  });
+
+  it("keeps classes in terrain order without duplicates, and accepts only the city's class", () => {
+    const session = withConstraints(
+      add("classe_relevo"),
+      edit("classe_relevo", { accepted: ["montanhoso", "plano", "montanhoso"] }),
+    );
+    expect(session.constraints).toEqual([{ criterion: "classe_relevo", on: true, accepted: ["plano", "montanhoso"] }]);
+    expect(candidateNames(session)).toEqual(["Alta Floresta D'Oeste", "Rio de Janeiro"]);
+    expect(candidateNames(editConstraint(session, "classe_relevo", { accepted: [] }))).toEqual([]);
+  });
+
+  it.each(["altitude", "declividade_urbana", "classe_relevo"])(
+    "cuts missing %s and preserves values across toggle and removal",
+    (criterion) => {
+      const session = withConstraints(add(criterion));
+      expect(candidateNames(session)).not.toContain("Recife");
+      const off = toggleConstraint(session, criterion);
+      expect(candidateNames(off)).toHaveLength(6);
+      expect(toggleConstraint(off, criterion)).toEqual(session);
+      expect(removeConstraint(session, criterion).constraints).toEqual([]);
+      expect(rank(fixtureDataset, off).cutCounts[criterion]).toBe(1);
+    },
+  );
+
+  it("combines terrain and existing constraints without changing any scores or rulers", () => {
+    const all = rank(fixtureDataset, toggleCategory(initial, "Segurança"));
+    const session = withConstraints(
+      (s) => toggleCategory(s, "Segurança"),
+      add("altitude"),
+      edit("altitude", { min: 700 }),
+      add("declividade_urbana"),
+      edit("declividade_urbana", { max: 10 }),
+      add("classe_relevo"),
+      edit("classe_relevo", { accepted: ["ondulado"] }),
+      add("crime"),
+    );
+    const result = rank(fixtureDataset, session);
+    expect(result.candidates.map((c) => c.name)).toEqual(["São Paulo"]);
+    expect(result.candidates[0].criterionScores).toEqual(
+      all.candidates.find((c) => c.name === "São Paulo")!.criterionScores,
+    );
+    expect(result.rulers).toEqual(all.rulers);
+    expect(rank(fixtureDataset, { ...session, constraints: [...session.constraints].reverse() }).candidates).toEqual(
+      result.candidates,
+    );
   });
 });

@@ -13,6 +13,7 @@ import {
 import type { CatalogEntry, Dataset } from "../domain/dataset";
 import { REGIONS, regionSelection, toggleRegion } from "../domain/regions";
 import type { Constraint, Session } from "../domain/session";
+import { TERRAIN_CLASSES, TERRAIN_CRITERION } from "../domain/terrain";
 
 type Props = {
   dataset: Dataset;
@@ -117,11 +118,15 @@ function ConstraintCard({
       {"states" in constraint ? (
         <StatesEditor states={constraint.states} onChange={(states) => edit({ states })} />
       ) : "accepted" in constraint ? (
-        <KoppenEditor
-          classes={koppenClasses(dataset)}
-          accepted={constraint.accepted}
-          onChange={(accepted) => edit({ accepted })}
-        />
+        criterion === TERRAIN_CRITERION ? (
+          <TerrainEditor accepted={constraint.accepted} onChange={(accepted) => edit({ accepted })} />
+        ) : (
+          <KoppenEditor
+            classes={koppenClasses(dataset)}
+            accepted={constraint.accepted}
+            onChange={(accepted) => edit({ accepted })}
+          />
+        )
       ) : "atLeast" in constraint ? (
         <ScoreEditor atLeast={constraint.atLeast} onChange={(atLeast) => edit({ atLeast })} />
       ) : "value" in constraint ? (
@@ -135,6 +140,27 @@ function ConstraintCard({
         />
       )}
     </div>
+  );
+}
+
+function TerrainEditor({ accepted, onChange }: { accepted: string[]; onChange: (accepted: string[]) => void }) {
+  return (
+    <>
+      <p className="muted small">Classe que cobre a maior área do município, da mais plana à mais acidentada.</p>
+      <div className="kchips">
+        {TERRAIN_CLASSES.map((name) => (
+          <button
+            type="button"
+            key={name}
+            className={accepted.includes(name) ? "kchip on" : "kchip"}
+            aria-pressed={accepted.includes(name)}
+            onClick={() => onChange(accepted.includes(name) ? accepted.filter((c) => c !== name) : [...accepted, name])}
+          >
+            {name}
+          </button>
+        ))}
+      </div>
+    </>
   );
 }
 
@@ -261,19 +287,26 @@ function NumericEditor({
   onEdit: (change: ConstraintEdit) => void;
 }) {
   const range = useMemo(() => numericRange(dataset, entry.chave), [dataset, entry.chave]);
-  const direction = entry.direcao === "menor" ? "menor é melhor" : "maior é melhor";
+  const direction =
+    entry.direcao === null
+      ? "Só restringe; não entra na Pontuação"
+      : entry.direcao === "menor"
+        ? "menor é melhor"
+        : "maior é melhor";
   return (
     <>
       <div className="lims">
         <LimitInput
           label="mín"
           value={constraint.min}
+          max={constraint.max}
           placeholder={range && number.format(range[0])}
           onCommit={(min) => onEdit({ min })}
         />
         <LimitInput
           label="máx"
           value={constraint.max}
+          min={constraint.min}
           placeholder={range && number.format(range[1])}
           onCommit={(max) => onEdit({ max })}
         />
@@ -299,11 +332,15 @@ function LimitInput({
   label,
   value,
   placeholder,
+  min,
+  max,
   onCommit,
 }: {
   label: string;
   value: number | null;
   placeholder: string | null;
+  min?: number | null;
+  max?: number | null;
   onCommit: (value: number | null) => void;
 }) {
   const [text, setText] = useState(textOf(value));
@@ -326,16 +363,20 @@ function LimitInput({
         type="number"
         step="any"
         value={text}
+        min={min ?? undefined}
+        max={max ?? undefined}
         placeholder={placeholder ?? undefined}
         onChange={(event) => {
           setText(event.target.value);
           clearTimeout(timer.current);
-          if (event.target.validity.badInput) return;
-          timer.current = setTimeout(() => commit(event.target.value), COMMIT_DELAY_MS);
+          if (!event.target.validity.valid) return;
+          timer.current = setTimeout(() => {
+            if (event.target.validity.valid) commit(event.target.value);
+          }, COMMIT_DELAY_MS);
         }}
         onBlur={(event) => {
           clearTimeout(timer.current);
-          if (!event.target.validity.badInput) commit(text);
+          if (event.target.reportValidity()) commit(text);
         }}
       />
     </label>

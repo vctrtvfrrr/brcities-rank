@@ -220,3 +220,38 @@ describe("cityDetail subjectives", () => {
     expect(detail.subjectives[0]).toMatchObject({ average: null, note: null, mine: 2 });
   });
 });
+
+describe("cityDetail terrain", () => {
+  it("shows the three raw values with units and sources outside scoring categories", () => {
+    const detail = open()("4106902")!;
+    expect(detail.filters.terrain).toEqual([
+      { key: "altitude", label: "Altitude", unit: "m", value: 934, sources: fixtureDataset.fontes.slice(2) },
+      {
+        key: "declividade_urbana",
+        label: "Declividade urbana",
+        unit: "%",
+        value: 5,
+        sources: fixtureDataset.fontes.slice(2),
+      },
+      {
+        key: "classe_relevo",
+        label: "Classe de relevo",
+        unit: "",
+        value: "suave ondulado",
+        sources: fixtureDataset.fontes.slice(2),
+      },
+    ]);
+    expect(detail.categories.map((c) => c.id)).not.toContain("Relevo");
+  });
+
+  it("shows missing terrain as null and explains a terrain cut", () => {
+    let session = addConstraint(fixtureDataset, createInitialSession(fixtureDataset), "altitude");
+    session = editConstraint(session, "altitude", { min: 900 });
+    const missing = open(fixtureDataset, session)("2611606")!;
+    expect(missing.filters.terrain.map((f) => f.value)).toEqual([null, null, null]);
+    expect(missing.standing).toMatchObject({
+      kind: "cut",
+      failed: [{ criterion: "altitude", on: true, min: 900, max: null }],
+    });
+  });
+});

@@ -8,7 +8,7 @@ from pathlib import Path
 
 from coleta import dataset
 from coleta.corte import CutResult, Restriction
-from coleta.criterios import Bounds, Criterion
+from coleta.criterios import FILTERS, Bounds, Criterion
 from coleta.extraidos import CODE, IDENTITY, ExtractedSource
 
 GENERATED = "> Gerado pela Coleta (`uv run python -m coleta montar`, em `pipeline/`). Não edite: rode a Coleta de novo."
@@ -35,6 +35,7 @@ def write(
 def data_columns(restrictions: Sequence[Restriction], criteria: Sequence[Criterion]) -> list[str]:
     columns = [column for restriction in restrictions for column in restriction.columns]
     columns += [column for criterion in criteria for column in (criterion.column, *criterion.extra_columns)]
+    columns += [entry.column for entry in FILTERS]
     return list(dict.fromkeys(columns))
 
 
@@ -150,6 +151,20 @@ def render_criteria(
             f"| Direção | {criterion.direction.value.capitalize()} |",
             f"| Transformação | {'Logaritmo natural antes do min-max' if criterion.logarithmic else 'Nenhuma'} |",
             *_bounds_rows(criterion, bounds[criterion.column]),
+        ]
+    for entry in FILTERS:
+        if not entry.scope or entry.source not in by_name:
+            continue
+        cited = [by_name[name] for name in (entry.source, *entry.other_sources)]
+        lines += [
+            "", f"## {entry.category}: {entry.name}", "",
+            "| Campo | Valor |", "| --- | --- |",
+            f"| Fonte | {'<br>'.join(source.title for source in cited)} |",
+            f"| Recorte | {entry.scope} |",
+            f"| Edição | {'<br>'.join(source.edition for source in cited)} |",
+            f"| Coluna no CSV | `{entry.column}` |",
+            f"| Unidade | {entry.unit or 'Classe'} |",
+            "| Uso no app | Só Restrição; não pontua, sem direção, transformação nem P5/P95 |",
         ]
     lines += [
         "",

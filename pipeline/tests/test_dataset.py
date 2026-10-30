@@ -14,7 +14,7 @@ SCORING = (
     "ideb_anos_iniciais", "ideb_anos_finais", "ideb_ensino_medio", "umidade_relativa", "orvalho_dez_fev",
     "dias_de_chuva", "temp_mes_mais_quente", "populacao_2026",
 )
-FILTERING = ("koppen_beck", "koppen_alvares", "hospital_geral", "fibra")
+FILTERING = ("koppen_beck", "koppen_alvares", "hospital_geral", "fibra", "altitude", "declividade_urbana", "classe_relevo")
 COLUMNS = ("codigo_ibge", "nome", "uf", "latitude", "longitude", *SCORING, *FILTERING)
 COLLECTED_ON = date(2026, 10, 22)
 
@@ -23,7 +23,7 @@ FULL = {
     "pediatras_por_mil_criancas": "0.2161", "esgoto_pct": "18.28", "ideb_anos_iniciais": "5.7",
     "ideb_anos_finais": "4.9", "ideb_ensino_medio": "4.1", "umidade_relativa": "76.4", "orvalho_dez_fev": "17.2",
     "dias_de_chuva": "130.5", "temp_mes_mais_quente": "27.8", "populacao_2026": "1832183",
-    "koppen_beck": "Cfb", "koppen_alvares": "Cfa", "hospital_geral": "sim", "fibra": "não",
+    "koppen_beck": "Cfb", "koppen_alvares": "Cfa", "hospital_geral": "sim", "fibra": "não", "altitude": "934", "declividade_urbana": "5.25", "classe_relevo": "suave ondulado",
 }
 MUNICIPALITIES = {
     "4106902": {"nome": "Curitiba", "uf": "PR", "latitude": "-25.4133", "longitude": "-49.2679", **FULL},
@@ -63,7 +63,7 @@ def test_dataset_is_deterministic(tmp_path):
     assert write(tmp_path).read_bytes() == first
 
 
-def test_dataset_has_exactly_the_22_columns_sorted_by_code(tmp_path):
+def test_dataset_has_exactly_the_25_columns_sorted_by_code(tmp_path):
     columns = read(tmp_path)["colunas"]
 
     assert tuple(columns) == COLUMNS
@@ -90,11 +90,11 @@ def test_dataset_leaves_the_cut_and_the_components_out(tmp_path):
         assert left_out not in text
 
 
-def test_catalog_lists_the_13_scoring_and_the_4_filtering_criteria(tmp_path):
+def test_catalog_lists_the_13_scoring_and_the_7_filtering_criteria(tmp_path):
     catalog = read(tmp_path)["catalogo"]
 
     assert [entry["chave"] for entry in catalog] == [*SCORING, *FILTERING]
-    assert [entry["pontua"] for entry in catalog] == [True] * 13 + [False] * 4
+    assert [entry["pontua"] for entry in catalog] == [True] * 13 + [False] * 7
     assert all(
         set(entry) == {"chave", "categoria", "rotulo", "unidade", "direcao", "transformacao", "pontua", "fontes"}
         for entry in catalog
@@ -136,3 +136,26 @@ def test_record_fails_when_hospital_or_fibra_is_not_yes_no_or_empty(tmp_path, co
 
     assert column in str(failure.value) and "4106902" in str(failure.value) and repr(value) in str(failure.value)
     assert list(tmp_path.rglob("*")) == []
+
+
+def test_terrain_is_published_with_sources_and_never_changes_the_reference_cut(tmp_path):
+    data = read(tmp_path)
+    catalog = {entry["chave"]: entry for entry in data["catalogo"]}
+    assert data["colunas"]["altitude"] == [None, 934]
+    assert data["colunas"]["declividade_urbana"] == [None, 5.25]
+    assert data["colunas"]["classe_relevo"] == [None, "suave ondulado"]
+    for key, unit in (("altitude", "m"), ("declividade_urbana", "%"), ("classe_relevo", "")):
+        assert catalog[key]["categoria"] == "Relevo"
+        assert catalog[key]["pontua"] is False
+        assert catalog[key]["direcao"] is None
+        assert catalog[key]["unidade"] == unit
+        assert "anadem" in catalog[key]["fontes"]
+    assert "ibge-setores" in catalog["declividade_urbana"]["fontes"]
+    metadata = {source["chave"]: source for source in data["fontes"]}
+    assert "CC BY 4.0" in metadata["anadem"]["credito"]
+    assert metadata["ibge-setores"]["ano"] == "2022"
+    csv = (tmp_path / "dados/municipios.csv").read_text()
+    assert "altitude,declividade_urbana,classe_relevo" in csv.splitlines()[0]
+    original = run_cut(MUNICIPALITIES, RESTRICTIONS)
+    changed = {code: {**row, "altitude": "-20", "declividade_urbana": "90", "classe_relevo": "escarpado"} for code, row in MUNICIPALITIES.items()}
+    assert run_cut(changed, RESTRICTIONS) == original

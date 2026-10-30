@@ -7,7 +7,7 @@ export const DEFAULT_WEIGHT = 5;
 
 export type Constraint =
   | { criterion: string; on: boolean; min: number | null; max: number | null }
-  | { criterion: "koppen"; on: boolean; accepted: string[] }
+  | { criterion: "koppen" | "classe_relevo"; on: boolean; accepted: string[] }
   | { criterion: "location"; on: boolean; states: string[] }
   | { criterion: "score"; on: boolean; atLeast: number | null }
   | { criterion: "hospital_geral" | "fibra"; on: boolean; value: boolean };

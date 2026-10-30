@@ -23,6 +23,18 @@ _Avoid_: voltagem
 **Região**:
 Uma das cinco grandes regiões do IBGE (Norte, Nordeste, Centro-Oeste, Sudeste e Sul), cada uma um grupo fixo de estados; na Localização é só um atalho que aceita ou recusa todos os estados dela, e não se guarda na Sessão.
 
+**Altitude**:
+Restrição sobre a altura do terreno, em metros acima do nível do mar, no ponto da sede do município; nasce sem limites e nunca entra na Pontuação.
+_Avoid_: relevo, elevação
+
+**Declividade urbana**:
+Restrição sobre a declividade média do terreno, em %, nos setores urbanos do distrito-sede: o quanto as ruas da cidade sobem e descem. Nasce sem limites e nunca entra na Pontuação.
+_Avoid_: relevo, inclinação
+
+**Classe de relevo**:
+Restrição que aceita um conjunto de classes da Embrapa (plano, suave ondulado, ondulado, forte ondulado, montanhoso, escarpado) e tira do ranking a cidade cuja classe não está nele. A classe é a que cobre a maior área do território do município, e não só da sede; no empate, vale a mais plana. Nasce com todas as classes aceitas, pode ficar sem nenhuma e nunca entra na Pontuação.
+_Avoid_: relevo, topografia
+
 **Corte**:
 A aplicação conjunta das restrições ligadas, sem ordem, que separa as Candidatas das cidades cortadas.
 

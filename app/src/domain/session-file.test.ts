@@ -224,3 +224,29 @@ describe("hasOwnSession", () => {
     expect(hasOwnSession(fixtureDataset, toggleCategory(initial, "Clima"))).toBe(true);
   });
 });
+
+describe("terrain Session files", () => {
+  it("round-trips terrain constraints without changing the format version", () => {
+    let session = createInitialSession(fixtureDataset);
+    session = addConstraint(fixtureDataset, session, "altitude");
+    session = editConstraint(session, "altitude", { min: 700, max: 1200 });
+    session = addConstraint(fixtureDataset, session, "declividade_urbana");
+    session = editConstraint(session, "declividade_urbana", { max: 8 });
+    session = addConstraint(fixtureDataset, session, "classe_relevo");
+    session = editConstraint(session, "classe_relevo", { accepted: ["montanhoso", "plano"] });
+    expect(parseSession(fixtureDataset, serializeSession(session))).toEqual({ ok: true, session });
+    expect(session.version).toBe(2);
+  });
+
+  it.each([
+    { criterion: "classe_relevo", on: true, accepted: ["desconhecida"] },
+    { criterion: "altitude", on: true, min: "alto", max: null },
+    { criterion: "declividade_urbana", on: true, min: null, max: "plano" },
+    { criterion: "altitude", on: true, min: 1000, max: 500 },
+  ])("refuses invalid terrain constraints with a clear reason", (constraint) => {
+    const session = { ...createInitialSession(fixtureDataset), constraints: [constraint] };
+    const result = parseSession(fixtureDataset, JSON.stringify(session));
+    expect(result.ok).toBe(false);
+    if (!result.ok) expect(result.reason).toMatch(/classe|mínimo|máximo/);
+  });
+});

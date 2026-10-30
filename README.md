@@ -4,7 +4,7 @@
 
 BRCities Rank é um app web que filtra todos os municípios brasileiros pelas restrições que você exige e ordena os que sobram pelas categorias que importam para você.
 
-- **Restrições** (população, clima, segurança, hospital, acesso à internet e outras) cortam as cidades que não atendem ao que você exige.
+- **Restrições** (população, clima, segurança, hospital, acesso à internet, altitude, declividade urbana, classe de relevo e outras) cortam as cidades que não atendem ao que você exige.
 - **Categorias objetivas** (Segurança, Desastres, Saúde, Escola, Clima e Porte) dão notas automáticas às cidades que sobraram, a partir de dados públicos.
 - **Categorias subjetivas** são temas seus, como lazer ou paisagem, em que você mesmo dá a nota.
 

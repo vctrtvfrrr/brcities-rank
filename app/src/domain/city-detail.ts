@@ -37,6 +37,7 @@ export type SubjectiveDetail = {
 };
 
 export type FiltersDetail = {
+  terrain: { key: string; label: string; unit: string; value: string | number | null; sources: SourceInfo[] }[];
   koppen: { beck: string | null; alvares: string | null; diverge: boolean };
   koppenSources: SourceInfo[];
   hospital: boolean | null;
@@ -122,6 +123,15 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
     categories,
     subjectives,
     filters: {
+      terrain: dataset.catalogo
+        .filter((entry) => entry.categoria === "Relevo" && !entry.pontua)
+        .map((entry) => ({
+          key: entry.chave,
+          label: entry.rotulo,
+          unit: entry.unidade,
+          value: cell(entry.chave) as string | number | null,
+          sources: sourcesOf(entry.chave),
+        })),
       koppen: { beck, alvares, diverge: beck !== null && alvares !== null && beck !== alvares },
       koppenSources: sourcesOf("koppen_beck", "koppen_alvares"),
       hospital: flag("hospital_geral"),

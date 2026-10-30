@@ -1,6 +1,7 @@
 import { constraintOptions, MAX_SCORE } from "./constraints";
 import { inStateOrder, STATES } from "./regions";
 import type { Dataset } from "./dataset";
+import { inTerrainOrder, TERRAIN_CLASSES, TERRAIN_CRITERION } from "./terrain";
 import {
   createInitialSession,
   MAX_WEIGHT,
@@ -82,6 +83,13 @@ function parseConstraints(dataset: Dataset, raw: unknown): Constraint[] {
       );
       return { criterion: "koppen", on, accepted };
     }
+    if (kind === "terrain") {
+      const accepted = arrayOf(entry.accepted, "As classes de relevo aceitas").map((value) => {
+        const name = stringOf(value, "Cada classe de relevo");
+        return TERRAIN_CLASSES.includes(name) ? name : refuse(`A classe de relevo "${name}" não existe.`);
+      });
+      return { criterion: TERRAIN_CRITERION, on, accepted: inTerrainOrder(accepted) };
+    }
     if (kind === "boolean") {
       return {
         criterion: criterion as "hospital_geral" | "fibra",
@@ -89,12 +97,12 @@ function parseConstraints(dataset: Dataset, raw: unknown): Constraint[] {
         value: booleanOf(entry.value, `O valor exigido de "${criterion}"`),
       };
     }
-    return {
-      criterion,
-      on,
-      min: limitOf(entry.min, `O mínimo de "${criterion}"`),
-      max: limitOf(entry.max, `O máximo de "${criterion}"`),
-    };
+    const min = limitOf(entry.min, `O mínimo de "${criterion}"`);
+    const max = limitOf(entry.max, `O máximo de "${criterion}"`);
+    if (["altitude", "declividade_urbana"].includes(criterion) && min !== null && max !== null && min > max) {
+      refuse(`O mínimo de "${criterion}" não pode superar o máximo.`);
+    }
+    return { criterion, on, min, max };
   });
 }
 

@@ -238,6 +238,39 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | P95 | `13.544446` (logaritmo de 762.567) |
 | Candidatas com dado | 120 |
 
+## Relevo: Altitude
+
+| Campo | Valor |
+| --- | --- |
+| Fonte | ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul |
+| Recorte | Altitude do pixel ANADEM de 30 m que contém a sede; sem dado, usa o pixel válido mais próximo, sem interpolação |
+| Edição | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 |
+| Coluna no CSV | `altitude` |
+| Unidade | m |
+| Uso no app | Só Restrição; não pontua, sem direção, transformação nem P5/P95 |
+
+## Relevo: Declividade urbana
+
+| Campo | Valor |
+| --- | --- |
+| Fonte | ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul<br>IBGE, Malhas de municípios, distritos e setores censitários do Censo 2022 |
+| Recorte | Média da declividade dos pixels nos setores urbanos (CD_SIT 1, 2 ou 3) do distrito que contém a sede, Censo 2022 |
+| Edição | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022<br>Malha Municipal 2022 e malhas definitivas de distritos e setores do Censo 2022 |
+| Coluna no CSV | `declividade_urbana` |
+| Unidade | % |
+| Uso no app | Só Restrição; não pontua, sem direção, transformação nem P5/P95 |
+
+## Relevo: Classe de relevo
+
+| Campo | Valor |
+| --- | --- |
+| Fonte | ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul<br>IBGE, Malhas de municípios, distritos e setores censitários do Censo 2022 |
+| Recorte | Classe Embrapa de maior área no território municipal: 0–3%, 3–8%, 8–20%, 20–45%, 45–75%, acima de 75%; empate pela mais plana |
+| Edição | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022<br>Malha Municipal 2022 e malhas definitivas de distritos e setores do Censo 2022 |
+| Coluna no CSV | `classe_relevo` |
+| Unidade | Classe |
+| Uso no app | Só Restrição; não pontua, sem direção, transformação nem P5/P95 |
+
 ## Fontes
 
 Todos os arquivos baixados nesta Coleta, com a edição de cada fonte.
@@ -430,3 +463,36 @@ Todos os arquivos baixados nesta Coleta, com a edição de cada fonte.
 | BR-DWGD, Xavier et al. 2022, grade meteorológica diária brasileira | Versão 3.2.4 da grade diária de 0,1°, série até 2025; 60 sedes caem em pixel sem dado e usam o pixel válido mais próximo | `ETo_u2_RH_Rs_NetCDF_Files.zip` | <https://drive.google.com/file/d/1aGdOHRT10W8oBWvE5IvmEAqJCNQOYYid/view> | 2026-10-21 |
 | Beck et al. 2023, High-resolution (1 km) Köppen-Geiger maps for 1901–2099 | Figshare 21789074 v2, GeoTIFF de 1991–2020 a 30″ (cerca de 1 km) | `koppen_geiger_tif.zip` | <https://ndownloader.figshare.com/files/61012822> | 2026-10-21 |
 | Alvares et al. 2013, Köppen's climate classification map for Brazil | Planilha por município da malha de 2007, classe de maior área | `Koppen_Brazil_2013.rar` | <https://www.ipef.br/geodatabase/Koppen_Brazil_2013.rar> | 2026-10-21 |
+| IBGE, Malhas de municípios, distritos e setores censitários do Censo 2022 | Malha Municipal 2022 e malhas definitivas de distritos e setores do Censo 2022 | `BR_Municipios_2022.zip` | <https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_municipais/municipio_2022/Brasil/BR/BR_Municipios_2022.zip> | 2026-10-30 |
+| IBGE, Malhas de municípios, distritos e setores censitários do Censo 2022 | Malha Municipal 2022 e malhas definitivas de distritos e setores do Censo 2022 | `BR_distritos_CD2022.gpkg` | <https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_de_setores_censitarios__divisoes_intramunicipais/censo_2022/distritos/gpkg/BR/BR_distritos_CD2022.gpkg> | 2026-10-30 |
+| IBGE, Malhas de municípios, distritos e setores censitários do Censo 2022 | Malha Municipal 2022 e malhas definitivas de distritos e setores do Censo 2022 | `BR_setores_CD2022.gpkg` | <https://geoftp.ibge.gov.br/organizacao_do_territorio/malhas_territoriais/malhas_de_setores_censitarios__divisoes_intramunicipais/censo_2022/setores/gpkg/BR/BR_setores_CD2022.gpkg> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_18L.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_18L.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_18M.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_18M.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_19L.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_19L.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_19M.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_19M.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_19N.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_19N.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_20K.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_20K.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_20L.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_20L.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_20M.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_20M.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_20N.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_20N.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_21H.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_21H.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_21J.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_21J.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_21K.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_21K.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_21L.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_21L.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_21M.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_21M.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_21N.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_21N.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_22H.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_22H.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_22J.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_22J.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_22K.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_22K.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_22L.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_22L.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_22M.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_22M.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_22N.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_22N.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_23J.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_23J.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_23K.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_23K.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_23L.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_23L.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_23M.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_23M.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_24K.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_24K.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_24L.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_24L.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_24M.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_24M.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_25L.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_25L.tif> | 2026-10-30 |
+| ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_25M.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_25M.tif> | 2026-10-30 |

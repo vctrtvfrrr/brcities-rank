@@ -20,6 +20,14 @@ export const fixtureDataset: Dataset = {
       endereco: "https://example.org/inmet",
       credito: "INMET",
     },
+    ...["anadem", "ibge-setores"].map((key) => ({
+      chave: key,
+      nome: key,
+      edicao: "2024",
+      ano: "2024",
+      endereco: `https://example.org/${key}`,
+      credito: key,
+    })),
   ],
   catalogo: [
     {
@@ -102,6 +110,18 @@ export const fixtureDataset: Dataset = {
       pontua: false,
       fontes: ["ssp"],
     },
+    ...[
+      { chave: "altitude", rotulo: "Altitude", unidade: "m" },
+      { chave: "declividade_urbana", rotulo: "Declividade urbana", unidade: "%" },
+      { chave: "classe_relevo", rotulo: "Classe de relevo", unidade: "" },
+    ].map((entry) => ({
+      ...entry,
+      categoria: "Relevo",
+      direcao: null,
+      transformacao: "nenhuma" as const,
+      pontua: false,
+      fontes: ["anadem", "ibge-setores"],
+    })),
   ],
   colunas: {
     codigo_ibge: ["3550308", "3304557", "1100015", "2927408", "4106902", "2611606"],
@@ -109,6 +129,9 @@ export const fixtureDataset: Dataset = {
     uf: ["SP", "RJ", "RO", "BA", "PR", "PE"],
     latitude: [-23.55, -22.91, -11.93, -12.97, -25.43, -8.05],
     longitude: [-46.63, -43.2, -62.0, -38.5, -49.27, -34.88],
+    altitude: [760, 5, 340, 8, 934, null],
+    declividade_urbana: [10, 20, 3, 8, 5, null],
+    classe_relevo: ["ondulado", "montanhoso", "plano", "forte ondulado", "suave ondulado", null],
     crime: [10, 30, null, 20, 5, 40],
     rain: [100, 120, 190, 110, 140, 150],
     heat: [28, 33, 27, 30, 25, 31],

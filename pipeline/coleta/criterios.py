@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 
 from coleta.fontes import alvares, anatel, atlas_desastres, beck, casa_civil, cnes, ibge_censo_esgoto, ibge_estimativas, inep_ideb, sgb, sim
-from coleta.fontes import br_dwgd
+from coleta.fontes import br_dwgd, anadem, ibge_setores
 
 
 class Direction(Enum):
@@ -258,6 +258,9 @@ class Filter:
     name: str
     source: str
     column: str
+    unit: str | None = None
+    other_sources: tuple[str, ...] = ()
+    scope: str = ""
 
 
 FILTERS = (
@@ -265,4 +268,7 @@ FILTERS = (
     Filter("Clima", "Köppen de Alvares", alvares.NAME, alvares.COLUMN),
     Filter("Saúde", "Hospital geral com leito de internação", cnes.NAME, cnes.HOSPITAL_COLUMN),
     Filter("Internet", "Acesso de fibra", anatel.NAME, anatel.COLUMN),
+    Filter("Relevo", "Altitude", anadem.NAME, anadem.ALTITUDE_COLUMN, "m", scope="Altitude do pixel ANADEM de 30 m que contém a sede; sem dado, usa o pixel válido mais próximo, sem interpolação"),
+    Filter("Relevo", "Declividade urbana", anadem.NAME, anadem.SLOPE_COLUMN, "%", (ibge_setores.NAME,), "Média da declividade dos pixels nos setores urbanos (CD_SIT 1, 2 ou 3) do distrito que contém a sede, Censo 2022"),
+    Filter("Relevo", "Classe de relevo", anadem.NAME, anadem.CLASS_COLUMN, "", (ibge_setores.NAME,), "Classe Embrapa de maior área no território municipal: 0–3%, 3–8%, 8–20%, 20–45%, 45–75%, acima de 75%; empate pela mais plana"),
 )

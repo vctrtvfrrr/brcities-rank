@@ -1,6 +1,7 @@
 import type { Dataset } from "./dataset";
 import { inStateOrder, STATES } from "./regions";
 import type { Constraint, Session } from "./session";
+import { inTerrainOrder, TERRAIN_CLASSES, TERRAIN_CRITERION } from "./terrain";
 
 export const KOPPEN_CRITERION = "koppen";
 export const LOCATION_CRITERION = "location";
@@ -10,7 +11,7 @@ const KOPPEN_BECK = "koppen_beck";
 const KOPPEN_ALVARES = "koppen_alvares";
 const BOOLEAN_CRITERIA = ["hospital_geral", "fibra"];
 
-export type ConstraintKind = "location" | "score" | "numeric" | "koppen" | "boolean";
+export type ConstraintKind = "location" | "score" | "numeric" | "koppen" | "terrain" | "boolean";
 
 export type ConstraintOption = {
   criterion: string;
@@ -32,6 +33,7 @@ export function constraintKind(criterion: string): ConstraintKind {
   if (criterion === LOCATION_CRITERION) return "location";
   if (criterion === SCORE_CRITERION) return "score";
   if (criterion === KOPPEN_CRITERION) return "koppen";
+  if (criterion === TERRAIN_CRITERION) return "terrain";
   return BOOLEAN_CRITERIA.includes(criterion) ? "boolean" : "numeric";
 }
 
@@ -77,6 +79,8 @@ function neutralConstraint(option: ConstraintOption): Constraint {
       return { criterion: SCORE_CRITERION, on: true, atLeast: null };
     case "koppen":
       return { criterion: KOPPEN_CRITERION, on: true, accepted: [] };
+    case "terrain":
+      return { criterion: TERRAIN_CRITERION, on: true, accepted: [...TERRAIN_CLASSES] };
     case "boolean":
       return { criterion: option.criterion as "hospital_geral" | "fibra", on: true, value: true };
     case "numeric":
@@ -98,7 +102,10 @@ export function editConstraint(session: Session, criterion: string, edit: Constr
   return mapConstraint(session, criterion, (c) => {
     if ("states" in c) return edit.states ? { ...c, states: inStateOrder(edit.states) } : c;
     if ("atLeast" in c) return edit.atLeast === undefined ? c : { ...c, atLeast: edit.atLeast };
-    if ("accepted" in c) return edit.accepted ? { ...c, accepted: edit.accepted } : c;
+    if ("accepted" in c)
+      return edit.accepted
+        ? { ...c, accepted: c.criterion === TERRAIN_CRITERION ? inTerrainOrder(edit.accepted) : edit.accepted }
+        : c;
     if ("value" in c) return edit.value === undefined ? c : { ...c, value: edit.value };
     return { ...c, min: edit.min === undefined ? c.min : edit.min, max: edit.max === undefined ? c.max : edit.max };
   });
@@ -158,6 +165,10 @@ export function passesConstraint(
   }
   if ("accepted" in constraint) {
     const accepted = new Set(constraint.accepted);
+    if (constraint.criterion === TERRAIN_CRITERION) {
+      const column = colunas[TERRAIN_CRITERION];
+      return (i) => typeof column[i] === "string" && accepted.has(column[i] as string);
+    }
     const beck = colunas[KOPPEN_BECK];
     const alvares = colunas[KOPPEN_ALVARES];
     return (i) => {

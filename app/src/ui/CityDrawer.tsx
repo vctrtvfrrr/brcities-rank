@@ -229,6 +229,21 @@ function Filters({ detail }: { detail: CityDetail }) {
         <span>Só filtram</span>
       </div>
       <div className="crit-list">
+        {filters.terrain.map((entry) => (
+          <div className="crit" key={entry.key}>
+            <span>{entry.label}</span>
+            <span className="wide">
+              {entry.value === null
+                ? absent
+                : typeof entry.value === "number"
+                  ? formatValue(entry.value, entry.unit)
+                  : entry.value}
+            </span>
+            <span className="src">
+              <Sources sources={entry.sources} />
+            </span>
+          </div>
+        ))}
         <div className="crit">
           <span>Köppen</span>
           <span className="wide">

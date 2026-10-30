@@ -9,7 +9,7 @@ from coleta.extraidos import CODE, IDENTITY, ExtractedSource
 from coleta.fontes import SOURCES, anatel, cnes
 
 CONTRACT_VERSION = 1
-TEXT_COLUMNS = ("nome", "uf", "koppen_beck", "koppen_alvares")
+TEXT_COLUMNS = ("nome", "uf", "koppen_beck", "koppen_alvares", "classe_relevo")
 YES_NO_COLUMNS = (cnes.HOSPITAL_COLUMN, anatel.COLUMN)
 YES = "sim"
 NO = "não"
@@ -74,11 +74,11 @@ def _catalog(criteria: Sequence[Criterion]) -> list[dict]:
             "chave": entry.column,
             "categoria": entry.category,
             "rotulo": entry.name,
-            "unidade": None,
+            "unidade": entry.unit,
             "direcao": None,
             "transformacao": NO_TRANSFORMATION,
             "pontua": False,
-            "fontes": [entry.source],
+            "fontes": [entry.source, *entry.other_sources],
         }
         for entry in FILTERS
     ]

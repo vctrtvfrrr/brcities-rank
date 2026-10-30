@@ -3,7 +3,7 @@
 Levanta os dados dos 5.570 municípios nas fontes públicas descritas em [METODOLOGIA.md](METODOLOGIA.md) e escreve o registro versionado:
 
 - `dados/municipios.csv`: um município por linha, com os valores das restrições de referência, o motivo do corte ou as marcas A conferir, e os valores dos critérios.
-- `dados/dataset.json`: o dataset que o app consome, colunar, com as 22 colunas do app, o catálogo dos critérios e os metadados das fontes (versão do contrato, data da Coleta e, por fonte, edição, ano, endereço e crédito). A Coleta falha se `hospital_geral` ou `fibra` vier com valor fora de sim, não ou vazio.
+- `dados/dataset.json`: o dataset que o app consome, colunar, com as 25 colunas do app, o catálogo dos critérios e os metadados das fontes (versão do contrato, data da Coleta e, por fonte, edição, ano, endereço e crédito). A Coleta falha se `hospital_geral` ou `fibra` vier com valor fora de sim, não ou vazio.
 - `corte.md`: quantas cidades cada restrição de referência cortou e quais Candidatas passaram com marca.
 - `criterios.md`: fonte, recorte, edição, endereço e P5/P95 de cada critério.
 
@@ -36,3 +36,15 @@ uv run python -m coleta validar
 ```bash
 uv run pytest
 ```
+
+## Relevo
+
+`ibge-setores` baixa as malhas de municípios, distritos e setores do Censo 2022. `anadem` baixa as folhas GeoTIFF v1.0 que cobrem o Brasil (dezenas de GB, fora do Git). Extraia as duas depois de `ibge-localidades`:
+
+```bash
+uv run python -m coleta baixar ibge-setores anadem
+uv run python -m coleta extrair ibge-setores anadem
+uv run python -m coleta montar
+```
+
+A extração lê o mosaico em blocos, sem carregá-lo inteiro na memória. As três colunas só restringem no app; não alteram o Corte de referência. O método está em [METODOLOGIA.md](METODOLOGIA.md#relevo).

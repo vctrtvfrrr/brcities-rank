@@ -4,11 +4,14 @@ version = "0.1.0"
 description = "Coleta dos dados municipais do BRCities Rank"
 requires-python = ">=3.12"
 dependencies = [
+    "fiona>=1.10.1",
     "netcdf4>=1.7.5",
     "openpyxl>=3.1.5",
     "pypdf>=6.21.1",
+    "pyproj>=3.8.0",
     "pyreaddbc>=2.0.4",
     "rasterio>=1.5.2",
+    "shapely>=2.2.0",
     "xarray>=2026.9.0",
     "xlrd>=2.0.2",
 ]
