@@ -12,14 +12,6 @@ HEADER = ("codigo_ibge", "uf", "distribuidora", "tensao", "status", "consultado_
 def source_dir(tmp_path):
     folder = tmp_path / aneel_tensoes.NAME
     folder.mkdir()
-    base = tmp_path / "extraidos"
-    base.mkdir()
-    (base / "ibge-localidades.csv").write_text(
-        "codigo_ibge,nome,uf,latitude,longitude\n"
-        "1200401,Rio Branco,AC,-9.97,-67.82\n"
-        "4106902,Curitiba,PR,-25.43,-49.27\n"
-        "1100015,Alta Floresta D'Oeste,RO,-11.93,-62.00\n"
-    )
     return folder
 
 
@@ -77,7 +69,7 @@ def test_extract_refuses_malformed_rows(source_dir, row, reason):
 
 @pytest.mark.parametrize("header, rows, reason", [
     (("codigo_ibge", "tensao"), [("1200401", "220/127")], "cabeçalho esperado"),
-    (HEADER, [], "3 município.*ausente"),
+    (HEADER, [], "não tem municípios"),
     (HEADER, [(*complete_rows()[0], "extra"), *complete_rows()[1:]], "quantidade de campos inválida"),
     (HEADER, [*complete_rows(), ("1200401", "AC", "", "", "sem_tensao", "2026-10-29", "")], "status ou datas de consulta conflitantes"),
     (HEADER, [*complete_rows(), ("1200401", "AC", "B", "230/115", "ok", "2026-10-30", "")], "status ou datas de consulta conflitantes"),
@@ -95,6 +87,11 @@ def test_download_lists_manual_file_and_instructions(source_dir, capsys):
     assert aneel_tensoes.download(source_dir) == []
 
 
+def test_extract_skips_aneel_entries_that_are_not_ibge_municipalities(source_dir):
+    write_csv(source_dir, [*complete_rows(), ("9900002", "PA", "", "", "falha", "2026-10-30", "Resposta fora do formato")])
+    assert "9900002" not in aneel_tensoes.extract(source_dir).rows
+
+
 def test_extract_refuses_failed_queries(source_dir):
     rows = complete_rows()
     rows[1] = ("4106902", "PR", "", "", "falha", "2026-10-30", "HTTP 503")
@@ -103,25 +100,14 @@ def test_extract_refuses_failed_queries(source_dir):
         aneel_tensoes.extract(source_dir)
 
 
-def test_extract_refuses_municipalities_missing_from_the_ibge_base(source_dir):
-    write_csv(source_dir, complete_rows()[:-1])
-    with pytest.raises(SystemExit, match="1 município.*ausente"):
-        aneel_tensoes.extract(source_dir)
-
-
-def test_extract_refuses_codes_outside_the_ibge_base(source_dir):
-    write_csv(source_dir, [*complete_rows(), ("3550308", "SP", "C", "220/127", "ok", "2026-10-30", "")])
-    with pytest.raises(SystemExit, match="1 código.*fora da base"):
-        aneel_tensoes.extract(source_dir)
-
-
-def test_extract_requires_the_ibge_base_to_validate_coverage(source_dir):
-    (source_dir.parent / "extraidos" / "ibge-localidades.csv").unlink()
-    write_csv(source_dir, complete_rows())
-    with pytest.raises(SystemExit, match="base do IBGE"):
-        aneel_tensoes.extract(source_dir)
-
-
 def test_edition_uses_query_dates_across_days(source_dir):
     write_csv(source_dir, complete_rows())
     assert aneel_tensoes.extract(source_dir).edition == "2026-10-29 a 2026-10-30"
+
+
+@pytest.mark.parametrize("pair, voltage", [
+    ("220/127", 127), ("230/115", 127), ("240/120", 127), ("380/220", 220), ("440/254", 220),
+    ("347/173,5", 220), ("347/173.49", 127), ("347/173.51", 220),
+])
+def test_outlet_voltage_groups_like_the_app(pair, voltage):
+    assert aneel_tensoes.outlet_voltage(pair) == voltage

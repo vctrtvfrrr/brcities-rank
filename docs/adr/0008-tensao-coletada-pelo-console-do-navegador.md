@@ -10,5 +10,6 @@ A única fonte oficial da tensão de cada município é a consulta da ANEEL às 
 
 ## Consequences
 
-- Atualizar a Tensão exige uma pessoa com navegador; a Coleta automática não a renova, e o arquivo manual fica com a data em que foi gerado.
+- Atualizar a Tensão exige uma pessoa com navegador; a Coleta automática não a renova, e cada município fica com a data da sua consulta.
+- A fonte é opcional para a Coleta: enquanto o CSV não for gerado e extraído, `montar` publica o dataset sem a coluna nem a entrada da Tensão no catálogo, e o app não oferece a Restrição. Assim a Tensão não trava a atualização das outras fontes; depois de extraída, ela tem de cobrir todos os municípios da base do IBGE.
 - A fonte declara a tensão das distribuidoras, que pode estar desatualizada, e traz nomes antigos de distribuidoras; o app mostra só as tensões.

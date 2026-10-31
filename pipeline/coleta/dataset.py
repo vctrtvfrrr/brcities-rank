@@ -6,7 +6,7 @@ from datetime import date
 
 from coleta.criterios import Criterion, Filter, available_filters
 from coleta.extraidos import CODE, IDENTITY, ExtractedSource
-from coleta.fontes import SOURCES, anatel, aneel_tensoes, cnes
+from coleta.fontes import SOURCES, anatel, cnes
 
 CONTRACT_VERSION = 1
 TEXT_COLUMNS = ("nome", "uf", "koppen_beck", "koppen_alvares", "classe_relevo", "tensao")
@@ -88,9 +88,8 @@ def _catalog(criteria: Sequence[Criterion], filters: Sequence[Filter]) -> list[d
 
 def _source(source: ExtractedSource) -> dict:
     module = SOURCES[source.name]
-    year = module.YEAR_LABEL
-    if source.name == aneel_tensoes.NAME:
-        year = " a ".join(dict.fromkeys(value[:4] for value in source.edition.split(" a ")))
+    year_label = getattr(module, "year_label", None)
+    year = year_label(source.edition) if year_label else module.YEAR_LABEL
     return {
         "chave": source.name,
         "nome": source.title,

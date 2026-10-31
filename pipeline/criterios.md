@@ -271,6 +271,17 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Unidade | Classe |
 | Uso no app | Só Restrição; não pontua, sem direção, transformação nem P5/P95 |
 
+## Tensão: Tensão
+
+| Campo | Valor |
+| --- | --- |
+| Fonte | ANEEL, tensões nominais secundárias por município |
+| Recorte | Pares fase-fase/fase-neutro distintos, na ordem da ANEEL, separados por ponto e vírgula; vazio sem tensão conhecida |
+| Edição | 2026-10-30 |
+| Coluna no CSV | `tensao` |
+| Unidade | V |
+| Uso no app | Só Restrição; não pontua, sem direção, transformação nem P5/P95 |
+
 ## Fontes
 
 Todos os arquivos baixados nesta Coleta, com a edição de cada fonte.
@@ -496,3 +507,4 @@ Todos os arquivos baixados nesta Coleta, com a edição de cada fonte.
 | ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_24M.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_24M.tif> | 2026-10-30 |
 | ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_25L.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_25L.tif> | 2026-10-30 |
 | ANA e UFRGS, ANADEM: modelo digital do terreno da América do Sul | ANADEM v1.0 (2024), 30 m; malhas IBGE do Censo 2022 | `anadem_v1_25M.tif` | <https://metadados.snirh.gov.br/files/anadem_v1_tiles/anadem_v1_25M.tif> | 2026-10-30 |
+| ANEEL, tensões nominais secundárias por município | 2026-10-30 | `tensoes.csv` | <https://www2.aneel.gov.br/aplicacoes/srd/frmConcessionaria.cfm> | 2026-10-30 |

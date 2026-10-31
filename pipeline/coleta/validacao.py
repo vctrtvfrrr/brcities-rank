@@ -16,7 +16,7 @@ import openpyxl
 
 from coleta import EXTRACTED_DIR, PIPELINE_DIR, SOURCES_DIR, extraidos
 from coleta.extraidos import CODE
-from coleta.fontes import br_dwgd, sim
+from coleta.fontes import aneel_tensoes, br_dwgd, sim
 from coleta.fontes.base import RemoteFile, download_files
 from coleta.geografia import Gazetteer, great_circle_km
 
@@ -270,20 +270,12 @@ def render_voltage(municipalities: Mapping[str, Mapping[str, str]]) -> str:
         return ""
     values = [row.get("tensao", "") for row in municipalities.values()]
     missing = sum(not value for value in values)
-    multiple = sum(len(_outlet_voltages(value)) > 1 for value in values if value)
+    multiple = sum(len({aneel_tensoes.outlet_voltage(pair) for pair in value.split(";")}) > 1 for value in values if value)
     return (
         "## Tensão\n\n"
         f"- Sem tensão conhecida: {_integer(missing)}.\n"
         f"- Com 127 V e 220 V: {_integer(multiple)}.\n"
     )
-
-
-def _outlet_voltages(value: str) -> set[int]:
-    voltages = set()
-    for pair in value.split(";"):
-        neutral = min(float(part.replace(",", ".")) for part in pair.split("/"))
-        voltages.add(127 if abs(neutral - 127) < abs(neutral - 220) else 220)
-    return voltages
 
 
 def render_comparison(comparison: Comparison) -> str:

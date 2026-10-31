@@ -89,13 +89,20 @@
       const label = entry.querySelector("label")?.textContent.trim();
       const value = entry.querySelector("span")?.textContent.trim();
       const pair = value?.match(/^([1-9][0-9]*(?:[.,][0-9]+)?)\s*\/\s*([1-9][0-9]*(?:[.,][0-9]+)?)\s*(?:volts|V)$/i);
-      if (!distributor || !/^Tensão Nominal\s+[0-9]+$/i.test(label || "") || !pair) {
+      if (!distributor || !/^Tensão Nominal\s+[0-9]+$/i.test(label || "")) {
         throw new Error("Tensão nominal fora do formato esperado.");
       }
+      // Some distributors also declare a lone value ("220 volts", or junk like "1 volts") beside their pairs.
+      if (!pair && /^[0-9]+(?:[.,][0-9]+)?\s*(?:volts|V)$/i.test(value || "")) {
+        console.warn(`${code}: valor isolado ignorado (${distributor}: ${value}).`);
+        continue;
+      }
+      if (!pair) throw new Error("Tensão nominal fora do formato esperado.");
       rows.push({ codigo_ibge: code, uf, distribuidora: distributor, tensao: `${pair[1]}/${pair[2]}`, status: "ok" });
     }
     if (rows.length) return rows;
-    if (entries.length && distributor) {
+    const emptyTemplate = !entries.length && !document.body.children.length && !document.body.textContent.trim();
+    if ((entries.length && distributor) || emptyTemplate) {
       return [{ codigo_ibge: code, uf, status: "sem_tensao" }];
     }
     throw new Error("Resposta da ANEEL fora do formato esperado; não foi considerada ausência de tensão.");

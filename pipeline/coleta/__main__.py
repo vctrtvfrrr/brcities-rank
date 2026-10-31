@@ -6,6 +6,7 @@ from types import ModuleType
 from coleta import EXTRACTED_DIR, PIPELINE_DIR, SOURCES_DIR, extraidos, registro, validacao
 from coleta.corte import RESTRICTIONS, run_cut
 from coleta.criterios import CRITERIA, freeze
+from coleta.extraidos import ExtractedSource
 from coleta.fontes import BASE, OPTIONAL_SOURCES, SOURCES
 from coleta.fontes.base import missing_files, provenance
 
@@ -46,8 +47,8 @@ def montar() -> int:
     sources = [extraidos.read(EXTRACTED_DIR, name) for name in available]
     base = next(source for source in sources if source.name == BASE)
     for source in sources:
-        if source.name in OPTIONAL_SOURCES and source.rows.keys() != base.rows.keys():
-            raise SystemExit(f"{source.name}: cobertura diferente da base do IBGE; rode extrair antes de montar")
+        if source.name in OPTIONAL_SOURCES:
+            _check_coverage(source, base)
     municipalities = extraidos.merge(base, [source for source in sources if source is not base])
     for name in available:
         module = SOURCES[name]
@@ -60,6 +61,14 @@ def montar() -> int:
     registro.write(PIPELINE_DIR, municipalities, RESTRICTIONS, result, CRITERIA, bounds, sources, date.today())
     print(f"{len(municipalities)} municípios, {len(candidates)} Candidatas")
     return 0
+
+
+def _check_coverage(source: ExtractedSource, base: ExtractedSource) -> None:
+    if missing := base.rows.keys() - source.rows.keys():
+        raise SystemExit(
+            f"{source.name}: {len(missing)} município(s) da base do IBGE ausente(s): {', '.join(sorted(missing)[:10])}; "
+            "gere o CSV completo e rode extrair antes de montar"
+        )
 
 
 def validar() -> int:

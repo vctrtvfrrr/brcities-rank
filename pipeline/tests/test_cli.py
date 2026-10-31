@@ -58,12 +58,22 @@ def test_mount_includes_voltage_once_extracted(project, tmp_path):
     assert next(entry for entry in dataset["catalogo"] if entry["chave"] == "tensao")["pontua"] is False
 
 
-def test_mount_refuses_stale_voltage_coverage(project, tmp_path):
+def test_mount_refuses_voltage_extraction_missing_municipalities_of_the_ibge_base(project, tmp_path):
     write_base(project)
     extraidos.write(project, aneel_tensoes.NAME, aneel_tensoes.TITLE, Extraction(("tensao",), {}, "2026-10-30"), [])
-    with pytest.raises(SystemExit, match="cobertura.*IBGE"):
+    with pytest.raises(SystemExit, match=r"1 município\(s\) da base do IBGE ausente\(s\): 1200401"):
         cli.main(["montar"])
     assert not (tmp_path / "dados").exists()
+
+
+def test_mount_ignores_voltage_codes_outside_the_ibge_base_like_other_sources(project, tmp_path):
+    write_base(project)
+    extraidos.write(project, aneel_tensoes.NAME, aneel_tensoes.TITLE, Extraction(
+        ("tensao",), {"1200401": {"tensao": "220/127"}, "2605459": {"tensao": "380/220"}}, "2026-10-30",
+    ), [])
+    assert cli.main(["montar"]) == 0
+    dataset = json.loads((tmp_path / "dados" / "dataset.json").read_text())
+    assert dataset["colunas"]["tensao"] == ["220/127"]
 
 
 def test_extract_all_skips_an_optional_manual_file_that_is_missing(project, monkeypatch, capsys):

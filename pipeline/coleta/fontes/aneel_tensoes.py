@@ -18,7 +18,19 @@ STATE_CODES = dict(zip(
     "RO AC AM RR PA AP TO MA PI CE RN PB PE AL SE BA MG ES RJ SP PR SC RS MS MT GO DF".split(),
     "11 12 13 14 15 16 17 21 22 23 24 25 26 27 28 29 31 32 33 35 41 42 43 50 51 52 53".split(),
 ))
+# The ANEEL lists also offer entries coded 99000xx, which are not IBGE municipalities.
+NON_MUNICIPAL_PREFIX = "99"
 PAIR = re.compile(r"[1-9][0-9]*(?:[.,][0-9]+)?/[1-9][0-9]*(?:[.,][0-9]+)?")
+
+
+def year_label(edition: str) -> str:
+    return " a ".join(dict.fromkeys(queried_on[:4] for queried_on in edition.split(" a ")))
+
+
+# Mirrors outletVoltage in app/src/domain/voltage.ts; both must group the same way.
+def outlet_voltage(pair: str) -> int:
+    neutral = min(float(part.replace(",", ".")) for part in pair.split("/"))
+    return 127 if abs(neutral - 127) < abs(neutral - 220) else 220
 
 
 def download(folder: Path) -> list[RemoteFile]:
@@ -38,6 +50,8 @@ def extract(folder: Path) -> Extraction:
             if reader.fieldnames != list(HEADER):
                 raise ValueError(f"cabeçalho esperado: {','.join(HEADER)}")
             for row in reader:
+                if row["codigo_ibge"].startswith(NON_MUNICIPAL_PREFIX):
+                    continue
                 _validate_row(row, reader.line_num)
                 code, pair = row["codigo_ibge"], row["tensao"]
                 observation = row["status"], row["consultado_em"]
@@ -47,7 +61,8 @@ def extract(folder: Path) -> Extraction:
                 values = pairs.setdefault(code, [])
                 if pair and pair not in values:
                     values.append(pair)
-        _validate_coverage(folder, set(pairs))
+        if not observations:
+            raise ValueError("o CSV não tem municípios")
     except (ValueError, csv.Error, UnicodeError) as error:
         raise SystemExit(f"{path}: CSV de Tensão inválido: {error}") from error
     dates = sorted({queried_on for _, queried_on in observations.values()})
@@ -78,19 +93,3 @@ def _validate_row(row: dict[str, str], line: int) -> None:
     else:
         raise ValueError(f"linha {line}: status inválido")
 
-
-def _validate_coverage(folder: Path, codes: set[str]) -> None:
-    base = folder.parent / "extraidos" / "ibge-localidades.csv"
-    if not base.exists():
-        raise ValueError("falta a base do IBGE; rode extrair ibge-localidades antes")
-    with base.open(encoding="utf-8-sig", newline="") as source:
-        reader = csv.DictReader(source)
-        if not reader.fieldnames or "codigo_ibge" not in reader.fieldnames:
-            raise ValueError("base do IBGE inválida: falta codigo_ibge")
-        expected = {row["codigo_ibge"] for row in reader}
-    if not expected:
-        raise ValueError("base do IBGE vazia")
-    if missing := expected - codes:
-        raise ValueError(f"{len(missing)} município(s) ausente(s) da cobertura: {', '.join(sorted(missing)[:10])}")
-    if unexpected := codes - expected:
-        raise ValueError(f"{len(unexpected)} código(s) fora da base do IBGE: {', '.join(sorted(unexpected)[:10])}")

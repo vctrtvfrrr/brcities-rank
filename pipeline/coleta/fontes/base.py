@@ -5,7 +5,8 @@ YEAR_LABEL, LANDING_URL and CREDIT (the citation shown by the app), FILES, downl
 already present and returns the manual files still missing; extract returns an
 Extraction keyed by the 7-digit IBGE code and knows nothing about the Corte.
 A module may also expose derive(row), which montar applies to every merged
-municipality to compute the columns that combine several sources.
+municipality to compute the columns that combine several sources, and
+year_label(edition), which replaces YEAR_LABEL when the year depends on the edition.
 """
 
 import gzip
