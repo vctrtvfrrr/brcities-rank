@@ -5,52 +5,110 @@ from coleta.criterios import SAFETY, Direction
 from coleta.fontes import sim
 
 
-def municipality(deaths: tuple[str, str, str] = ("", "", ""), census: str = "10000", estimate: str = "10000"):
-    row = dict(zip(sim.DEATH_COLUMNS, deaths)) | {"populacao_2022": census, "populacao_2024": estimate}
+def municipality(deaths: tuple[str, str, str] = ("", "", ""), census: str = "10000", estimate: str = "10000", uf: str = "SP"):
+    row = dict(zip(sim.DEATH_COLUMNS, deaths)) | {"uf": uf, "populacao_2022": census, "populacao_2024": estimate}
     return row | sim.derive(row)
+
+
+def smoothed(*rows: dict) -> list[str]:
+    municipalities = {str(code): row for code, row in enumerate(rows)}
+    sim.derive_all(municipalities)
+    return [row[sim.RATE_COLUMN] for row in municipalities.values()]
 
 
 def test_rate_interpolates_2023_between_census_and_estimate():
     assert sim.homicide_rate(30, 100_000, 110_000) == pytest.approx(30 * 100_000 / (100_000 + 105_000 + 110_000))
 
 
-def test_rate_sums_the_three_years():
+def test_raw_rate_sums_the_three_years():
     row = municipality(("1", "2", "3"), census="20000", estimate="40000")
 
-    assert row[sim.RATE_COLUMN] == "6.6667"
+    assert row[sim.RAW_RATE_COLUMN] == "6.6667"
 
 
-def test_municipality_absent_from_the_sim_has_zero_rate():
+def test_municipality_absent_from_the_sim_has_zero_raw_rate():
     row = municipality()
 
     assert [row[column] for column in sim.DEATH_COLUMNS] == ["0", "0", "0"]
-    assert row[sim.RATE_COLUMN] == "0.0000"
-    assert judge_homicides(row) == PASS
+    assert row[sim.RAW_RATE_COLUMN] == "0.0000"
+
+
+def test_smoothing_follows_marshall_within_the_state():
+    big = municipality(("10", "10", "10"), census="100000", estimate="100000")
+    small = municipality(("4", "4", "4"), census="10000", estimate="10000")
+    deaths, person_years = 42, 330_000
+    mean = deaths / person_years
+    variance = (300_000 * (1e-4 - mean) ** 2 + 30_000 * (4e-4 - mean) ** 2) / person_years
+    between = variance - mean / (person_years / 2)
+    weight = between / (between + mean / 30_000)
+
+    assert float(smoothed(big, small)[1]) == pytest.approx((mean + weight * (4e-4 - mean)) * 100_000, abs=1e-4)
+
+
+def test_smoothing_pulls_the_small_city_further_toward_the_state_mean():
+    rows = [
+        municipality(("10", "10", "10"), census="100000", estimate="100000"),
+        municipality(("1", "1", "1"), census="10000", estimate="10000"),
+        municipality(("100", "100", "100"), census="200000", estimate="200000"),
+        municipality(("1", "1", "1"), census="10000", estimate="10000"),
+    ]
+    raw = [float(row[sim.RAW_RATE_COLUMN]) for row in rows]
+
+    rates = list(map(float, smoothed(*rows)))
+
+    assert raw[0] == raw[1] == 10
+    assert rates[0] < rates[1]
+    assert rates[0] == pytest.approx(10, abs=1)
+
+
+def test_state_without_extra_variation_takes_the_state_mean():
+    rows = [municipality(("1", "1", "1"), census="10000", estimate="10000"), municipality(("2", "1", "0"))]
+
+    assert smoothed(*rows) == ["10.0000", "10.0000"]
+
+
+def test_each_state_is_smoothed_toward_its_own_mean():
+    rows = [
+        municipality(("1", "1", "1"), uf="SP"),
+        municipality(("1", "1", "1"), uf="SP"),
+        municipality(("5", "5", "5"), uf="ES"),
+        municipality(("5", "5", "5"), uf="ES"),
+    ]
+
+    assert smoothed(*rows) == ["10.0000", "10.0000", "50.0000", "50.0000"]
+
+
+def test_state_without_homicides_keeps_zero():
+    assert smoothed(municipality(), municipality(census="50000", estimate="50000")) == ["0.0000", "0.0000"]
+
+
+def test_municipality_without_population_stays_out_of_the_state_mean():
+    rows = [municipality(("1", "1", "1")), municipality(("9", "9", "9"), estimate="")]
+
+    assert smoothed(*rows) == ["10.0000", ""]
 
 
 def test_rate_limit_is_inclusive():
-    assert municipality(("2", "2", "2"))[sim.RATE_COLUMN] == "20.0000"
-    assert judge_homicides(municipality(("2", "2", "2"))) == PASS
+    assert judge_homicides({sim.RATE_COLUMN: "20.0000"}) == PASS
     assert judge_homicides({sim.RATE_COLUMN: "20.0001"}) == CUT
 
 
 def test_rate_without_population_passes_to_check():
-    row = municipality(("1", "0", "0"), estimate="")
+    outcome = judge_homicides({sim.RATE_COLUMN: ""})
 
-    assert row[sim.RATE_COLUMN] == ""
-    outcome = judge_homicides(row)
     assert outcome.verdict is Verdict.CHECK
     assert outcome.reason == Reason.MISSING
 
 
-def test_homicide_restriction_in_the_cut():
-    municipalities = {"1": municipality(("9", "9", "9")), "2": municipality(), "3": municipality(census="")}
+def test_homicide_restriction_reads_the_smoothed_rate():
+    municipalities = {"1": {sim.RATE_COLUMN: "25.0"}, "2": {sim.RATE_COLUMN: "0.0"}, "3": {sim.RATE_COLUMN: ""}}
 
     result = run_cut(municipalities, [HOMICIDES])
 
     assert result.candidates == ["2", "3"]
     assert result.fates["1"].cut_by == "homicidios"
     assert result.fates["3"].marks[0].reason == Reason.MISSING
+    assert sim.RAW_RATE_COLUMN in HOMICIDES.columns
 
 
 def test_safety_criterion_reads_the_rate_and_lower_is_better():

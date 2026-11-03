@@ -55,6 +55,9 @@ def montar() -> int:
         if derive := getattr(module, "derive", None):
             for row in municipalities.values():
                 row.update(derive(row))
+    for name in available:
+        if derive_all := getattr(SOURCES[name], "derive_all", None):
+            derive_all(municipalities)
     result = run_cut(municipalities, RESTRICTIONS)
     candidates = [municipalities[code] for code in result.candidates]
     bounds = {criterion.column: freeze(criterion, candidates) for criterion in CRITERIA}

@@ -2,7 +2,7 @@
 
 > Gerado pela Coleta (`uv run python -m coleta montar`, em `pipeline/`). Não edite: rode a Coleta de novo.
 
-P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
+P5 e P95 foram calculados sobre as 122 Candidatas ao fim do Corte.
 
 ## Segurança: Homicídios por 100 mil habitantes
 
@@ -10,7 +10,7 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | --- | --- |
 | Categoria | Segurança |
 | Fonte | SIM/DataSUS, Declarações de Óbito |
-| Recorte | Óbitos por agressão (CID-10 X85–Y09) e intervenção legal (Y35–Y36), por município de residência, somados de 2022 a 2024 e divididos pela soma das populações dos três anos: o Censo 2022, a média do Censo 2022 e da Estimativa 2024 para 2023, e a Estimativa 2024; sem óbito registrado, a taxa é zero |
+| Recorte | Óbitos por agressão (CID-10 X85–Y09) e intervenção legal (Y35–Y36), por município de residência, somados de 2022 a 2024 e divididos pela soma das populações dos três anos: o Censo 2022, a média do Censo 2022 e da Estimativa 2024 para 2023, e a Estimativa 2024; sem óbito registrado, a taxa bruta é zero. A taxa publicada é a bruta suavizada pelo estimador bayesiano empírico global de Marshall, com a taxa da UF como média: quanto menor a população, mais a taxa se aproxima da taxa da UF |
 | Edição | DORES (definitivo) de 2022 a 2024, arquivos publicados de 2023-12-21 a 2025-12-23 |
 | Ano | 2022 a 2024 |
 | Endereço | <ftp://ftp.datasus.gov.br/dissemin/publicos/SIM/CID10/DORES/> |
@@ -18,9 +18,9 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Coluna no CSV | `homicidios_por_100_mil` |
 | Direção | Menor |
 | Transformação | Nenhuma |
-| P5 | `3.502110` |
-| P95 | `18.212850` |
-| Candidatas com dado | 120 |
+| P5 | `4.141120` |
+| P95 | `18.409230` |
+| Candidatas com dado | 122 |
 
 ## Desastres: Anos com registro de desastre
 
@@ -38,7 +38,7 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Transformação | Nenhuma |
 | P5 | `0.000000` |
 | P95 | `8.500000` |
-| Candidatas com dado | 120 |
+| Candidatas com dado | 122 |
 
 ## Desastres: Danos humanos da família chuva por mil habitantes
 
@@ -55,8 +55,8 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Direção | Menor |
 | Transformação | Nenhuma |
 | P5 | `0.000000` |
-| P95 | `46.348995` |
-| Candidatas com dado | 120 |
+| P95 | `46.137760` |
+| Candidatas com dado | 122 |
 
 ## Saúde: Pediatras por mil crianças
 
@@ -72,9 +72,9 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Coluna no CSV | `pediatras_por_mil_criancas` |
 | Direção | Maior |
 | Transformação | Nenhuma |
-| P5 | `0.691120` |
-| P95 | `6.789755` |
-| Candidatas com dado | 120 |
+| P5 | `0.702855` |
+| P95 | `6.767960` |
+| Candidatas com dado | 122 |
 
 ## Saúde: Esgoto por rede geral ou fossa séptica
 
@@ -90,9 +90,9 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Coluna no CSV | `esgoto_pct` |
 | Direção | Maior |
 | Transformação | Nenhuma |
-| P5 | `68.351000` |
-| P95 | `98.652500` |
-| Candidatas com dado | 120 |
+| P5 | `68.413000` |
+| P95 | `98.636000` |
+| Candidatas com dado | 122 |
 
 ## Escola: IDEB dos anos iniciais do fundamental
 
@@ -108,9 +108,9 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Coluna no CSV | `ideb_anos_iniciais` |
 | Direção | Maior |
 | Transformação | Nenhuma |
-| P5 | `5.995000` |
+| P5 | `6.000000` |
 | P95 | `7.200000` |
-| Candidatas com dado | 120 |
+| Candidatas com dado | 122 |
 
 ## Escola: IDEB dos anos finais do fundamental
 
@@ -128,7 +128,7 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Transformação | Nenhuma |
 | P5 | `4.800000` |
 | P95 | `6.000000` |
-| Candidatas com dado | 120 |
+| Candidatas com dado | 122 |
 
 ## Escola: IDEB do ensino médio
 
@@ -144,9 +144,9 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Coluna no CSV | `ideb_ensino_medio` |
 | Direção | Maior |
 | Transformação | Nenhuma |
-| P5 | `4.100000` |
-| P95 | `5.200000` |
-| Candidatas com dado | 120 |
+| P5 | `4.105000` |
+| P95 | `5.195000` |
+| Candidatas com dado | 122 |
 
 ## Clima: Umidade relativa média anual
 
@@ -162,9 +162,9 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Coluna no CSV | `umidade_relativa` |
 | Direção | Menor |
 | Transformação | Nenhuma |
-| P5 | `69.695000` |
-| P95 | `81.605000` |
-| Candidatas com dado | 120 |
+| P5 | `69.605000` |
+| P95 | `81.595000` |
+| Candidatas com dado | 122 |
 
 ## Clima: Ponto de orvalho médio de dezembro a fevereiro
 
@@ -180,9 +180,9 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Coluna no CSV | `orvalho_dez_fev` |
 | Direção | Menor |
 | Transformação | Nenhuma |
-| P5 | `17.095000` |
+| P5 | `17.100000` |
 | P95 | `19.800000` |
-| Candidatas com dado | 120 |
+| Candidatas com dado | 122 |
 
 ## Clima: Dias com chuva de 1 mm ou mais por ano
 
@@ -198,9 +198,9 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Coluna no CSV | `dias_de_chuva` |
 | Direção | Menor |
 | Transformação | Nenhuma |
-| P5 | `113.895000` |
-| P95 | `158.255000` |
-| Candidatas com dado | 120 |
+| P5 | `113.800000` |
+| P95 | `157.860000` |
+| Candidatas com dado | 122 |
 
 ## Clima: Temperatura do mês mais quente
 
@@ -217,8 +217,8 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Direção | Menor |
 | Transformação | Nenhuma |
 | P5 | `21.500000` |
-| P95 | `24.500000` |
-| Candidatas com dado | 120 |
+| P95 | `24.495000` |
+| Candidatas com dado | 122 |
 
 ## Porte: População
 
@@ -234,9 +234,9 @@ P5 e P95 foram calculados sobre as 120 Candidatas ao fim do Corte.
 | Coluna no CSV | `populacao_2026` |
 | Direção | Maior |
 | Transformação | Logaritmo natural antes do min-max |
-| P5 | `10.598595` (logaritmo de 40.078) |
-| P95 | `13.544446` (logaritmo de 762.567) |
-| Candidatas com dado | 120 |
+| P5 | `10.590727` (logaritmo de 39.764) |
+| P95 | `13.535284` (logaritmo de 755.613) |
+| Candidatas com dado | 122 |
 
 ## Relevo: Altitude
 

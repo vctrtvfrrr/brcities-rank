@@ -2,15 +2,15 @@
 
 > Gerado pela Coleta (`uv run python -m coleta montar`, em `pipeline/`). Não edite: rode a Coleta de novo.
 
-Das 5.570 cidades, 120 são Candidatas ao fim do Corte, 0 delas com marca A conferir.
+Das 5.570 cidades, 122 são Candidatas ao fim do Corte, 0 delas com marca A conferir.
 
 | Ordem | Restrição | Passa quando | Fonte | Entraram | Cortadas | A conferir | Seguiram |
 | --- | --- | --- | --- | ---: | ---: | ---: | ---: |
 | 1 | População | Tem 35 mil habitantes ou mais. | IBGE, Estimativas da População 2026 | 5.570 | 4.576 | 0 | 994 |
 | 2 | Clima | A classe Köppen no ponto da sede é Cwb, Cwc, Cfb, Cfc, Csb ou Csc. | Beck et al. 2023 (1991–2020) e Alvares et al. 2013 | 994 | 845 | 0 | 149 |
-| 3 | Homicídios | Tem taxa de até 20 por 100 mil habitantes, na média de 2022 a 2024, com os óbitos atribuídos ao município de residência da vítima. | SIM/DataSUS, com o Censo 2022 e a Estimativa 2024 do IBGE | 149 | 22 | 0 | 127 |
-| 4 | Hospital | Tem ao menos um hospital geral com leito de internação no próprio município. | CNES/DataSUS, competência 2026-09 | 127 | 7 | 0 | 120 |
-| 5 | Internet | Tem ao menos uma empresa com acesso de fibra declarado no município, em qualquer um dos 12 meses mais recentes. | Anatel, acessos de banda larga fixa | 120 | 0 | 0 | 120 |
+| 3 | Homicídios | Tem taxa de até 20 por 100 mil habitantes, na média de 2022 a 2024, com os óbitos atribuídos ao município de residência da vítima e a taxa suavizada pela da UF. | SIM/DataSUS, com o Censo 2022 e a Estimativa 2024 do IBGE | 149 | 20 | 0 | 129 |
+| 4 | Hospital | Tem ao menos um hospital geral com leito de internação no próprio município. | CNES/DataSUS, competência 2026-09 | 129 | 7 | 0 | 122 |
+| 5 | Internet | Tem ao menos uma empresa com acesso de fibra declarado no município, em qualquer um dos 12 meses mais recentes. | Anatel, acessos de banda larga fixa | 122 | 0 | 0 | 122 |
 
 ## Candidatas com marca
 
@@ -28,6 +28,7 @@ Nestas Candidatas, Beck e Alvares divergem sobre o Clima. O calor do verão pesa
 | 3106200 | Belo Horizonte | MG | Beck Aw, Alvares Cwb |
 | 3107109 | Boa Esperança | MG | Beck Aw, Alvares Cwb |
 | 3109006 | Brumadinho | MG | Beck Aw, Alvares Cwb |
+| 3110004 | Caeté | MG | Beck Cwa, Alvares Cwb |
 | 3111200 | Campo Belo | MG | Beck Aw, Alvares Cwb |
 | 3112307 | Capelinha | MG | Beck Cwa, Alvares Cwb |
 | 3118007 | Congonhas | MG | Beck Cwa, Alvares Cwb |
@@ -44,6 +45,7 @@ Nestas Candidatas, Beck e Alvares divergem sobre o Clima. O calor do verão pesa
 | 3136702 | Juiz de Fora | MG | Beck Cwa, Alvares Cwb |
 | 3138203 | Lavras | MG | Beck Cwa, Alvares Cwb |
 | 3139003 | Machado | MG | Beck Cwa, Alvares Cwb |
+| 3140704 | Mateus Leme | MG | Beck Aw, Alvares Cwb |
 | 3144805 | Nova Lima | MG | Beck Aw, Alvares Cwb |
 | 3145604 | Oliveira | MG | Beck Cwa, Alvares Cwb |
 | 3145901 | Ouro Branco | MG | Beck Cwa, Alvares Cwb |

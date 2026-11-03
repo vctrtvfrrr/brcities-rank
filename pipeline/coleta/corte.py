@@ -166,9 +166,9 @@ HOMICIDES = Restriction(
     key="homicidios",
     name="Homicídios",
     rule="Tem taxa de até 20 por 100 mil habitantes, na média de 2022 a 2024, "
-    "com os óbitos atribuídos ao município de residência da vítima.",
+    "com os óbitos atribuídos ao município de residência da vítima e a taxa suavizada pela da UF.",
     source="SIM/DataSUS, com o Censo 2022 e a Estimativa 2024 do IBGE",
-    columns=(*sim.DEATH_COLUMNS, *sim.POPULATION_COLUMNS, sim.RATE_COLUMN),
+    columns=(*sim.DEATH_COLUMNS, *sim.POPULATION_COLUMNS, sim.RAW_RATE_COLUMN, sim.RATE_COLUMN),
     judge=judge_homicides,
 )
 

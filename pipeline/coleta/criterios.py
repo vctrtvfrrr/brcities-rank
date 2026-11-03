@@ -84,7 +84,9 @@ SAFETY = Criterion(
     name="Homicídios por 100 mil habitantes",
     scope="Óbitos por agressão (CID-10 X85–Y09) e intervenção legal (Y35–Y36), por município de residência, "
     "somados de 2022 a 2024 e divididos pela soma das populações dos três anos: o Censo 2022, a média do Censo "
-    "2022 e da Estimativa 2024 para 2023, e a Estimativa 2024; sem óbito registrado, a taxa é zero",
+    "2022 e da Estimativa 2024 para 2023, e a Estimativa 2024; sem óbito registrado, a taxa bruta é zero. A taxa "
+    "publicada é a bruta suavizada pelo estimador bayesiano empírico global de Marshall, com a taxa da UF como média: "
+    "quanto menor a população, mais a taxa se aproxima da taxa da UF",
     year=f"{sim.YEARS[0]} a {sim.YEARS[-1]}",
     source=sim.NAME,
     source_file=sim.LISTING.name,

@@ -24,7 +24,8 @@ const TEXTS: Record<string, { measures: string; details: string; scoring?: strin
     measures: "Quão segura é a cidade, medida pelas mortes violentas dos seus moradores.",
     details:
       "Conta os homicídios, incluindo as mortes por intervenção legal, de pessoas que moram no município, em média de 2022 a 2024: a média de três anos evita que um ano ruim distorça uma cidade pequena. " +
-      "Cidade sem óbito registrado tem taxa zero. Roubo, furto e outros crimes ficam de fora, porque não há dado municipal confiável; para eles, crie uma categoria subjetiva.",
+      "Em cidade pequena, poucos óbitos mudam muito a taxa; por isso ela é puxada para a taxa do estado, tanto mais quanto menor a população, e a cidade grande fica quase com a própria taxa. " +
+      "Roubo, furto e outros crimes ficam de fora, porque não há dado municipal confiável; para eles, crie uma categoria subjetiva.",
   },
   Desastres: {
     measures:
