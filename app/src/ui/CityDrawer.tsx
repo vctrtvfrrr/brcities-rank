@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { CategoryDetail, CityDetail, CriterionDetail, SubjectiveDetail } from "../domain/city-detail";
-import type { Dataset, SourceInfo } from "../domain/dataset";
+import type { Dataset } from "../domain/dataset";
 import { GRADES, type Grade } from "../domain/session";
 import { ScoreBadge } from "./ScoreBadge";
 import { describeConstraint, formatCount, formatDate, formatGrade, formatNote, formatValue } from "./format";
@@ -55,6 +55,7 @@ export function CityDrawer({
       {detail.categories.map((category) => (
         <Category key={category.id} category={category} />
       ))}
+      <Filters detail={detail} />
       {detail.subjectives.map((subjective) => (
         <Subjective
           key={subjective.id}
@@ -63,7 +64,6 @@ export function CityDrawer({
           onGrade={(grade) => onGrade(subjective.id, detail.code, grade)}
         />
       ))}
-      <Filters detail={detail} />
     </aside>
   );
 }
@@ -196,27 +196,12 @@ function Criterion({ criterion }: { criterion: CriterionDetail }) {
         )}
       </span>
       <span className="note">{criterion.note === null ? "–" : formatNote(criterion.note)}</span>
-      <span className="src">
-        <Sources sources={criterion.sources} />
-        {ruler && ` · 0 em ${formatValue(ruler.worst)} / 100 em ${formatValue(ruler.best)}`}
-      </span>
-    </div>
-  );
-}
-
-function Sources({ sources }: { sources: SourceInfo[] }) {
-  return (
-    <>
-      {sources.map((source, at) => (
-        <span key={source.chave}>
-          {at > 0 && "; "}
-          <a href={source.endereco} target="_blank" rel="noreferrer">
-            {source.nome}
-          </a>
-          , {source.edicao} ({source.ano}) · {source.credito}
+      {ruler && (
+        <span className="ruler">
+          0 em {formatValue(ruler.worst)} / 100 em {formatValue(ruler.best)}
         </span>
-      ))}
-    </>
+      )}
+    </div>
   );
 }
 
@@ -239,9 +224,6 @@ function Filters({ detail }: { detail: CityDetail }) {
                 <span className="tag warn">Tensão desconhecida · Dado ausente</span>
               )}
             </span>
-            <span className="src">
-              <Sources sources={filters.voltageSources} />
-            </span>
           </div>
         )}
         {filters.terrain.map((entry) => (
@@ -254,9 +236,6 @@ function Filters({ detail }: { detail: CityDetail }) {
                   ? formatValue(entry.value, entry.unit)
                   : entry.value}
             </span>
-            <span className="src">
-              <Sources sources={entry.sources} />
-            </span>
           </div>
         ))}
         <div className="crit">
@@ -265,23 +244,14 @@ function Filters({ detail }: { detail: CityDetail }) {
             Beck <b>{filters.koppen.beck ?? "–"}</b> · Alvares <b>{filters.koppen.alvares ?? "sem dado"}</b>
             {filters.koppen.diverge && <span className="tag"> divergem</span>}
           </span>
-          <span className="src">
-            <Sources sources={filters.koppenSources} />
-          </span>
         </div>
         <div className="crit">
           <span>Hospital geral com leito</span>
           <span className="wide">{yesNo(filters.hospital) ?? absent}</span>
-          <span className="src">
-            <Sources sources={filters.hospitalSources} />
-          </span>
         </div>
         <div className="crit">
           <span>Acesso de fibra</span>
           <span className="wide">{yesNo(filters.fibra) ?? absent}</span>
-          <span className="src">
-            <Sources sources={filters.fibraSources} />
-          </span>
         </div>
       </div>
     </section>

@@ -1,4 +1,4 @@
-import type { CatalogEntry, Dataset, SourceInfo } from "./dataset";
+import type { CatalogEntry, Dataset } from "./dataset";
 import { SCORE_CRITERION } from "./constraints";
 import type { Candidate, CityScores, CutCity, RankResult, Ruler } from "./rank";
 import { gradeOf, type Constraint, type Grade, type Session } from "./session";
@@ -17,7 +17,6 @@ export type CriterionDetail = {
   missing: boolean;
   note: number | null;
   ruler: Ruler | null;
-  sources: SourceInfo[];
 };
 
 export type CategoryDetail = {
@@ -39,14 +38,10 @@ export type SubjectiveDetail = {
 
 export type FiltersDetail = {
   voltage: string[] | null;
-  voltageSources: SourceInfo[];
-  terrain: { key: string; label: string; unit: string; value: string | number | null; sources: SourceInfo[] }[];
+  terrain: { key: string; label: string; unit: string; value: string | number | null }[];
   koppen: { beck: string | null; alvares: string | null; diverge: boolean };
-  koppenSources: SourceInfo[];
   hospital: boolean | null;
-  hospitalSources: SourceInfo[];
   fibra: boolean | null;
-  fibraSources: SourceInfo[];
 };
 
 export type CityDetail = {
@@ -68,10 +63,6 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
   const cutCity = result.cut.find((c) => c.code === code);
   const scores = candidate ?? scoresShownWhenCut(cutCity);
   const categoryOn = new Map(session.categories.map((c) => [c.id, c.on]));
-  const sourcesOf = (...keys: string[]) => {
-    const wanted = new Set(keys.flatMap((key) => dataset.catalogo.find((e) => e.chave === key)?.fontes ?? []));
-    return dataset.fontes.filter((source) => wanted.has(source.chave));
-  };
   const cell = (key: string) => dataset.colunas[key][index];
   const text = (key: string) => (typeof cell(key) === "string" ? (cell(key) as string) : null);
   const flag = (key: string) => (typeof cell(key) === "boolean" ? (cell(key) as boolean) : null);
@@ -86,7 +77,6 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
       missing: value === null,
       note: scores?.criterionScores[entry.chave] ?? null,
       ruler: result.rulers[entry.chave] ?? null,
-      sources: sourcesOf(entry.chave),
     };
   };
   const categoryIds = [...new Set(dataset.catalogo.filter((e) => e.pontua).map((e) => e.categoria))];
@@ -129,7 +119,6 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
       voltage: dataset.catalogo.some((entry) => entry.chave === VOLTAGE_CRITERION)
         ? voltagePairs(dataset.colunas[VOLTAGE_CRITERION]?.[index])
         : null,
-      voltageSources: sourcesOf(VOLTAGE_CRITERION),
       terrain: dataset.catalogo
         .filter((entry) => entry.categoria === "Relevo" && !entry.pontua)
         .map((entry) => ({
@@ -137,14 +126,10 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
           label: entry.rotulo,
           unit: entry.unidade ?? "",
           value: cell(entry.chave) as string | number | null,
-          sources: sourcesOf(entry.chave),
         })),
       koppen: { beck, alvares, diverge: beck !== null && alvares !== null && beck !== alvares },
-      koppenSources: sourcesOf("koppen_beck", "koppen_alvares"),
       hospital: flag("hospital_geral"),
-      hospitalSources: sourcesOf("hospital_geral"),
       fibra: flag("fibra"),
-      fibraSources: sourcesOf("fibra"),
     },
   };
 }

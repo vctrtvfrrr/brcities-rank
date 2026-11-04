@@ -92,10 +92,6 @@ describe("cityDetail criteria", () => {
     expect(missing).toMatchObject({ key: "crime", value: null, missing: true, note: 0 });
   });
 
-  it("reports the sources of the criterion with edition, year, address and credit", () => {
-    expect(criterion("Segurança", "crime").sources).toEqual([fixtureDataset.fontes[0]]);
-  });
-
   it("keeps a switched-off category in the detail, marked off", () => {
     const off = cityDetail(
       fixtureDataset,
@@ -166,11 +162,6 @@ describe("cityDetail filters", () => {
     expect(open()("2611606")!.filters).toMatchObject({ hospital: false, fibra: null });
     expect(open()("3550308")!.filters).toMatchObject({ hospital: true, fibra: true });
   });
-
-  it("carries the sources of the filters", () => {
-    expect(open()("3550308")!.filters.fibraSources).toEqual([fixtureDataset.fontes[0]]);
-    expect(open()("3550308")!.filters.koppenSources).toEqual([fixtureDataset.fontes[1]]);
-  });
 });
 
 describe("cityDetail subjectives", () => {
@@ -222,23 +213,21 @@ describe("cityDetail subjectives", () => {
 });
 
 describe("cityDetail terrain", () => {
-  it("shows the three raw values with units and sources outside scoring categories", () => {
+  it("shows the three raw values with units outside scoring categories", () => {
     const detail = open()("4106902")!;
     expect(detail.filters.terrain).toEqual([
-      { key: "altitude", label: "Altitude", unit: "m", value: 934, sources: fixtureDataset.fontes.slice(2, 4) },
+      { key: "altitude", label: "Altitude", unit: "m", value: 934 },
       {
         key: "declividade_urbana",
         label: "Declividade urbana",
         unit: "%",
         value: 5,
-        sources: fixtureDataset.fontes.slice(2, 4),
       },
       {
         key: "classe_relevo",
         label: "Classe de relevo",
         unit: "",
         value: "suave ondulado",
-        sources: fixtureDataset.fontes.slice(2, 4),
       },
     ]);
     expect(detail.categories.map((c) => c.id)).not.toContain("Relevo");
@@ -256,7 +245,7 @@ describe("cityDetail terrain", () => {
   });
 });
 
-it("shows ANEEL voltage pairs, missing voltage, source edition and the reason for a voltage cut", () => {
+it("shows ANEEL voltage pairs, missing voltage and the reason for a voltage cut", () => {
   const dataset = fixtureDataset;
   const session = editConstraint(addConstraint(dataset, createInitialSession(dataset), "tensao"), "tensao", {
     voltages: [220],
@@ -264,7 +253,6 @@ it("shows ANEEL voltage pairs, missing voltage, source edition and the reason fo
   const result = rank(dataset, session);
   const detail = cityDetail(dataset, session, result, "3304557")!;
   expect(detail.filters.voltage).toEqual(["220/127", "380/220"]);
-  expect(detail.filters.voltageSources).toEqual([dataset.fontes.find((s) => s.chave === "aneel-tensoes")]);
   expect(cityDetail(dataset, session, result, "2611606")!.filters.voltage).toEqual([]);
   expect(cityDetail(dataset, session, result, "3550308")!.standing).toMatchObject({
     kind: "cut",
