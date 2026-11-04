@@ -5,9 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import type { Dataset } from "../domain/dataset";
 import { isAmongFirstTen, type Candidate, type CutCity } from "../domain/rank";
 import stateOutlinesUrl from "../assets/state-outlines.geojson?url";
-import { citiesLayer, CUT_COLOR } from "./cities-layer";
+import { CITIES_LAYER, citiesLayer, CUT_COLOR } from "./cities-layer";
 import { BASEMAP_STYLE_URL } from "./map-style";
 import { FIRST_TEN_COLOR, markerColor, rankedCount } from "./marker-color";
+import { ReliefLegend } from "./ReliefLegend";
+import { RELIEF_LAYER_IDS, reliefLayers, reliefSource, reliefVisibility } from "./relief-layers";
 
 const BRAZIL_BOUNDS: [[number, number], [number, number]] = [
   [-74, -34],
@@ -15,6 +17,7 @@ const BRAZIL_BOUNDS: [[number, number], [number, number]] = [
 ];
 const OUTLINES_SOURCE = "state-outlines";
 const CITIES_SOURCE = "cities";
+const RELIEF_SOURCE = "relief";
 
 const BLANK_STYLE: StyleSpecification = {
   version: 8,
@@ -75,8 +78,17 @@ function citiesGeoJson(
 }
 
 type Markers = { candidates: Candidate[]; cut: CutCity[]; selectedCode: string | null };
+type MapContent = Markers & { reliefVisible: boolean };
 
-function addDatasetLayers(map: MapLibreMap, dataset: Dataset, { candidates, cut, selectedCode }: Markers) {
+function addReliefLayers(map: MapLibreMap, visible: boolean) {
+  const firstLabel = map.getStyle().layers.find((layer) => layer.type === "symbol");
+  map.addSource(RELIEF_SOURCE, reliefSource());
+  for (const layer of reliefLayers(RELIEF_SOURCE, visible)) map.addLayer(layer, firstLabel?.id);
+}
+
+function addDatasetLayers(map: MapLibreMap, dataset: Dataset, content: MapContent) {
+  const { candidates, cut, selectedCode, reliefVisible } = content;
+  addReliefLayers(map, reliefVisible);
   map.addSource(OUTLINES_SOURCE, { type: "geojson", data: stateOutlinesUrl });
   map.addLayer({
     id: "state-outlines",
@@ -85,17 +97,25 @@ function addDatasetLayers(map: MapLibreMap, dataset: Dataset, { candidates, cut,
     paint: { "line-color": "#5d616a", "line-width": 1 },
   });
   map.addSource(CITIES_SOURCE, { type: "geojson", data: citiesGeoJson(dataset, candidates, cut, selectedCode) });
-  map.addLayer(citiesLayer(CITIES_SOURCE, false));
+  map.addLayer(citiesLayer(CITIES_SOURCE, reliefVisible));
 }
 
-type MapViewProps = Markers & { dataset: Dataset; onSelect: (code: string) => void };
+function showRelief(map: MapLibreMap, visible: boolean) {
+  if (!map.getLayer(CITIES_LAYER)) return;
+  for (const id of RELIEF_LAYER_IDS) map.setLayoutProperty(id, "visibility", reliefVisibility(visible));
+  const halo = citiesLayer(CITIES_SOURCE, visible).paint!["circle-stroke-width"];
+  map.setPaintProperty(CITIES_LAYER, "circle-stroke-width", halo);
+}
 
-export function MapView({ dataset, candidates, cut, selectedCode, onSelect }: MapViewProps) {
+type MapViewProps = MapContent & { dataset: Dataset; onSelect: (code: string) => void };
+
+export function MapView({ dataset, candidates, cut, selectedCode, reliefVisible, onSelect }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null);
   const [unavailable, setUnavailable] = useState(false);
+  const [reliefUnavailable, setReliefUnavailable] = useState(false);
   const mapRef = useRef<MapLibreMap | null>(null);
-  const latest = useRef<Markers>({ candidates, cut, selectedCode });
-  latest.current = { candidates, cut, selectedCode };
+  const latest = useRef<MapContent>({ candidates, cut, selectedCode, reliefVisible });
+  latest.current = { candidates, cut, selectedCode, reliefVisible };
   const onSelectRef = useRef(onSelect);
   onSelectRef.current = onSelect;
 
@@ -122,18 +142,20 @@ export function MapView({ dataset, candidates, cut, selectedCode, onSelect }: Ma
     });
     // The basemap is context only (ADR 0001): if its style cannot be fetched, keep the dataset layers over a blank background.
     map.on("error", (event) => {
-      if (basemapLoaded || (event as { sourceId?: string }).sourceId) return;
+      const { sourceId } = event as { sourceId?: string };
+      if (sourceId === RELIEF_SOURCE) setReliefUnavailable(true);
+      if (basemapLoaded || sourceId) return;
       basemapLoaded = true;
       map.once("style.load", () => addDatasetLayers(map, dataset, latest.current));
       map.setStyle(BLANK_STYLE);
     });
 
-    map.on("click", "cities", (event) => {
+    map.on("click", CITIES_LAYER, (event) => {
       const code = event.features?.[0]?.properties?.code;
       if (typeof code === "string") onSelectRef.current(code);
     });
-    map.on("mouseenter", "cities", () => (map.getCanvas().style.cursor = "pointer"));
-    map.on("mouseleave", "cities", () => (map.getCanvas().style.cursor = ""));
+    map.on("mouseenter", CITIES_LAYER, () => (map.getCanvas().style.cursor = "pointer"));
+    map.on("mouseleave", CITIES_LAYER, () => (map.getCanvas().style.cursor = ""));
 
     const resize = new ResizeObserver(() => map.resize());
     resize.observe(container.current!);
@@ -149,11 +171,22 @@ export function MapView({ dataset, candidates, cut, selectedCode, onSelect }: Ma
     source?.setData(citiesGeoJson(dataset, candidates, cut, selectedCode));
   }, [dataset, candidates, cut, selectedCode]);
 
+  useEffect(() => {
+    if (mapRef.current) showRelief(mapRef.current, reliefVisible);
+  }, [reliefVisible]);
+
+  const reliefSentence = reliefVisible
+    ? reliefUnavailable
+      ? " O relevo deveria aparecer, mas não pôde ser carregado."
+      : " O relevo está visível, em cores por altitude do verde das terras baixas ao branco dos picos, com a legenda de altitudes no canto inferior esquerdo."
+    : "";
+
   return (
     <div className="map" ref={container} role="region" aria-label="Mapa das cidades" aria-describedby="map-description">
       <p id="map-description" className="visually-hidden">
-        {`${candidates.length} candidatas em tons de verde, mais escuro quanto melhor a posição, com as dez primeiras em vermelho e um pouco maiores, e ${cut.length} cidades cortadas em cinza-claro; a cidade aberta no detalhe fica em roxo e bem maior. Os marcadores não recebem foco: use a tabela, ou a busca de cidade na barra lateral (que inclui as cortadas), para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
+        {`${candidates.length} candidatas em tons de azul, do azul-marinho na melhor posição ao azul na pior, com a candidata sem pontuação em azul-acinzentado e as dez primeiras em vermelho e um pouco maiores, e ${cut.length} cidades cortadas em cinza; a cidade aberta no detalhe fica em roxo e bem maior.${reliefSentence} Os marcadores não recebem foco: use a tabela, ou a busca de cidade na barra lateral (que inclui as cortadas), para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
       </p>
+      {reliefVisible && !unavailable && <ReliefLegend unavailable={reliefUnavailable} />}
       {unavailable && (
         <p className="notice" role="alert">
           Não foi possível iniciar o mapa neste navegador (é preciso WebGL). A tabela continua disponível.

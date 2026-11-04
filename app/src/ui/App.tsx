@@ -13,6 +13,7 @@ import {
   type Library,
 } from "../domain/session-library";
 import { decodeSessionLink, sessionLinkPayload } from "../domain/session-link";
+import { showsRelief } from "../domain/terrain";
 import { CityDrawer } from "./CityDrawer";
 import { MapView } from "./MapView";
 import { RankTable } from "./RankTable";
@@ -110,6 +111,7 @@ function Workspace({ dataset }: { dataset: Dataset }) {
               candidates={candidates}
               cut={cut}
               selectedCode={selectedCode}
+              reliefVisible={showsRelief(session)}
               onSelect={selectFromMap}
             />
             {detail && (

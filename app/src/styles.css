@@ -225,6 +225,42 @@ input[type="range"] {
   position: absolute;
   inset: 0;
 }
+.relief-legend {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  z-index: 2;
+  width: 220px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  font-size: 11px;
+}
+.relief-legend p {
+  margin: 0 0 4px;
+}
+.relief-legend .relief-unavailable {
+  margin: 0;
+  color: var(--warn);
+}
+.relief-bar {
+  height: 10px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+.relief-ticks {
+  position: relative;
+  height: 14px;
+  margin: 2px 0 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+}
+.relief-ticks li {
+  position: absolute;
+  transform: translateX(-50%);
+}
 .divider {
   cursor: row-resize;
   background: var(--line);

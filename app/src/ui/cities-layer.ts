@@ -1,5 +1,6 @@
 import type { CircleLayerSpecification, ExpressionSpecification } from "maplibre-gl";
 
+export const CITIES_LAYER = "cities";
 export const CUT_COLOR = "#6e6e6e";
 export const SELECTED_COLOR = "#6a1b9a";
 const HALO_COLOR = "#ffffff";
@@ -18,7 +19,7 @@ export function citiesLayer(source: string, reliefVisible: boolean): CircleLayer
   const firstTen: ExpressionSpecification = ["get", "firstTen"];
   const selected: ExpressionSpecification = ["get", "selected"];
   return {
-    id: "cities",
+    id: CITIES_LAYER,
     type: "circle",
     source,
     layout: { "circle-sort-key": ["get", "order"] },
