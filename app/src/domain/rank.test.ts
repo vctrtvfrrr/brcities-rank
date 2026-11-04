@@ -280,6 +280,45 @@ describe("Referência Candidatas", () => {
     expect(result.candidates.map((c) => c.name)).toEqual(["Cidade 6"]);
   });
 
+  it("does not change the Pontuação of the remaining Candidatas when the Pontuação mínima is turned on", () => {
+    const base = withOn(limited("rain", { min: 5 }, createInitialSession(tenths)), "Segurança");
+    const strict = editConstraint(addConstraint(tenths, base, "score"), "score", { atLeast: 50 });
+    const before = byName(rank(tenths, base));
+    const after = rank(tenths, strict).candidates;
+    expect(after.map((c) => c.name)).toEqual(["Cidade 6", "Cidade 7", "Cidade 8"]);
+    for (const candidate of after) expect(candidate.score).toBe(before[candidate.name].score);
+    expect(after.map((c) => c.score)).toEqual([
+      100,
+      expect.closeTo((37.5 / 45) * 100),
+      expect.closeTo((27.5 / 45) * 100),
+    ]);
+  });
+
+  it("gives 100 to every city with data when the group has a single value", () => {
+    const dataset = datasetWithCities([
+      ...[0, 10, 20, 30].map((crime, i) => ({
+        code: String(i + 1),
+        name: `Cidade ${i + 1}`,
+        values: { crime, rain: 0 },
+      })),
+      { code: "5", name: "Cidade 5", values: { crime: 50, rain: 1 } },
+      { code: "6", name: "Cidade 6", values: { crime: null, rain: 0 } },
+    ]);
+    const session = editConstraint(addConstraint(dataset, createInitialSession(dataset), "rain"), "rain", { min: 1 });
+    const result = rank(dataset, session);
+    expect(result.rulers.crime).toEqual({ worst: 50, best: 50 });
+    expect(result.candidates.map((c) => c.criterionScores.crime)).toEqual([100]);
+    const cutNotes = Object.fromEntries(result.cut.map((city) => [city.name, city.scores.criterionScores.crime]));
+    expect(cutNotes).toEqual({ "Cidade 1": 100, "Cidade 2": 100, "Cidade 3": 100, "Cidade 4": 100, "Cidade 6": 0 });
+  });
+
+  it("moves the other end to the real extreme of the group, not of Brazil, when the percentile falls on the wrong side of the limit", () => {
+    const worstOfGroup = limited("crime", { min: 49 }, limited("rain", { max: 5 }, createInitialSession(tenths)));
+    expect(rank(tenths, worstOfGroup).rulers.crime).toEqual({ worst: 50, best: 49 });
+    const bestOfGroup = limited("crime", { max: 51 }, limited("rain", { min: 5 }, createInitialSession(tenths)));
+    expect(rank(tenths, bestOfGroup).rulers.crime).toEqual({ worst: 51, best: 50 });
+  });
+
   it("measures a cut city by the same Régua as the Candidatas", () => {
     const result = rank(tenths, limited("rain", { min: 5 }, createInitialSession(tenths)));
     const first = result.cut.find((city) => city.name === "Cidade 1")!;
