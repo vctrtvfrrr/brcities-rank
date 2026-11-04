@@ -5,11 +5,11 @@ import { useEffect, useRef, useState } from "react";
 import type { Dataset } from "../domain/dataset";
 import { isAmongFirstTen, type Candidate, type CutCity } from "../domain/rank";
 import stateOutlinesUrl from "../assets/state-outlines.geojson?url";
-import { CITIES_LAYER, citiesLayer, CUT_COLOR } from "./cities-layer";
-import { BASEMAP_STYLE_URL } from "./map-style";
+import { CITIES_LAYER, citiesLayer, CUT_COLOR, haloWidth } from "./cities-layer";
+import { BASEMAP_STYLE_URL, STATE_OUTLINE_COLOR } from "./map-style";
 import { FIRST_TEN_COLOR, markerColor, rankedCount } from "./marker-color";
 import { ReliefLegend } from "./ReliefLegend";
-import { RELIEF_LAYER_IDS, reliefLayers, reliefSource, reliefVisibility } from "./relief-layers";
+import { RELIEF_LAYER_IDS, reliefInsertionLayer, reliefLayers, reliefSource, reliefVisibility } from "./relief-layers";
 
 const BRAZIL_BOUNDS: [[number, number], [number, number]] = [
   [-74, -34],
@@ -81,9 +81,9 @@ type Markers = { candidates: Candidate[]; cut: CutCity[]; selectedCode: string |
 type MapContent = Markers & { reliefVisible: boolean };
 
 function addReliefLayers(map: MapLibreMap, visible: boolean) {
-  const firstLabel = map.getStyle().layers.find((layer) => layer.type === "symbol");
+  const below = reliefInsertionLayer(map.getStyle().layers);
   map.addSource(RELIEF_SOURCE, reliefSource());
-  for (const layer of reliefLayers(RELIEF_SOURCE, visible)) map.addLayer(layer, firstLabel?.id);
+  for (const layer of reliefLayers(RELIEF_SOURCE, visible)) map.addLayer(layer, below);
 }
 
 function addDatasetLayers(map: MapLibreMap, dataset: Dataset, content: MapContent) {
@@ -94,7 +94,7 @@ function addDatasetLayers(map: MapLibreMap, dataset: Dataset, content: MapConten
     id: "state-outlines",
     type: "line",
     source: OUTLINES_SOURCE,
-    paint: { "line-color": "#5d616a", "line-width": 1 },
+    paint: { "line-color": STATE_OUTLINE_COLOR, "line-width": 1 },
   });
   map.addSource(CITIES_SOURCE, { type: "geojson", data: citiesGeoJson(dataset, candidates, cut, selectedCode) });
   map.addLayer(citiesLayer(CITIES_SOURCE, reliefVisible));
@@ -103,8 +103,7 @@ function addDatasetLayers(map: MapLibreMap, dataset: Dataset, content: MapConten
 function showRelief(map: MapLibreMap, visible: boolean) {
   if (!map.getLayer(CITIES_LAYER)) return;
   for (const id of RELIEF_LAYER_IDS) map.setLayoutProperty(id, "visibility", reliefVisibility(visible));
-  const halo = citiesLayer(CITIES_SOURCE, visible).paint!["circle-stroke-width"];
-  map.setPaintProperty(CITIES_LAYER, "circle-stroke-width", halo);
+  map.setPaintProperty(CITIES_LAYER, "circle-stroke-width", haloWidth(visible));
 }
 
 type MapViewProps = MapContent & { dataset: Dataset; onSelect: (code: string) => void };
@@ -136,14 +135,20 @@ export function MapView({ dataset, candidates, cut, selectedCode, reliefVisible,
     map.addControl(new NavigationControl({ showCompass: false }), "top-left");
 
     let basemapLoaded = false;
+    let reliefTileLoaded = false;
     map.on("load", () => {
       basemapLoaded = true;
       addDatasetLayers(map, dataset, latest.current);
     });
+    map.on("sourcedata", (event) => {
+      if (event.sourceId !== RELIEF_SOURCE || !event.tile) return;
+      reliefTileLoaded = true;
+      setReliefUnavailable(false);
+    });
     // The basemap is context only (ADR 0001): if its style cannot be fetched, keep the dataset layers over a blank background.
     map.on("error", (event) => {
       const { sourceId } = event as { sourceId?: string };
-      if (sourceId === RELIEF_SOURCE) setReliefUnavailable(true);
+      if (sourceId === RELIEF_SOURCE && !reliefTileLoaded) setReliefUnavailable(true);
       if (basemapLoaded || sourceId) return;
       basemapLoaded = true;
       map.once("style.load", () => addDatasetLayers(map, dataset, latest.current));
@@ -184,7 +189,7 @@ export function MapView({ dataset, candidates, cut, selectedCode, reliefVisible,
   return (
     <div className="map" ref={container} role="region" aria-label="Mapa das cidades" aria-describedby="map-description">
       <p id="map-description" className="visually-hidden">
-        {`${candidates.length} candidatas em tons de azul, do azul-marinho na melhor posição ao azul na pior, com a candidata sem pontuação em azul-acinzentado e as dez primeiras em vermelho e um pouco maiores, e ${cut.length} cidades cortadas em cinza; a cidade aberta no detalhe fica em roxo e bem maior.${reliefSentence} Os marcadores não recebem foco: use a tabela, ou a busca de cidade na barra lateral (que inclui as cortadas), para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
+        {`${candidates.length} candidatas em tons de azul, do azul-marinho na melhor posição ao azul na pior, com a candidata sem pontuação em azul-acinzentado e as dez primeiras em vermelho e um pouco maiores, e ${cut.length} cidades cortadas em cinza e menores; a cidade aberta no detalhe fica em roxo e bem maior.${reliefSentence} Os marcadores não recebem foco: use a tabela, ou a busca de cidade na barra lateral (que inclui as cortadas), para abrir o detalhe de uma cidade. As setas movem o mapa e + e − dão zoom.`}
       </p>
       {reliefVisible && !unavailable && <ReliefLegend unavailable={reliefUnavailable} />}
       {unavailable && (

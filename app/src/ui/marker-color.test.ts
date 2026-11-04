@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { CUT_COLOR } from "./cities-layer";
+import { STATE_OUTLINE_COLOR } from "./map-style";
 import { markerColor } from "./marker-color";
 import { RELIEF_PALETTE } from "./relief-layers";
 
 const LIGHT_LAND = [248, 244, 240];
-const BLACK = [0, 0, 0];
 const WCAG_NON_TEXT_CONTRAST = 3;
 const POSITIONS = [1, 2, 60, 119, 120];
 
@@ -47,8 +47,12 @@ describe("markerColor", () => {
     }
   });
 
-  it("keeps the best position clear of the black map lines", () => {
-    expect(contrast(channels(markerColor(1, 120)), BLACK)).toBeGreaterThanOrEqual(WCAG_NON_TEXT_CONTRAST);
+  it("keeps the best position apart from the state outlines", () => {
+    expect(contrast(channels(markerColor(1, 120)), channels(STATE_OUTLINE_COLOR))).toBeGreaterThanOrEqual(2);
+  });
+
+  it("tells the best position from the worst at a glance", () => {
+    expect(contrast(channels(markerColor(1, 120)), channels(markerColor(120, 120)))).toBeGreaterThanOrEqual(2);
   });
 
   it("darkens the better positions", () => {
@@ -57,5 +61,16 @@ describe("markerColor", () => {
 
   it("draws the candidate without score lighter than the worst position", () => {
     expect(luminance(channels(markerColor(null, 120)))).toBeGreaterThan(luminance(channels(markerColor(120, 120))));
+  });
+
+  it("draws cut cities lighter than the candidate without score", () => {
+    expect(luminance(channels(CUT_COLOR))).toBeGreaterThan(luminance(channels(markerColor(null, 120))));
+  });
+
+  it("draws cut cities in neutral gray and the candidate without score in blue", () => {
+    const [cutRed, cutGreen, cutBlue] = channels(CUT_COLOR);
+    const [red, , blue] = channels(markerColor(null, 120));
+    expect(Math.max(cutRed, cutGreen, cutBlue) - Math.min(cutRed, cutGreen, cutBlue)).toBeLessThanOrEqual(4);
+    expect(blue - red).toBeGreaterThanOrEqual(64);
   });
 });

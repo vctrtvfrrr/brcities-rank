@@ -2,6 +2,7 @@ import type {
   ColorReliefLayerSpecification,
   ExpressionSpecification,
   HillshadeLayerSpecification,
+  LayerSpecification,
   RasterDEMSourceSpecification,
 } from "maplibre-gl";
 import { RELIEF_TILES_URL } from "./map-style";
@@ -9,13 +10,13 @@ import { RELIEF_TILES_URL } from "./map-style";
 export type ReliefStop = { elevation: number; color: string };
 
 export const RELIEF_PALETTE: ReliefStop[] = [
-  { elevation: 0, color: "#bfe2aa" },
+  { elevation: 0, color: "#c8e8b2" },
   { elevation: 100, color: "#d0eaae" },
   { elevation: 250, color: "#e2efb0" },
   { elevation: 450, color: "#f3eaa8" },
   { elevation: 700, color: "#f0dca4" },
-  { elevation: 1000, color: "#ebd2a6" },
-  { elevation: 1500, color: "#e6d0b8" },
+  { elevation: 1000, color: "#f0dcb0" },
+  { elevation: 1500, color: "#eedfcc" },
   { elevation: 2200, color: "#efe8e1" },
   { elevation: 3000, color: "#ffffff" },
 ];
@@ -39,6 +40,11 @@ export function reliefSource(): RasterDEMSourceSpecification {
 
 export function reliefVisibility(visible: boolean): "visible" | "none" {
   return visible ? "visible" : "none";
+}
+
+export function reliefInsertionLayer(layers: LayerSpecification[]): string | undefined {
+  const water = layers.find((layer) => "source-layer" in layer && layer["source-layer"] === "water");
+  return (water ?? layers.find((layer) => layer.type === "symbol"))?.id;
 }
 
 export function reliefLayers(

@@ -1,9 +1,9 @@
 import type { Candidate } from "../domain/rank";
 
 export const FIRST_TEN_COLOR = "#c62828";
-const UNRANKED_COLOR = "#5e7088";
-const BEST = [44, 88, 166];
-const WORST = [42, 104, 190];
+const UNRANKED_COLOR = "#5a78b0";
+const BEST = [22, 47, 107];
+const WORST = [42, 98, 196];
 
 export function markerColor(position: number | null, rankedCount: number): string {
   if (position === null) return UNRANKED_COLOR;
