@@ -1,6 +1,6 @@
 import type { CircleLayerSpecification, ExpressionSpecification } from "maplibre-gl";
 
-export const CUT_COLOR = "#c3c6cc";
+export const CUT_COLOR = "#6e6e6e";
 export const SELECTED_COLOR = "#6a1b9a";
 const HALO_COLOR = "#ffffff";
 
