@@ -85,7 +85,7 @@ function addDatasetLayers(map: MapLibreMap, dataset: Dataset, { candidates, cut,
     paint: { "line-color": "#5d616a", "line-width": 1 },
   });
   map.addSource(CITIES_SOURCE, { type: "geojson", data: citiesGeoJson(dataset, candidates, cut, selectedCode) });
-  map.addLayer(citiesLayer(CITIES_SOURCE));
+  map.addLayer(citiesLayer(CITIES_SOURCE, false));
 }
 
 type MapViewProps = Markers & { dataset: Dataset; onSelect: (code: string) => void };

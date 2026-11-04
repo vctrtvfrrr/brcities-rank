@@ -4,7 +4,7 @@ export const CUT_COLOR = "#6e6e6e";
 export const SELECTED_COLOR = "#6a1b9a";
 const HALO_COLOR = "#ffffff";
 
-export function citiesLayer(source: string): CircleLayerSpecification {
+export function citiesLayer(source: string, reliefVisible: boolean): CircleLayerSpecification {
   const byZoom = (low: ExpressionSpecification, high: ExpressionSpecification): ExpressionSpecification => [
     "interpolate",
     ["linear"],
@@ -25,7 +25,9 @@ export function citiesLayer(source: string): CircleLayerSpecification {
     paint: {
       "circle-color": ["case", selected, SELECTED_COLOR, ["get", "color"]],
       "circle-stroke-color": HALO_COLOR,
-      "circle-stroke-width": byZoom(["case", selected, 1.5, 0], ["case", selected, 2, cut, 0, 0.75]),
+      "circle-stroke-width": reliefVisible
+        ? byZoom(["case", selected, 1.5, 0.75], ["case", selected, 2, 0.75])
+        : byZoom(["case", selected, 1.5, 0], ["case", selected, 2, cut, 0, 0.75]),
       "circle-radius": byZoom(["case", selected, 5, firstTen, 2.5, 1.5], ["case", selected, 10, firstTen, 5.5, 4]),
     },
   };
