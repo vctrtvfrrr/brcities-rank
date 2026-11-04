@@ -1,6 +1,7 @@
 import { useRef } from "react";
 import type { Dataset } from "../domain/dataset";
-import { SCORE_READING } from "../domain/explanations";
+import { explainScoreReading } from "../domain/explanations";
+import type { Reference } from "../domain/session";
 import { formatDate } from "./format";
 import { ScoreLegend } from "./ScoreBadge";
 
@@ -29,15 +30,15 @@ function InfoDialog({ trigger, title, children }: { trigger: string; title: stri
   );
 }
 
-export function ScoreReadingDialog() {
+export function ScoreReadingDialog({ reference }: { reference: Reference }) {
   return (
     <InfoDialog trigger="Como se lê a Pontuação" title="Como se lê a Pontuação">
       <ul>
-        {SCORE_READING.map((paragraph) => (
+        {explainScoreReading(reference).map((paragraph) => (
           <li key={paragraph}>{paragraph}</li>
         ))}
       </ul>
-      <ScoreLegend />
+      <ScoreLegend reference={reference} />
     </InfoDialog>
   );
 }

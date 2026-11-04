@@ -10,8 +10,8 @@ import {
   MAX_WEIGHT,
   orderedCategories,
   renameSubjective,
-  setReference,
   setWeight,
+  toggleReference,
   type Category,
   type Session,
 } from "../domain/session";
@@ -95,9 +95,7 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
           role="switch"
           aria-checked={relativeToCandidates}
           className={relativeToCandidates ? "toggle on" : "toggle"}
-          onClick={() =>
-            onChange((current) => setReference(current, current.reference === "candidates" ? "brazil" : "candidates"))
-          }
+          onClick={() => onChange(toggleReference)}
         />
         Notas relativas às Candidatas
       </label>
@@ -123,7 +121,7 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
                       onCommit={(next) => onChange((current) => renameSubjective(current, category.id, next))}
                     />
                   ) : (
-                    <CategoryLabel dataset={dataset} id={category.id} name={name} />
+                    <CategoryLabel dataset={dataset} id={category.id} name={name} reference={session.reference} />
                   )}
                 </span>
                 {category.kind === "subjective" && (

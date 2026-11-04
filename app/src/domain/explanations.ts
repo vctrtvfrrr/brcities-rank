@@ -1,4 +1,5 @@
 import type { Dataset } from "./dataset";
+import type { Reference } from "./session";
 
 export type CriterionSummary = {
   label: string;
@@ -13,13 +14,21 @@ export type CategoryExplanation = {
   criteria: CriterionSummary[];
 };
 
-const SCORING =
+const UNLIMITED_END: Record<Reference, string> = {
+  candidates: "entre as Candidatas, a Referência padrão",
+  brazil: "entre todos os municípios do Brasil, a Referência escolhida",
+};
+
+const scoring = (reference: Reference) =>
   "Cada critério vira uma nota de 0 a 100 pela régua dele, que vai de uma ponta ruim (nota 0) a uma ponta boa (nota 100), com a nota proporcional entre elas. " +
-  "Cada ponta é o limite da restrição ligada naquele critério, naquele lado; sem limite, é o valor dos 5% melhores (ou dos 5% piores) entre as Candidatas, ou, com as notas relativas às Candidatas desligadas, entre todos os municípios do Brasil. " +
+  `Cada ponta é o limite da restrição ligada naquele critério, naquele lado; sem limite, é o valor dos 5% melhores (ou dos 5% piores) ${UNLIMITED_END[reference]}. ` +
   "Assim, a cidade bem no limite da restrição vale 0, e a nota sobe conforme ela se afasta dele no sentido bom. " +
   "A nota da categoria é a média simples das notas dos seus critérios, e o critério sem dado conta 0.";
 
-const TEXTS: Record<string, { measures: string; details: string; scoring?: string }> = {
+const LOG_SCALE =
+  "A população passa antes por logaritmo, de modo que cada vez que ela dobra a nota sobe o mesmo tanto. ";
+
+const TEXTS: Record<string, { measures: string; details: string; scoringPrefix?: string }> = {
   Segurança: {
     measures: "Quão segura é a cidade, medida pelas mortes violentas dos seus moradores.",
     details:
@@ -60,33 +69,57 @@ const TEXTS: Record<string, { measures: string; details: string; scoring?: strin
   Porte: {
     measures: "O tamanho da cidade, pela população: quanto maior, maior a nota.",
     details: "Usa a estimativa de população do IBGE para 1º de julho de 2026, uma estimativa e não uma contagem.",
-    scoring: SCORING.replace(
-      "Cada critério vira",
-      "A população passa antes por logaritmo, de modo que cada vez que ela dobra a nota sobe o mesmo tanto. Cada critério vira",
-    ),
+    scoringPrefix: LOG_SCALE,
   },
 };
 
-export function explainCategory(dataset: Dataset, categoryId: string): CategoryExplanation | null {
+export function explainCategory(
+  dataset: Dataset,
+  categoryId: string,
+  reference: Reference,
+): CategoryExplanation | null {
   const text = TEXTS[categoryId];
   if (!text) return null;
   const criteria = dataset.catalogo
     .filter((entry) => entry.pontua && entry.categoria === categoryId && entry.direcao !== null)
     .map((entry) => ({ label: entry.rotulo, unit: entry.unidade ?? "", direction: entry.direcao! }));
-  return { measures: text.measures, details: text.details, scoring: text.scoring ?? SCORING, criteria };
+  return {
+    measures: text.measures,
+    details: text.details,
+    scoring: (text.scoringPrefix ?? "") + scoring(reference),
+    criteria,
+  };
 }
 
 export const SUBJECTIVE_GRADING =
   "Categoria subjetiva: a coluna mostra a média das Notas subjetivas de 1 a 5 e, em destaque, a do Avaliador ativo. Para dar ou mudar uma nota, abra o Detalhe da cidade clicando na linha.";
 
-export const SCORE_READING: string[] = [
+const RULER_READING: Record<Reference, string> = {
+  candidates:
+    "Cada critério mede a cidade numa régua que vai do limite da restrição, se houver, ao melhor da Referência, que agora é a das Candidatas: a régua sai das cidades que passam em todas as restrições ligadas menos a Pontuação mínima. Mexer em qualquer outra restrição pode mudar as notas de todo mundo, e a cidade cortada é medida pela mesma régua.",
+  brazil:
+    "Cada critério mede a cidade numa régua que vai do limite da restrição, se houver, ao melhor da Referência, que agora é a de todos os municípios do Brasil. Por isso as notas só dependem dos dados da cidade e das restrições.",
+};
+
+export const explainScoreReading = (reference: Reference): string[] => [
   "A Pontuação vai de 0 a 100 e serve para ordenar as Candidatas do Corte atual. Com a restrição Pontuação mínima, ela também corta: mudar pesos, notas subjetivas ou categorias ligadas pode tirar ou devolver cidades ao Ranking.",
-  "Cada critério mede a cidade numa régua que vai do limite da restrição, se houver, ao melhor da Referência. Com Notas relativas às Candidatas, o padrão, a régua sai das cidades que passam em todas as restrições ligadas menos a Pontuação mínima: mexer em qualquer outra restrição pode mudar as notas de todo mundo, e a cidade cortada é medida pela mesma régua. Com essa opção desligada, a régua sai de todos os municípios do Brasil, e as notas só dependem dos dados da cidade e das restrições.",
+  RULER_READING[reference],
   "Dado ausente conta 0 no critério, para que a falta de dado nunca favoreça uma cidade.",
   "Cada avaliador dá a cada categoria um peso de 0 a 10, sem soma fixa. Entre as categorias ligadas, o peso vira a participação da categoria na conta daquele avaliador (o peso dividido pela soma dos pesos dele), e o Ranking usa a média das participações de todos os avaliadores; assim, quem dá 10 a tudo não pesa mais do que quem dá 2 a tudo. A Pontuação é a média das notas das categorias ligadas, ponderada por essas participações; categoria desligada ou com peso 0 fica fora da conta.",
   "Numa categoria subjetiva, vale a média das notas de 1 a 5 de quem avaliou a cidade, passada para 0 a 100 (1 vale 0 e 5 vale 100). Se ninguém avaliou, a subjetiva sai da conta daquela cidade e o peso dela se reparte entre as demais.",
   "A cidade em que nenhuma categoria entra na conta fica sem Pontuação (–) e vai para o fim da lista. Empates se desfazem pela maior população e, depois, pelo código IBGE.",
 ];
+
+const BAND_REFERENCE: Record<Reference, string> = {
+  candidates:
+    "o melhor das Candidatas, a Referência ativa. Por isso a Faixa de uma cidade pode mudar quando outras cidades entram ou saem do Corte.",
+  brazil:
+    "o melhor do Brasil, a Referência ativa. Por isso a Faixa de uma cidade não muda quando outras cidades entram ou saem do Corte.",
+};
+
+export const explainBands = (reference: Reference): string =>
+  "A Pontuação e a nota de cada categoria ganham a cor da Faixa em que caem. Como as notas vêm da régua de cada critério, a Faixa diz onde a cidade fica entre o limite das suas restrições e " +
+  BAND_REFERENCE[reference];
 
 const CONSTRAINT_EXPLANATIONS: Record<string, string> = {
   tensao:

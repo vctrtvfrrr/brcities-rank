@@ -2,7 +2,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { useEffect, useRef, type CSSProperties, type KeyboardEvent } from "react";
 import { isAmongFirstTen, type Candidate } from "../domain/rank";
 import type { Dataset } from "../domain/dataset";
-import { SCORE_READING, SUBJECTIVE_GRADING } from "../domain/explanations";
+import { explainScoreReading, SUBJECTIVE_GRADING } from "../domain/explanations";
 import { gradeOf, type Grade, type Session } from "../domain/session";
 import { CategoryLabel } from "./CategoryTip";
 import { formatGrade } from "./format";
@@ -81,12 +81,12 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
           <span role="columnheader" className="num">
             <Tooltip label="Pontuação">
               <strong>Como se lê a Pontuação</strong>
-              {SCORE_READING.map((paragraph) => (
+              {explainScoreReading(session.reference).map((paragraph) => (
                 <span className="tip-block" key={paragraph}>
                   {paragraph}
                 </span>
               ))}
-              <ScoreLegend />
+              <ScoreLegend reference={session.reference} />
             </Tooltip>
           </span>
           {categories.map((category) => (
@@ -97,7 +97,7 @@ export function RankTable({ dataset, candidates, session, selectedCode, reveal, 
                   <span className="tip-block">{SUBJECTIVE_GRADING}</span>
                 </Tooltip>
               ) : (
-                <CategoryLabel dataset={dataset} id={category.id} name={category.id} />
+                <CategoryLabel dataset={dataset} id={category.id} name={category.id} reference={session.reference} />
               )}
             </span>
           ))}

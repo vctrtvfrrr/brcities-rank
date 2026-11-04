@@ -1,3 +1,5 @@
+import { explainBands } from "../domain/explanations";
+import type { Reference } from "../domain/session";
 import { formatNote, formatScore } from "./format";
 import { SCORE_BANDS, scoreBand } from "./score-band";
 
@@ -10,16 +12,11 @@ export function ScoreBadge({ score, note = false }: { score: number; note?: bool
   );
 }
 
-export function ScoreLegend() {
+export function ScoreLegend({ reference }: { reference: Reference }) {
   return (
     <>
       <span className="tip-block tip-title">Cores</span>
-      <span className="tip-block">
-        A Pontuação e a nota de cada categoria ganham a cor da faixa em que caem. Como as notas vêm da régua de cada
-        critério, a faixa diz onde a cidade fica entre o limite das suas restrições e o melhor da Referência: as
-        Candidatas, por padrão, ou o Brasil. Só com a Referência Brasil a faixa não muda quando outras cidades entram ou
-        saem do Corte.
-      </span>
+      <span className="tip-block">{explainBands(reference)}</span>
       <ul className="band-legend">
         {SCORE_BANDS.map((band) => (
           <li key={band.id}>

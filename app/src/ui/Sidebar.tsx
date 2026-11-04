@@ -41,7 +41,7 @@ export function Sidebar({
         <h1>BRCities Rank</h1>
         <p className="muted small">Dados coletados em {formatDate(dataset.coleta)}</p>
         <div className="links small">
-          <ScoreReadingDialog />
+          <ScoreReadingDialog reference={session.reference} />
           <SourcesDialog dataset={dataset} />
         </div>
       </header>

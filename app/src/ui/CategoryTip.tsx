@@ -1,9 +1,12 @@
 import type { Dataset } from "../domain/dataset";
 import { explainCategory } from "../domain/explanations";
+import type { Reference } from "../domain/session";
 import { Tooltip } from "./Tooltip";
 
-export function CategoryLabel({ dataset, id, name }: { dataset: Dataset; id: string; name: string }) {
-  const explanation = explainCategory(dataset, id);
+type Props = { dataset: Dataset; id: string; name: string; reference: Reference };
+
+export function CategoryLabel({ dataset, id, name, reference }: Props) {
+  const explanation = explainCategory(dataset, id, reference);
   if (!explanation) return <>{name}</>;
   return (
     <Tooltip label={name}>
