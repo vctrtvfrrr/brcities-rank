@@ -13,3 +13,5 @@ O visitante quer tirar do Ranking as cidades com Pontuação baixa. Isso entra c
 - O Corte passa a depender dos Pesos, das notas subjetivas e das categorias ligadas: mexer neles pode tirar ou devolver cidades.
 - A Pontuação passa a ser calculada para todas as cidades, não só para as Candidatas, para que a cidade cortada mostre por quanto ficou de fora.
 - O formato da Sessão ganha mais um tipo de Restrição, só com mínimo; nasce sem valor e não corta nada até o visitante escolher.
+
+> Com o [ADR 0011](0011-referencia-da-regua.md), na Referência Candidatas a Régua depende do grupo das cidades que passam nas demais Restrições; a Pontuação mínima fica fora desse grupo, e por isso o Corte continua sem ordem.

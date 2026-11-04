@@ -49,22 +49,26 @@ _Avoid_: Ranking objetivo, Ranking final
 Medida de uma Categoria objetiva, tirada de uma fonte pública, com uma direção (maior ou menor é melhor); vira nota de 0 a 100 pela posição do valor da cidade na Régua.
 
 **Régua**:
-Intervalo de um Critério entre a ponta ruim, que vale nota 0, e a ponta boa, que vale 100, com nota linear no meio e presa a 0 e 100 fora dele. Cada ponta é o limite da Restrição ligada naquele lado, ou, sem ele, o 5º ou 95º percentil do Critério entre todos os municípios do Brasil; quando esse percentil fica do lado errado do limite, a ponta vai ao extremo real do dado. Não depende das outras Candidatas, e a Candidata exatamente no limite ruim passa no Corte com nota 0; se as duas pontas coincidem, todas valem 100.
+Intervalo de um Critério entre a ponta ruim, que vale nota 0, e a ponta boa, que vale 100, com nota linear no meio e presa a 0 e 100 fora dele. Cada ponta é o limite da Restrição ligada naquele lado, ou, sem ele, o 5º ou 95º percentil do Critério no grupo da Referência; quando esse percentil fica do lado errado do limite, a ponta vai ao extremo real do dado. A Candidata exatamente no limite ruim passa no Corte com nota 0; se as duas pontas coincidem, todas valem 100.
 _Avoid_: alvo, meta, critério selecionado
+
+**Referência**:
+O grupo de cidades de onde saem as pontas da Régua que não têm limite: Candidatas, o padrão, ou Brasil, todos os municípios. Na Referência Candidatas, o grupo é o das cidades que passam em todas as Restrições ligadas menos a Pontuação mínima, e a nota de uma cidade muda quando outras entram ou saem desse grupo; num Critério em que nenhuma cidade do grupo tem valor, a Régua usa o Brasil. Na Referência Brasil, a nota só depende dos dados da cidade e das Restrições.
+_Avoid_: nota relativa, normalização, base de comparação
 
 **Pontuação**:
 Valor de 0 a 100 que ordena uma Candidata no Ranking, vindo das categorias que entram na conta dela; a Candidata em que nenhuma categoria entra na conta fica sem Pontuação, que não é Pontuação 0, e vai para o fim.
 _Avoid_: nota final, score
 
 **Faixa**:
-Uma das quatro partes da escala de 0 a 100 em que cai a Pontuação ou a nota de uma categoria: baixa (abaixo de 40, vermelho), média (40 a 60, laranja), alta (60 a 80, verde) e muito alta (80 ou mais, azul). Como as notas dos Critérios vêm da Régua, a Faixa diz onde a cidade fica entre o que o visitante tolera e o melhor do Brasil, e não muda quando outras cidades entram ou saem do Corte.
+Uma das quatro partes da escala de 0 a 100 em que cai a Pontuação ou a nota de uma categoria: baixa (abaixo de 40, vermelho), média (40 a 60, laranja), alta (60 a 80, verde) e muito alta (80 ou mais, azul). Como as notas dos Critérios vêm da Régua, a Faixa diz onde a cidade fica entre o que o visitante tolera e o melhor da Referência; só na Referência Brasil ela não muda quando outras cidades entram ou saem do Corte.
 
 **Dez primeiras**:
 As Candidatas nas posições 1 a 10 do Ranking; só existem quando alguma Candidata tem Pontuação, e são menos de dez quando menos Candidatas a têm.
 _Avoid_: top 10, destaque
 
 **Sessão**:
-Tudo o que o visitante configurou (restrições, subjetivas, avaliadores, pesos e notas), com um nome; é o que se exporta, importa e compartilha por link. O navegador guarda várias, e o nome é o que distingue uma da outra: não há duas Sessões com o mesmo nome no mesmo navegador.
+Tudo o que o visitante configurou (restrições, Referência, subjetivas, avaliadores, pesos e notas), com um nome; é o que se exporta, importa e compartilha por link. O navegador guarda várias, e o nome é o que distingue uma da outra: não há duas Sessões com o mesmo nome no mesmo navegador.
 _Avoid_: configuração, perfil
 
 **Sessão ativa**:

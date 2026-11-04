@@ -15,3 +15,5 @@ Até aqui a nota de cada Critério era um min-max aparado no P5 e no P95 das Can
 - A Localização, o Köppen, o hospital e a fibra não têm limite numérico em Critério que pontua, então não mexem em nenhuma Régua.
 - A População continua em logaritmo, agora na Régua.
 - O [`criterios.md`](../../pipeline/criterios.md) da Coleta segue com o min-max sobre o Corte de referência, que é um artefato à parte do app.
+
+> A partir do [ADR 0011](0011-referencia-da-regua.md), este é o comportamento da Referência Brasil; o padrão passou a ser a Referência Candidatas, que usa o P5 e o P95 das Candidatas nas pontas sem limite.
