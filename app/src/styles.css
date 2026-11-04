@@ -130,6 +130,13 @@ p {
 .categories li:last-child {
   border-bottom: none;
 }
+.reference {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  cursor: pointer;
+}
 .category-head {
   display: flex;
   align-items: center;

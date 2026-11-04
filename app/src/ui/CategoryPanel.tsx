@@ -10,6 +10,7 @@ import {
   MAX_WEIGHT,
   orderedCategories,
   renameSubjective,
+  setReference,
   setWeight,
   type Category,
   type Session,
@@ -84,8 +85,22 @@ export function CategoryPanel({ dataset, session, onChange, onToggleCategory }: 
     }
   };
 
+  const relativeToCandidates = session.reference === "candidates";
+
   return (
     <>
+      <label className="reference">
+        <button
+          type="button"
+          role="switch"
+          aria-checked={relativeToCandidates}
+          className={relativeToCandidates ? "toggle on" : "toggle"}
+          onClick={() =>
+            onChange((current) => setReference(current, current.reference === "candidates" ? "brazil" : "candidates"))
+          }
+        />
+        Notas relativas às Candidatas
+      </label>
       <ul className="categories">
         {categories.map((category) => {
           const name = categoryName(category);
