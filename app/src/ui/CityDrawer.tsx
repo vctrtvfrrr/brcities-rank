@@ -184,7 +184,6 @@ function Subjective({
 }
 
 function Criterion({ criterion }: { criterion: CriterionDetail }) {
-  const { ruler } = criterion;
   return (
     <div className="crit">
       <span>{criterion.label}</span>
@@ -196,11 +195,6 @@ function Criterion({ criterion }: { criterion: CriterionDetail }) {
         )}
       </span>
       <span className="note">{criterion.note === null ? "–" : formatNote(criterion.note)}</span>
-      {ruler && (
-        <span className="ruler">
-          0 em {formatValue(ruler.worst)} / 100 em {formatValue(ruler.best)}
-        </span>
-      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import type { CatalogEntry, Dataset } from "./dataset";
 import { SCORE_CRITERION } from "./constraints";
-import type { Candidate, CityScores, CutCity, RankResult, Ruler } from "./rank";
+import type { Candidate, CityScores, CutCity, RankResult } from "./rank";
 import { gradeOf, type Constraint, type Grade, type Session } from "./session";
 import { voltagePairs, VOLTAGE_CRITERION } from "./voltage";
 
@@ -16,7 +16,6 @@ export type CriterionDetail = {
   value: number | null;
   missing: boolean;
   note: number | null;
-  ruler: Ruler | null;
 };
 
 export type CategoryDetail = {
@@ -76,7 +75,6 @@ export function cityDetail(dataset: Dataset, session: Session, result: RankResul
       value,
       missing: value === null,
       note: scores?.criterionScores[entry.chave] ?? null,
-      ruler: result.rulers[entry.chave] ?? null,
     };
   };
   const categoryIds = [...new Set(dataset.catalogo.filter((e) => e.pontua).map((e) => e.categoria))];

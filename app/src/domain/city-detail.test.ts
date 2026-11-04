@@ -76,17 +76,6 @@ describe("cityDetail criteria", () => {
     expect(detail.categories.find((c) => c.id === "Clima")!.note).toBe(candidate.categoryScores.Clima);
   });
 
-  it("reports the Régua from rank", () => {
-    expect(criterion("Segurança", "crime").ruler).toEqual(result.rulers.crime);
-    expect(result.rulers.crime).not.toBeNull();
-  });
-
-  it("gives the Régua of a logarithmic criterion in raw units", () => {
-    const { ruler } = criterion("Porte", "populacao_2026");
-    expect(ruler!.worst).toBeGreaterThan(22000);
-    expect(ruler!.best).toBeLessThan(12000000);
-  });
-
   it("flags Dado ausente, which counts 0", () => {
     const missing = cityDetail(fixtureDataset, session, result, "1100015")!.categories[0].criteria[0];
     expect(missing).toMatchObject({ key: "crime", value: null, missing: true, note: 0 });
@@ -106,11 +95,11 @@ describe("cityDetail criteria", () => {
     ]);
   });
 
-  it("reports no Régua when no city has data for the criterion", () => {
+  it("flags Dado ausente, which counts 0, when no city has data for the criterion", () => {
     const dataset = datasetWithCities([{ code: "1", name: "A" }]);
     const session = createInitialSession(dataset);
     const only = cityDetail(dataset, session, rank(dataset, session), "1")!;
-    expect(only.categories[0].criteria[0]).toMatchObject({ ruler: null, missing: true, note: 0 });
+    expect(only.categories[0].criteria[0]).toMatchObject({ missing: true, note: 0 });
   });
 });
 
