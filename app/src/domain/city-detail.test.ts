@@ -213,7 +213,7 @@ describe("cityDetail subjectives", () => {
 });
 
 describe("cityDetail terrain", () => {
-  it("shows the three raw values with units outside scoring categories", () => {
+  it("shows the three raw terrain values with units, outside any scoring category", () => {
     const detail = open()("4106902")!;
     expect(detail.filters.terrain).toEqual([
       { key: "altitude", label: "Altitude", unit: "m", value: 934 },
