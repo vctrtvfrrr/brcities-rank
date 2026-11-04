@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { addConstraint, constraintOptions, editConstraint, removeConstraint, toggleConstraint } from "./constraints";
 import { datasetWithCities, fixtureDataset } from "./fixture-dataset";
 import { rank } from "./rank";
-import { createInitialSession, toggleCategory, type Session } from "./session";
+import { createInitialSession, setReference, toggleCategory, type Session } from "./session";
 
 const initial = createInitialSession(fixtureDataset);
 
@@ -374,10 +374,11 @@ describe("terrain Corte", () => {
     },
   );
 
-  it("combines terrain and existing constraints without changing any scores or rulers", () => {
-    const all = rank(fixtureDataset, toggleCategory(initial, "Segurança"));
+  it("combines terrain and existing constraints without changing any scores or rulers in the Referência Brasil", () => {
+    const brazil = setReference(initial, "brazil");
+    const all = rank(fixtureDataset, toggleCategory(brazil, "Segurança"));
     const session = withConstraints(
-      (s) => toggleCategory(s, "Segurança"),
+      (s) => toggleCategory(setReference(s, "brazil"), "Segurança"),
       add("altitude"),
       edit("altitude", { min: 700 }),
       add("declividade_urbana"),
@@ -435,8 +436,8 @@ it.each([
   },
 );
 
-it("voltage never changes rulers, criterion notes, category notes or Pontuação", () => {
-  const session = ["Segurança", "Clima", "Porte"].reduce(toggleCategory, initial);
+it("voltage never changes rulers, criterion notes, category notes or Pontuação in the Referência Brasil", () => {
+  const session = ["Segurança", "Clima", "Porte"].reduce(toggleCategory, setReference(initial, "brazil"));
   const before = rank(fixtureDataset, session);
   const after = rank(
     fixtureDataset,

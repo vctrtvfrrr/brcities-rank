@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { datasetWithCities, fixtureDataset } from "./fixture-dataset";
 import { isAmongFirstTen, rank, type Candidate } from "./rank";
 import { addConstraint, editConstraint, toggleConstraint } from "./constraints";
-import { addSubjective, createInitialSession, setGrade, toggleCategory, type Session } from "./session";
+import { addSubjective, createInitialSession, setGrade, setReference, toggleCategory, type Session } from "./session";
 
 describe("rank without categories", () => {
   it("returns every city as a Candidate, without Pontuação, in alphabetical order", () => {
@@ -150,7 +150,7 @@ describe("criterion normalization", () => {
   });
 });
 
-describe("Régua", () => {
+describe("Régua in the Referência Brasil", () => {
   const tenths = datasetWithCities(
     [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((crime, i) => ({
       code: String(i + 1),
@@ -160,25 +160,26 @@ describe("Régua", () => {
   );
   const limited = (criterion: string, edit: { min?: number | null; max?: number | null }, session: Session) =>
     editConstraint(addConstraint(tenths, session, criterion), criterion, edit);
+  const brazil = setReference(createInitialSession(tenths), "brazil");
   const crimeNotes = (session: Session) =>
     Object.fromEntries(rank(tenths, session).candidates.map((c) => [c.name, c.criterionScores.crime]));
 
-  it("does not depend on the other Candidatas", () => {
-    const notes = crimeNotes(limited("rain", { min: 5 }, createInitialSession(tenths)));
+  it("does not depend on the other Candidatas, measuring the ends without a limit over Brazil", () => {
+    const notes = crimeNotes(limited("rain", { min: 5 }, brazil));
     expect(notes["Cidade 1"]).toBeUndefined();
     expect(notes["Cidade 6"]).toBeCloseTo(50);
     expect(notes["Cidade 11"]).toBe(0);
   });
 
   it("takes the limit of a Restrição on the bad side as the end worth 0", () => {
-    const notes = crimeNotes(limited("crime", { max: 50 }, createInitialSession(tenths)));
+    const notes = crimeNotes(limited("crime", { max: 50 }, brazil));
     expect(notes["Cidade 6"]).toBe(0);
     expect(notes["Cidade 4"]).toBeCloseTo((20 / 45) * 100);
     expect(notes["Cidade 1"]).toBe(100);
   });
 
   it("takes the limit of a Restrição on the good side as the end worth 100", () => {
-    const notes = crimeNotes(limited("crime", { min: 30 }, createInitialSession(tenths)));
+    const notes = crimeNotes(limited("crime", { min: 30 }, brazil));
     expect(notes["Cidade 4"]).toBe(100);
     expect(notes["Cidade 7"]).toBeCloseTo((35 / 65) * 100);
   });
@@ -200,19 +201,19 @@ describe("Régua", () => {
   });
 
   it("ignores the limit of a Restrição that is off", () => {
-    const off = toggleConstraint(limited("crime", { max: 50 }, createInitialSession(tenths)), "crime");
+    const off = toggleConstraint(limited("crime", { max: 50 }, brazil), "crime");
     expect(crimeNotes(off)["Cidade 6"]).toBeCloseTo(50);
   });
 
   it("moves the other end to the real extreme when the national percentile falls on the wrong side of the limit", () => {
-    const notes = crimeNotes(limited("crime", { min: 98 }, createInitialSession(tenths)));
+    const notes = crimeNotes(limited("crime", { min: 98 }, brazil));
     expect(notes["Cidade 11"]).toBe(0);
-    const capped = crimeNotes(limited("crime", { max: 2 }, createInitialSession(tenths)));
+    const capped = crimeNotes(limited("crime", { max: 2 }, brazil));
     expect(capped["Cidade 1"]).toBe(100);
   });
 
   it("moves the other end to the real extreme when the national percentile lands right on the limit", () => {
-    expect(rank(tenths, limited("crime", { max: 5 }, createInitialSession(tenths))).rulers.crime).toEqual({
+    expect(rank(tenths, limited("crime", { max: 5 }, brazil)).rulers.crime).toEqual({
       worst: 5,
       best: 0,
     });
@@ -230,8 +231,71 @@ describe("Régua", () => {
   });
 
   it("gives 100 to every Candidata when the limit sits on the real extreme", () => {
-    const notes = crimeNotes(limited("crime", { min: 100 }, createInitialSession(tenths)));
+    const notes = crimeNotes(limited("crime", { min: 100 }, brazil));
     expect(notes["Cidade 11"]).toBe(100);
+  });
+});
+
+describe("Referência Candidatas", () => {
+  const tenths = datasetWithCities(
+    [0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map((crime, i) => ({
+      code: String(i + 1),
+      name: `Cidade ${i + 1}`,
+      values: { crime, rain: i },
+    })),
+  );
+  const limited = (criterion: string, edit: { min?: number | null; max?: number | null }, session: Session) =>
+    editConstraint(addConstraint(tenths, session, criterion), criterion, edit);
+
+  it("is the default Referência of a new Session", () => {
+    expect(createInitialSession(tenths).reference).toBe("candidates");
+  });
+
+  it("takes the ends without a limit from P5 and P95 of the Candidatas", () => {
+    const result = rank(tenths, limited("rain", { min: 5 }, createInitialSession(tenths)));
+    expect(result.rulers.crime).toEqual({ worst: 97.5, best: 52.5 });
+    const notes = byName(result);
+    expect(notes["Cidade 6"].criterionScores.crime).toBe(100);
+    expect(notes["Cidade 9"].criterionScores.crime).toBeCloseTo((17.5 / 45) * 100);
+    expect(notes["Cidade 11"].criterionScores.crime).toBe(0);
+  });
+
+  it("keeps the limit of a Restrição as the end, so the Candidata on the bad limit is worth 0", () => {
+    const result = rank(tenths, limited("crime", { max: 50 }, createInitialSession(tenths)));
+    expect(result.rulers.crime).toEqual({ worst: 50, best: 2.5 });
+    expect(byName(result)["Cidade 6"].criterionScores.crime).toBe(0);
+    expect(byName(result)["Cidade 1"].criterionScores.crime).toBe(100);
+  });
+
+  it("ignores a Restrição that is off when forming the group", () => {
+    const off = toggleConstraint(limited("rain", { min: 5 }, createInitialSession(tenths)), "rain");
+    expect(rank(tenths, off).rulers.crime).toEqual({ worst: 95, best: 5 });
+  });
+
+  it("leaves the Pontuação mínima out of the group, so the Régua does not depend on the Pontuação", () => {
+    const base = withOn(limited("rain", { min: 5 }, createInitialSession(tenths)), "Segurança");
+    const strict = editConstraint(addConstraint(tenths, base, "score"), "score", { atLeast: 90 });
+    const result = rank(tenths, strict);
+    expect(result.rulers).toEqual(rank(tenths, base).rulers);
+    expect(result.candidates.map((c) => c.name)).toEqual(["Cidade 6"]);
+  });
+
+  it("measures a cut city by the same Régua as the Candidatas", () => {
+    const result = rank(tenths, limited("rain", { min: 5 }, createInitialSession(tenths)));
+    const first = result.cut.find((city) => city.name === "Cidade 1")!;
+    expect(first.scores.criterionScores.crime).toBe(100);
+    const fourth = result.cut.find((city) => city.name === "Cidade 4")!;
+    expect(fourth.scores.criterionScores.crime).toBe(100);
+  });
+
+  it("falls back to the Régua of Brazil for a criterion without a value in any city of the group", () => {
+    const dataset = datasetWithCities([
+      { code: "1", name: "A", values: { crime: null, rain: 1 } },
+      { code: "2", name: "B", values: { crime: 0, rain: 0 } },
+      { code: "3", name: "C", values: { crime: 100, rain: 0 } },
+    ]);
+    const session = editConstraint(addConstraint(dataset, createInitialSession(dataset), "rain"), "rain", { min: 1 });
+    expect(rank(dataset, session).rulers.crime).toEqual({ worst: 95, best: 5 });
   });
 });
 

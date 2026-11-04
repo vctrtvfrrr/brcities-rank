@@ -15,7 +15,7 @@ export type CategoryExplanation = {
 
 const SCORING =
   "Cada critério vira uma nota de 0 a 100 pela régua dele, que vai de uma ponta ruim (nota 0) a uma ponta boa (nota 100), com a nota proporcional entre elas. " +
-  "Cada ponta é o limite da restrição ligada naquele critério, naquele lado; sem limite, é o valor dos 5% melhores (ou dos 5% piores) entre todos os municípios do Brasil. " +
+  "Cada ponta é o limite da restrição ligada naquele critério, naquele lado; sem limite, é o valor dos 5% melhores (ou dos 5% piores) entre as Candidatas, ou, com as notas relativas às Candidatas desligadas, entre todos os municípios do Brasil. " +
   "Assim, a cidade bem no limite da restrição vale 0, e a nota sobe conforme ela se afasta dele no sentido bom. " +
   "A nota da categoria é a média simples das notas dos seus critérios, e o critério sem dado conta 0.";
 
@@ -81,7 +81,7 @@ export const SUBJECTIVE_GRADING =
 
 export const SCORE_READING: string[] = [
   "A Pontuação vai de 0 a 100 e serve para ordenar as Candidatas do Corte atual. Com a restrição Pontuação mínima, ela também corta: mudar pesos, notas subjetivas ou categorias ligadas pode tirar ou devolver cidades ao Ranking.",
-  "As notas não dependem das outras Candidatas: cada critério mede a cidade numa régua que vai do limite da restrição, se houver, ao melhor do Brasil. Mudar o limite de uma restrição muda as notas daquele critério; cortar ou recortar outras cidades não muda.",
+  "Cada critério mede a cidade numa régua que vai do limite da restrição, se houver, ao melhor da Referência. Com Notas relativas às Candidatas, o padrão, a régua sai das cidades que passam em todas as restrições ligadas menos a Pontuação mínima: mexer em qualquer outra restrição pode mudar as notas de todo mundo, e a cidade cortada é medida pela mesma régua. Com essa opção desligada, a régua sai de todos os municípios do Brasil, e as notas só dependem dos dados da cidade e das restrições.",
   "Dado ausente conta 0 no critério, para que a falta de dado nunca favoreça uma cidade.",
   "Cada avaliador dá a cada categoria um peso de 0 a 10, sem soma fixa. Entre as categorias ligadas, o peso vira a participação da categoria na conta daquele avaliador (o peso dividido pela soma dos pesos dele), e o Ranking usa a média das participações de todos os avaliadores; assim, quem dá 10 a tudo não pesa mais do que quem dá 2 a tudo. A Pontuação é a média das notas das categorias ligadas, ponderada por essas participações; categoria desligada ou com peso 0 fica fora da conta.",
   "Numa categoria subjetiva, vale a média das notas de 1 a 5 de quem avaliou a cidade, passada para 0 a 100 (1 vale 0 e 5 vale 100). Se ninguém avaliou, a subjetiva sai da conta daquela cidade e o peso dela se reparte entre as demais.",

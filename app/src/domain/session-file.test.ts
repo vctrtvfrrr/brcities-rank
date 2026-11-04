@@ -7,6 +7,7 @@ import {
   createInitialSession,
   renameEvaluator,
   setGrade,
+  setReference,
   setWeight,
   toggleCategory,
   type Session,
@@ -199,6 +200,36 @@ describe("parseSession converting a version 1 Session, whose weights are percent
 
   it("still refuses version 1 weights that do not sum 100", () => {
     expect(parseSession(fixtureDataset, versionOne({ Segurança: 50, Clima: 30, Porte: 30 })).ok).toBe(false);
+  });
+});
+
+describe("Referência in a Session file", () => {
+  const initial = () => createInitialSession(fixtureDataset);
+  const withoutReference = (version: number) => {
+    const file = { ...JSON.parse(serializeSession(initial())), version };
+    delete file.reference;
+    if (version === 1) file.evaluators[0].weights = { Segurança: 50, Clima: 30, Porte: 20 };
+    return JSON.stringify(file);
+  };
+
+  it("round-trips the Referência Brasil without changing the format version", () => {
+    const session = setReference(initial(), "brazil");
+    expect(parseSession(fixtureDataset, serializeSession(session))).toEqual({ ok: true, session });
+    expect(session.version).toBe(2);
+  });
+
+  it.each([1, 2])("opens a version %i Session without a Referência with Candidatas", (version) => {
+    const result = parseSession(fixtureDataset, withoutReference(version));
+    expect(result).toMatchObject({ ok: true, session: { reference: "candidates" } });
+  });
+
+  it.each([["brasil"], [null], [1]])("refuses the unknown Referência %j", (reference) => {
+    const result = parseSession(fixtureDataset, JSON.stringify({ ...initial(), reference }));
+    expect(result).toMatchObject({ ok: false, reason: expect.stringContaining("Referência") });
+  });
+
+  it("counts a Session that only changes the Referência as its own", () => {
+    expect(hasOwnSession(fixtureDataset, setReference(initial(), "brazil"))).toBe(true);
   });
 });
 

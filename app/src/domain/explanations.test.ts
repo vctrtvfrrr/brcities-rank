@@ -30,6 +30,12 @@ describe("explainCategory", () => {
     expect(scoring).toContain("sem dado conta 0");
   });
 
+  it("says the ends without a limit come from the Candidatas, or from Brazil with the other Referência", () => {
+    const { scoring } = explainCategory(fixtureDataset, "Clima")!;
+    expect(scoring).toContain("entre as Candidatas");
+    expect(scoring).toContain("entre todos os municípios do Brasil");
+  });
+
   it("has no explanation for a category outside the catalog", () => {
     expect(explainCategory(fixtureDataset, "Lazer")).toBeNull();
   });
@@ -47,9 +53,14 @@ describe("explainCategory", () => {
 describe("SCORE_READING", () => {
   const text = SCORE_READING.join(" ");
 
-  it("says the notes come from the régua, not from the other Candidates", () => {
-    expect(text).toContain("não dependem das outras Candidatas");
+  it("says the notes come from the régua, whose ends without a limit follow the Referência", () => {
     expect(text).toContain("limite da restrição");
+    expect(text).toContain("Notas relativas às Candidatas");
+    expect(text).toContain("só dependem dos dados da cidade e das restrições");
+  });
+
+  it("says the Pontuação mínima stays out of the group that sets the régua", () => {
+    expect(text).toContain("menos a Pontuação mínima");
   });
 
   it("says a missing value counts 0, and how weights and subjective grades enter", () => {

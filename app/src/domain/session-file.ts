@@ -6,11 +6,13 @@ import { VOLTAGES, VOLTAGE_CRITERION } from "./voltage";
 import {
   createInitialSession,
   MAX_WEIGHT,
+  REFERENCES,
   SESSION_VERSION,
   type Category,
   type Constraint,
   type Evaluator,
   type Grade,
+  type Reference,
   type Session,
 } from "./session";
 
@@ -117,6 +119,12 @@ function parseConstraints(dataset: Dataset, raw: unknown): Constraint[] {
     }
     return { criterion, on, min, max };
   });
+}
+
+function parseReference(file: Json): Reference {
+  if (!("reference" in file)) return "candidates";
+  const reference = REFERENCES.find((known) => known === file.reference);
+  return reference ?? refuse(`A Referência deve ser "candidates" ou "brazil".`);
 }
 
 function parseCategories(dataset: Dataset, raw: unknown): Category[] {
@@ -254,6 +262,7 @@ function parse(dataset: Dataset, text: string): Session {
     version: SESSION_VERSION,
     name: stringOf(file.name, "O nome da Sessão"),
     constraints: parseConstraints(dataset, file.constraints),
+    reference: parseReference(file),
     categories,
     evaluators,
     activeEvaluatorId,

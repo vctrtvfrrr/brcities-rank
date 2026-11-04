@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { addConstraint, editConstraint } from "./constraints";
 import { fixtureDataset } from "./fixture-dataset";
-import { createInitialSession, toggleCategory } from "./session";
+import { createInitialSession, setReference, toggleCategory } from "./session";
 import { decodeSessionLink, encodeSessionLink, sessionLinkPayload } from "./session-link";
 
 describe("session link", () => {
@@ -11,6 +11,16 @@ describe("session link", () => {
     expect(fragment).toMatch(/^sessao=[A-Za-z0-9_-]+$/);
     const payload = sessionLinkPayload(`#${fragment}`)!;
     expect(await decodeSessionLink(fixtureDataset, payload)).toEqual({ ok: true, session });
+  });
+
+  it("carries the Referência, and opens a link without one with Candidatas", async () => {
+    const brazil = setReference(createInitialSession(fixtureDataset), "brazil");
+    const decode = async (session: object) =>
+      decodeSessionLink(fixtureDataset, sessionLinkPayload(await encodeSessionLink(session as typeof brazil))!);
+    expect(await decode(brazil)).toEqual({ ok: true, session: brazil });
+    const withoutReference: Partial<typeof brazil> = { ...brazil };
+    delete withoutReference.reference;
+    expect(await decode(withoutReference)).toMatchObject({ ok: true, session: { reference: "candidates" } });
   });
 
   it("finds no Session in a fragment without one", () => {

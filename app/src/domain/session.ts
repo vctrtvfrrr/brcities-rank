@@ -29,10 +29,15 @@ export type Evaluator = {
   grades: Record<string, Record<string, Grade>>;
 };
 
+export type Reference = "candidates" | "brazil";
+
+export const REFERENCES: Reference[] = ["candidates", "brazil"];
+
 export type Session = {
   version: number;
   name: string;
   constraints: Constraint[];
+  reference: Reference;
   categories: Category[];
   evaluators: Evaluator[];
   activeEvaluatorId: string;
@@ -46,6 +51,7 @@ export function createInitialSession(dataset: Dataset): Session {
     version: SESSION_VERSION,
     name: "",
     constraints: [],
+    reference: "candidates",
     categories: objectiveIds.map((id) => ({ id, kind: "objective", on: false })),
     evaluators: [
       {
@@ -61,6 +67,10 @@ export function createInitialSession(dataset: Dataset): Session {
 
 export function renameSession(session: Session, name: string): Session {
   return { ...session, name };
+}
+
+export function setReference(session: Session, reference: Reference): Session {
+  return { ...session, reference };
 }
 
 export function toggleCategory(session: Session, id: string): Session {

@@ -1,4 +1,4 @@
-import { numericLimits, passesConstraint, type NumericLimits } from "./constraints";
+import { numericLimits, passesConstraint, SCORE_CRITERION, type NumericLimits } from "./constraints";
 import type { CatalogEntry, Dataset } from "./dataset";
 import type { Session } from "./session";
 
@@ -138,14 +138,25 @@ type Scoring = {
   rulers: Record<string, Ruler | null>;
 };
 
+function referenceGroup(dataset: Dataset, session: Session, indexes: number[]): number[] {
+  if (session.reference === "brazil") return indexes;
+  const passers = session.constraints
+    .filter((constraint) => constraint.on && constraint.criterion !== SCORE_CRITERION)
+    .map((constraint) => passesConstraint(dataset, constraint, () => null));
+  return indexes.filter((index) => passers.every((passes) => passes(index)));
+}
+
 function scoreObjectives(dataset: Dataset, session: Session): Scoring {
   const indexes = dataset.colunas.codigo_ibge.map((_, index) => index);
+  const group = referenceGroup(dataset, session, indexes);
   const scoring = dataset.catalogo.filter((entry) => entry.pontua);
   const criteriaByCategory = new Map<string, CatalogEntry[]>();
   for (const entry of scoring) {
     criteriaByCategory.set(entry.categoria, [...(criteriaByCategory.get(entry.categoria) ?? []), entry]);
   }
-  const scored = new Map(scoring.map((entry) => [entry.chave, scoreCriterion(dataset, session, entry, indexes)]));
+  const scored = new Map(
+    scoring.map((entry) => [entry.chave, scoreCriterion(dataset, session, entry, indexes, group)]),
+  );
   return {
     categories: indexes.map((_, position) =>
       Object.fromEntries(
@@ -162,9 +173,11 @@ function scoreObjectives(dataset: Dataset, session: Session): Scoring {
   };
 }
 
-function scoreCriterion(dataset: Dataset, session: Session, entry: CatalogEntry, indexes: number[]) {
+function scoreCriterion(dataset: Dataset, session: Session, entry: CatalogEntry, indexes: number[], group: number[]) {
   const column = dataset.colunas[entry.chave] as (number | null)[];
-  const ruler = measureRuler(column, entry, numericLimits(session, entry.chave));
+  const limits = numericLimits(session, entry.chave);
+  const groupColumn = group.map((index) => column[index]);
+  const ruler = measureRuler(groupColumn, entry, limits) ?? measureRuler(column, entry, limits);
   const notes = indexes.map((index) => {
     const value = transform(entry, column[index]);
     if (value === null || ruler === null) return 0;
