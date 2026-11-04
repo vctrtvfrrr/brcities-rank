@@ -138,24 +138,26 @@ type Scoring = {
   rulers: Record<string, Ruler | null>;
 };
 
-function referenceGroup(dataset: Dataset, session: Session, indexes: number[]): number[] {
+const noScore = () => null;
+
+function referenceIndexesOf(dataset: Dataset, session: Session, indexes: number[]): number[] {
   if (session.reference === "brazil") return indexes;
-  const passers = session.constraints
+  const passesGroupConstraints = session.constraints
     .filter((constraint) => constraint.on && constraint.criterion !== SCORE_CRITERION)
-    .map((constraint) => passesConstraint(dataset, constraint, () => null));
-  return indexes.filter((index) => passers.every((passes) => passes(index)));
+    .map((constraint) => passesConstraint(dataset, constraint, noScore));
+  return indexes.filter((index) => passesGroupConstraints.every((passes) => passes(index)));
 }
 
 function scoreObjectives(dataset: Dataset, session: Session): Scoring {
   const indexes = dataset.colunas.codigo_ibge.map((_, index) => index);
-  const group = referenceGroup(dataset, session, indexes);
+  const referenceIndexes = referenceIndexesOf(dataset, session, indexes);
   const scoring = dataset.catalogo.filter((entry) => entry.pontua);
   const criteriaByCategory = new Map<string, CatalogEntry[]>();
   for (const entry of scoring) {
     criteriaByCategory.set(entry.categoria, [...(criteriaByCategory.get(entry.categoria) ?? []), entry]);
   }
   const scored = new Map(
-    scoring.map((entry) => [entry.chave, scoreCriterion(dataset, session, entry, indexes, group)]),
+    scoring.map((entry) => [entry.chave, scoreCriterion(dataset, session, entry, indexes, referenceIndexes)]),
   );
   return {
     categories: indexes.map((_, position) =>
@@ -173,11 +175,17 @@ function scoreObjectives(dataset: Dataset, session: Session): Scoring {
   };
 }
 
-function scoreCriterion(dataset: Dataset, session: Session, entry: CatalogEntry, indexes: number[], group: number[]) {
+function scoreCriterion(
+  dataset: Dataset,
+  session: Session,
+  entry: CatalogEntry,
+  indexes: number[],
+  referenceIndexes: number[],
+) {
   const column = dataset.colunas[entry.chave] as (number | null)[];
   const limits = numericLimits(session, entry.chave);
-  const groupColumn = group.map((index) => column[index]);
-  const ruler = measureRuler(groupColumn, entry, limits) ?? measureRuler(column, entry, limits);
+  const referenceColumn = referenceIndexes.map((index) => column[index]);
+  const ruler = measureRulerOrBrazil(referenceColumn, column, entry, limits);
   const notes = indexes.map((index) => {
     const value = transform(entry, column[index]);
     if (value === null || ruler === null) return 0;
@@ -187,6 +195,15 @@ function scoreCriterion(dataset: Dataset, session: Session, entry: CatalogEntry,
   });
   const rawRuler = ruler && { worst: untransform(entry, ruler.worst), best: untransform(entry, ruler.best) };
   return { notes, ruler: rawRuler };
+}
+
+function measureRulerOrBrazil(
+  referenceColumn: (number | null)[],
+  brazilColumn: (number | null)[],
+  entry: CatalogEntry,
+  limits: NumericLimits,
+): Ruler | null {
+  return measureRuler(referenceColumn, entry, limits) ?? measureRuler(brazilColumn, entry, limits);
 }
 
 function measureRuler(column: (number | null)[], entry: CatalogEntry, limits: NumericLimits): Ruler | null {

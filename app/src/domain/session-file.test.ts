@@ -223,9 +223,9 @@ describe("Referência in a Session file", () => {
     expect(result).toMatchObject({ ok: true, session: { reference: "candidates" } });
   });
 
-  it.each([["brasil"], [null], [1]])("refuses the unknown Referência %j", (reference) => {
+  it.each([["brasil"], [null], [1]])("refuses the unknown Referência %j, naming the known ones", (reference) => {
     const result = parseSession(fixtureDataset, JSON.stringify({ ...initial(), reference }));
-    expect(result).toMatchObject({ ok: false, reason: expect.stringContaining("Referência") });
+    expect(result).toMatchObject({ ok: false, reason: 'A Referência deve ser "candidates" ou "brazil".' });
   });
 
   it("counts a Session that only changes the Referência as its own", () => {

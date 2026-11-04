@@ -124,7 +124,7 @@ function parseConstraints(dataset: Dataset, raw: unknown): Constraint[] {
 function parseReference(file: Json): Reference {
   if (!("reference" in file)) return "candidates";
   const reference = REFERENCES.find((known) => known === file.reference);
-  return reference ?? refuse(`A Referência deve ser "candidates" ou "brazil".`);
+  return reference ?? refuse(`A Referência deve ser ${REFERENCES.map((known) => `"${known}"`).join(" ou ")}.`);
 }
 
 function parseCategories(dataset: Dataset, raw: unknown): Category[] {

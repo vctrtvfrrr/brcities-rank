@@ -73,6 +73,10 @@ export function setReference(session: Session, reference: Reference): Session {
   return { ...session, reference };
 }
 
+export function toggleReference(session: Session): Session {
+  return setReference(session, session.reference === "candidates" ? "brazil" : "candidates");
+}
+
 export function toggleCategory(session: Session, id: string): Session {
   return {
     ...session,

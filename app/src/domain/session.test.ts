@@ -18,6 +18,7 @@ import {
   setGrade,
   setWeight,
   toggleCategory,
+  toggleReference,
   type Session,
 } from "./session";
 
@@ -66,6 +67,22 @@ describe("toggleCategory", () => {
   it("does not mutate the previous Session", () => {
     toggleCategory(session, "Clima");
     expect(session.categories.every((c) => !c.on)).toBe(true);
+  });
+});
+
+describe("toggleReference", () => {
+  const session = createInitialSession(fixtureDataset);
+
+  it("switches the Referência between Candidatas and Brasil without touching the rest of the Session", () => {
+    const brazil = toggleReference(session);
+    expect(brazil.reference).toBe("brazil");
+    expect({ ...brazil, reference: session.reference }).toEqual(session);
+    expect(toggleReference(brazil).reference).toBe("candidates");
+  });
+
+  it("does not mutate the previous Session", () => {
+    toggleReference(session);
+    expect(session.reference).toBe("candidates");
   });
 });
 
