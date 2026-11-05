@@ -286,13 +286,13 @@ describe("Referência Candidatas", () => {
       categories: ["subjective-1"],
     });
     const graded = setGrade(setGrade(requiring, "subjective-1", "7", 3), "subjective-1", "11", 5);
-    const objective = (session: Session) =>
-      Object.fromEntries(
-        [...rank(tenths, session).candidates, ...rank(tenths, session).cut].map((city) => [
-          city.name,
-          "criterionScores" in city ? city.criterionScores : city.scores.criterionScores,
-        ]),
-      );
+    const objective = (session: Session) => {
+      const { candidates, cut } = rank(tenths, session);
+      return Object.fromEntries([
+        ...candidates.map((c) => [c.name, c.criterionScores]),
+        ...cut.map((c) => [c.name, c.scores.criterionScores]),
+      ]);
+    };
 
     expect(rank(tenths, graded).candidates.map((c) => c.name)).toEqual(["Cidade 7", "Cidade 11"]);
     expect(rank(tenths, graded).rulers).toEqual(rank(tenths, base).rulers);
