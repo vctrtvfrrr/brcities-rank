@@ -28,6 +28,7 @@ export function describeConstraint(dataset: Dataset, constraint: Constraint): st
       ? "Pontuação mínima (sem mínimo)"
       : `Pontuação ≥ ${formatValue(constraint.atLeast)}`;
   }
+  if ("categories" in constraint) return "Avaliação subjetiva";
   const entry = dataset.catalogo.find((e) => e.chave === constraint.criterion)!;
   if ("value" in constraint) return `${entry.rotulo}: ${constraint.value ? "sim" : "não"}`;
   const limits = [

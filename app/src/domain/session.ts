@@ -12,6 +12,7 @@ export type Constraint =
   | { criterion: "koppen" | "classe_relevo"; on: boolean; accepted: string[] }
   | { criterion: "location"; on: boolean; states: string[] }
   | { criterion: "score"; on: boolean; atLeast: number | null }
+  | { criterion: "subjective"; on: boolean; categories: string[] }
   | { criterion: "hospital_geral" | "fibra"; on: boolean; value: boolean };
 
 export type Category =

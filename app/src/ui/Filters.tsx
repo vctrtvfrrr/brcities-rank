@@ -12,7 +12,7 @@ import {
 } from "../domain/constraints";
 import type { CatalogEntry, Dataset } from "../domain/dataset";
 import { REGIONS, regionSelection, toggleRegion } from "../domain/regions";
-import type { Constraint, Session } from "../domain/session";
+import type { Category, Constraint, Session } from "../domain/session";
 import { TERRAIN_CLASSES, TERRAIN_CRITERION } from "../domain/terrain";
 import { VOLTAGES, type Voltage } from "../domain/voltage";
 import { Tooltip } from "./Tooltip";
@@ -62,6 +62,7 @@ export function Filters({ dataset, session, cutCounts, onChange }: Props) {
             dataset={dataset}
             constraint={constraint}
             label={labels[constraint.criterion]}
+            subjectives={session.categories.filter(isSubjective)}
             cuts={cutCounts[constraint.criterion] ?? 0}
             onChange={onChange}
           />
@@ -76,19 +77,26 @@ function constraintLabels(dataset: Dataset): Record<string, string> {
   labels.koppen = "Clima Köppen";
   labels.location = "Localização";
   labels.score = "Pontuação mínima";
+  labels.subjective = "Avaliação subjetiva";
   return labels;
 }
+
+type SubjectiveCategory = Extract<Category, { kind: "subjective" }>;
+
+const isSubjective = (category: Category): category is SubjectiveCategory => category.kind === "subjective";
 
 function ConstraintCard({
   dataset,
   constraint,
   label,
+  subjectives,
   cuts,
   onChange,
 }: {
   dataset: Dataset;
   constraint: Constraint;
   label: string;
+  subjectives: SubjectiveCategory[];
   cuts: number;
   onChange: Props["onChange"];
 }) {
@@ -135,6 +143,12 @@ function ConstraintCard({
         )
       ) : "atLeast" in constraint ? (
         <ScoreEditor atLeast={constraint.atLeast} onChange={(atLeast) => edit({ atLeast })} />
+      ) : "categories" in constraint ? (
+        <SubjectiveEditor
+          subjectives={subjectives}
+          checked={constraint.categories}
+          onChange={(categories) => edit({ categories })}
+        />
       ) : "value" in constraint ? (
         <BooleanEditor value={constraint.value} onChange={(value) => edit({ value })} />
       ) : (
@@ -297,6 +311,41 @@ function ScoreEditor({ atLeast, onChange }: { atLeast: number | null; onChange: 
         />
       </div>
       <p className="muted small">De 0 a {MAX_SCORE} · a cidade sem Pontuação passa</p>
+    </>
+  );
+}
+
+function SubjectiveEditor({
+  subjectives,
+  checked,
+  onChange,
+}: {
+  subjectives: SubjectiveCategory[];
+  checked: string[];
+  onChange: (checked: string[]) => void;
+}) {
+  if (subjectives.length === 0) {
+    return <p className="muted small">Nenhuma categoria subjetiva: crie uma em Categorias para exigir notas nela.</p>;
+  }
+  const toggle = (id: string) => onChange(checked.includes(id) ? checked.filter((c) => c !== id) : [...checked, id]);
+  return (
+    <>
+      <p className="muted small">Corta a cidade sem nota, de nenhum avaliador, em alguma categoria marcada e ligada.</p>
+      <div className="kchips" role="group" aria-label="Categorias subjetivas exigidas">
+        {subjectives.map((category) => (
+          <button
+            type="button"
+            key={category.id}
+            className={checked.includes(category.id) ? "kchip on" : "kchip"}
+            aria-pressed={checked.includes(category.id)}
+            title={category.on ? undefined : "Categoria desligada: não corta enquanto estiver desligada"}
+            onClick={() => toggle(category.id)}
+          >
+            {category.name}
+            {!category.on && " (desligada)"}
+          </button>
+        ))}
+      </div>
     </>
   );
 }

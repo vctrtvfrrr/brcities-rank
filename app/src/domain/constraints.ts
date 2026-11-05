@@ -7,12 +7,21 @@ import { outletVoltage, voltagePairs, VOLTAGES, VOLTAGE_CRITERION, type Voltage 
 export const KOPPEN_CRITERION = "koppen";
 export const LOCATION_CRITERION = "location";
 export const SCORE_CRITERION = "score";
+export const SUBJECTIVE_CRITERION = "subjective";
 export const MAX_SCORE = 100;
 const KOPPEN_BECK = "koppen_beck";
 const KOPPEN_ALVARES = "koppen_alvares";
 const BOOLEAN_CRITERIA = ["hospital_geral", "fibra"];
 
-export type ConstraintKind = "location" | "score" | "numeric" | "koppen" | "terrain" | "boolean" | "voltage";
+export type ConstraintKind =
+  | "location"
+  | "score"
+  | "subjective"
+  | "numeric"
+  | "koppen"
+  | "terrain"
+  | "boolean"
+  | "voltage";
 
 export type ConstraintOption = {
   criterion: string;
@@ -28,6 +37,7 @@ export type ConstraintEdit = Partial<{
   accepted: string[];
   states: string[];
   atLeast: number | null;
+  categories: string[];
   value: boolean;
 }>;
 
@@ -35,6 +45,7 @@ export function constraintKind(criterion: string): ConstraintKind {
   if (criterion === VOLTAGE_CRITERION) return "voltage";
   if (criterion === LOCATION_CRITERION) return "location";
   if (criterion === SCORE_CRITERION) return "score";
+  if (criterion === SUBJECTIVE_CRITERION) return "subjective";
   if (criterion === KOPPEN_CRITERION) return "koppen";
   if (criterion === TERRAIN_CRITERION) return "terrain";
   return BOOLEAN_CRITERIA.includes(criterion) ? "boolean" : "numeric";
@@ -54,6 +65,13 @@ const SCORE_OPTION: ConstraintOption = {
   kind: "score",
 };
 
+const SUBJECTIVE_OPTION: ConstraintOption = {
+  criterion: SUBJECTIVE_CRITERION,
+  label: "Avaliação subjetiva",
+  group: "Pontuação",
+  kind: "subjective",
+};
+
 function allOptions(dataset: Dataset): ConstraintOption[] {
   const fromCatalog = dataset.catalogo
     .filter((entry) => entry.chave !== KOPPEN_ALVARES)
@@ -66,7 +84,7 @@ function allOptions(dataset: Dataset): ConstraintOption[] {
         kind: constraintKind(criterion),
       };
     });
-  return [LOCATION_OPTION, SCORE_OPTION, ...fromCatalog];
+  return [LOCATION_OPTION, SCORE_OPTION, SUBJECTIVE_OPTION, ...fromCatalog];
 }
 
 export function constraintOptions(dataset: Dataset, session: Session): ConstraintOption[] {
@@ -82,6 +100,8 @@ function neutralConstraint(option: ConstraintOption): Constraint {
       return { criterion: LOCATION_CRITERION, on: true, states: [...STATES] };
     case "score":
       return { criterion: SCORE_CRITERION, on: true, atLeast: null };
+    case "subjective":
+      return { criterion: SUBJECTIVE_CRITERION, on: true, categories: [] };
     case "koppen":
       return { criterion: KOPPEN_CRITERION, on: true, accepted: [] };
     case "terrain":
@@ -109,6 +129,8 @@ export function editConstraint(session: Session, criterion: string, edit: Constr
       return edit.voltages ? { ...c, voltages: VOLTAGES.filter((v) => edit.voltages!.includes(v)) } : c;
     if ("states" in c) return edit.states ? { ...c, states: inStateOrder(edit.states) } : c;
     if ("atLeast" in c) return edit.atLeast === undefined ? c : { ...c, atLeast: edit.atLeast };
+    if ("categories" in c)
+      return edit.categories ? { ...c, categories: inSubjectiveOrder(session, edit.categories) } : c;
     if ("accepted" in c)
       return edit.accepted
         ? { ...c, accepted: c.criterion === TERRAIN_CRITERION ? inTerrainOrder(edit.accepted) : edit.accepted }
@@ -116,6 +138,10 @@ export function editConstraint(session: Session, criterion: string, edit: Constr
     if ("value" in c) return edit.value === undefined ? c : { ...c, value: edit.value };
     return { ...c, min: edit.min === undefined ? c.min : edit.min, max: edit.max === undefined ? c.max : edit.max };
   });
+}
+
+function inSubjectiveOrder(session: Session, ids: string[]): string[] {
+  return session.categories.filter((c) => c.kind === "subjective" && ids.includes(c.id)).map((c) => c.id);
 }
 
 export function toggleConstraint(session: Session, criterion: string): Session {
@@ -170,6 +196,7 @@ export function passesConstraint(
       return atLeast === null || score === null || roundedAsShown(score) >= atLeast;
     };
   }
+  if ("categories" in constraint) return () => true;
   if ("states" in constraint) {
     const states = new Set(constraint.states);
     return (i) => states.has(colunas.uf[i]);

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { addConstraint, constraintOptions, editConstraint, removeConstraint, toggleConstraint } from "./constraints";
 import { datasetWithCities, fixtureDataset } from "./fixture-dataset";
 import { rank } from "./rank";
-import { createInitialSession, setReference, toggleCategory, type Session } from "./session";
+import { addSubjective, createInitialSession, setReference, toggleCategory, type Session } from "./session";
 
 const initial = createInitialSession(fixtureDataset);
 
@@ -22,6 +22,7 @@ describe("constraintOptions", () => {
     expect(keys).toEqual([
       "location",
       "score",
+      "subjective",
       "crime",
       "rain",
       "heat",
@@ -237,6 +238,49 @@ describe("Corte", () => {
     it("counts the cities it cuts", () => {
       const session = withConstraints(safety, add("score"), edit("score", { atLeast: 101 }));
       expect(rank(fixtureDataset, session).cutCounts.score).toBe(6);
+    });
+  });
+
+  describe("Avaliação subjetiva", () => {
+    const twoSubjectives = (s: Session) => addSubjective(addSubjective(s));
+
+    it("is offered next to the Pontuação mínima", () => {
+      expect(constraintOptions(fixtureDataset, initial).find((o) => o.criterion === "subjective")).toEqual({
+        criterion: "subjective",
+        label: "Avaliação subjetiva",
+        group: "Pontuação",
+        kind: "subjective",
+      });
+    });
+
+    it("starts with no category checked, cutting no city", () => {
+      const session = withConstraints(twoSubjectives, add("subjective"));
+      expect(session.constraints).toEqual([{ criterion: "subjective", on: true, categories: [] }]);
+      expect(candidateNames(session)).toHaveLength(6);
+    });
+
+    it("keeps the checked categories in category order, dropping ids that are not subjective categories", () => {
+      const session = withConstraints(
+        twoSubjectives,
+        add("subjective"),
+        edit("subjective", { categories: ["subjective-2", "Clima", "subjective-9", "subjective-1", "subjective-2"] }),
+      );
+      expect(session.constraints[0]).toEqual({
+        criterion: "subjective",
+        on: true,
+        categories: ["subjective-1", "subjective-2"],
+      });
+    });
+
+    it("keeps the checked categories through toggling", () => {
+      const checked = withConstraints(
+        twoSubjectives,
+        add("subjective"),
+        edit("subjective", { categories: ["subjective-2"] }),
+      );
+      const off = toggleConstraint(checked, "subjective");
+      expect(off.constraints[0]).toEqual({ criterion: "subjective", on: false, categories: ["subjective-2"] });
+      expect(toggleConstraint(off, "subjective")).toEqual(checked);
     });
   });
 
