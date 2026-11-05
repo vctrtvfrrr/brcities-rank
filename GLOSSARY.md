@@ -12,6 +12,10 @@ _Avoid_: filtro
 Restrição que tira do ranking a cidade com Pontuação abaixo de um valor de 0 a 100; nasce sem valor, sem cortar ninguém, e deixa passar a cidade sem Pontuação. Mexer em Pesos, notas subjetivas ou categorias ligadas pode tirar ou devolver cidades por ela. A cidade cortada por ela mostra no detalhe a Pontuação e as notas que a deixaram de fora.
 _Avoid_: filtro por pontuação, nota de corte
 
+**Avaliação subjetiva**:
+Restrição que aceita um conjunto de Categorias subjetivas e tira do ranking a cidade sem Nota subjetiva, de nenhum Avaliador, em alguma delas; a categoria marcada que está desligada não conta enquanto estiver desligada. Nasce sem nenhuma categoria marcada, sem cortar ninguém, e fica fora do grupo da Referência Candidatas, então dar uma nota nunca muda a Régua. A cidade cortada por ela mostra no Detalhe as categorias em que falta nota.
+_Avoid_: filtro de avaliadas, cidades sem nota
+
 **Localização**:
 Restrição que aceita um conjunto de estados (UFs) e tira do ranking a cidade cujo estado não está nele; nasce com todos os estados aceitos e pode ficar sem nenhum, quando corta todas as cidades.
 _Avoid_: filtro por região, filtro por estado
@@ -53,7 +57,7 @@ Intervalo de um Critério entre a ponta ruim, que vale nota 0, e a ponta boa, qu
 _Avoid_: alvo, meta, critério selecionado
 
 **Referência**:
-O grupo de cidades de onde saem as pontas da Régua que não têm limite: Candidatas, o padrão, ou Brasil, todos os municípios. Na Referência Candidatas, o grupo é o das cidades que passam em todas as Restrições ligadas menos a Pontuação mínima, e a nota de uma cidade muda quando outras entram ou saem desse grupo; num Critério em que nenhuma cidade do grupo tem valor, a Régua usa o Brasil. Na Referência Brasil, a nota só depende dos dados da cidade e das Restrições.
+O grupo de cidades de onde saem as pontas da Régua que não têm limite: Candidatas, o padrão, ou Brasil, todos os municípios. Na Referência Candidatas, o grupo é o das cidades que passam em todas as Restrições ligadas menos a Pontuação mínima e a Avaliação subjetiva, e a nota de uma cidade muda quando outras entram ou saem desse grupo; num Critério em que nenhuma cidade do grupo tem valor, a Régua usa o Brasil. Na Referência Brasil, a nota só depende dos dados da cidade e das Restrições.
 _Avoid_: nota relativa, normalização, base de comparação
 
 **Pontuação**:
