@@ -157,6 +157,9 @@ export function deleteSubjective(session: Session, id: string): Session {
   return {
     ...session,
     categories: session.categories.filter((c) => c.id !== id),
+    constraints: session.constraints.map((c) =>
+      "categories" in c ? { ...c, categories: c.categories.filter((checked) => checked !== id) } : c,
+    ),
     evaluators: session.evaluators.map((evaluator) => ({
       ...evaluator,
       weights: without(evaluator.weights),

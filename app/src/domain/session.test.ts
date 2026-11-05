@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { fixtureDataset } from "./fixture-dataset";
+import { addConstraint, editConstraint } from "./constraints";
 import {
   activateEvaluator,
   addEvaluator,
@@ -323,6 +324,30 @@ describe("deleteSubjective", () => {
     const graded = setGrade(withLoad(), second.id, "3550308", 4);
     const session = deleteSubjective(graded, first.id);
     expect(gradeOf(session, second.id, "3550308")).toBe(4);
+  });
+
+  it("unchecks the category from the Avaliação subjetiva, leaving the other constraints as they were", () => {
+    let requiring = addConstraint(fixtureDataset, withLoad(), "crime");
+    requiring = addConstraint(fixtureDataset, requiring, "subjective");
+    requiring = editConstraint(requiring, "subjective", { categories: [first.id, second.id] });
+    const session = deleteSubjective(requiring, first.id);
+    expect(session.constraints).toEqual([
+      { criterion: "crime", on: true, min: null, max: null },
+      { criterion: "subjective", on: true, categories: [second.id] },
+    ]);
+  });
+});
+
+describe("Avaliação subjetiva and new subjectives", () => {
+  it("does not check a subjective category when it is created", () => {
+    const requiring = editConstraint(
+      addConstraint(fixtureDataset, addSubjective(createInitialSession(fixtureDataset)), "subjective"),
+      "subjective",
+      { categories: ["subjective-1"] },
+    );
+    expect(addSubjective(requiring).constraints).toEqual([
+      { criterion: "subjective", on: true, categories: ["subjective-1"] },
+    ]);
   });
 });
 
