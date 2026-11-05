@@ -53,10 +53,11 @@ function limitOf(value: unknown, what: string): number | null {
   return typeof value === "number" && Number.isFinite(value) ? value : refuse(`${what} deve ser um número ou vazio.`);
 }
 
-function parseConstraints(dataset: Dataset, raw: unknown): Constraint[] {
+function parseConstraints(dataset: Dataset, raw: unknown, categories: Category[]): Constraint[] {
   const kinds = new Map(
     constraintOptions(dataset, { constraints: [] } as unknown as Session).map((o) => [o.criterion, o.kind]),
   );
+  const subjectives = categories.filter((c) => c.kind === "subjective").map((c) => c.id);
   const seen = new Set<string>();
   return arrayOf(raw, "As restrições").map((item) => {
     const entry = objectOf(item, "Cada restrição");
@@ -86,6 +87,15 @@ function parseConstraints(dataset: Dataset, raw: unknown): Constraint[] {
         refuse(`A Pontuação mínima deve ficar entre 0 e ${MAX_SCORE}.`);
       }
       return { criterion: "score", on, atLeast };
+    }
+    if (kind === "subjective") {
+      const checked = arrayOf(entry.categories, "As categorias da Avaliação subjetiva").map((value) => {
+        const id = stringOf(value, "Cada categoria da Avaliação subjetiva");
+        return subjectives.includes(id)
+          ? id
+          : refuse(`A Avaliação subjetiva cita "${id}", que não é uma categoria subjetiva da Sessão.`);
+      });
+      return { criterion: "subjective", on, categories: subjectives.filter((id) => checked.includes(id)) };
     }
     if (kind === "koppen") {
       const accepted = arrayOf(entry.accepted, `As classes aceitas de "${criterion}"`).map((c) =>
@@ -261,7 +271,7 @@ function parse(dataset: Dataset, text: string): Session {
   return {
     version: SESSION_VERSION,
     name: stringOf(file.name, "O nome da Sessão"),
-    constraints: parseConstraints(dataset, file.constraints),
+    constraints: parseConstraints(dataset, file.constraints, categories),
     reference: parseReference(file),
     categories,
     evaluators,

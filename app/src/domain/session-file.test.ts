@@ -34,6 +34,9 @@ function richSession(): Session {
   session = renameEvaluator(session, "evaluator-2", "Ana");
   session = setWeight(session, "subjective-1", 2);
   session = setGrade(session, "subjective-1", "3304557", 2);
+  session = addSubjective(session);
+  session = addConstraint(fixtureDataset, session, "subjective");
+  session = editConstraint(session, "subjective", { categories: ["subjective-2"] });
   return { ...session, name: "Família Silva" };
 }
 
@@ -105,6 +108,24 @@ describe("parseSession refusing invalid files", () => {
 
   it.each([[-1], [100.5], ["60"]])("refuses a Pontuação mínima of %j", (atLeast) => {
     refuses((f) => (f.constraints.find((c: any) => c.criterion === "score").atLeast = atLeast));
+  });
+
+  it.each([
+    ["an unknown category", ["subjective-9"], "subjective-9"],
+    ["an objective category", ["Clima"], "Clima"],
+    ["a category that is not a text", [2], "texto"],
+  ])("refuses an Avaliação subjetiva that checks %s", (_, categories, mention) => {
+    const result = refuses(
+      (f) => (f.constraints.find((c: any) => c.criterion === "subjective").categories = categories),
+    );
+    expect(result).toMatchObject({ reason: expect.stringContaining(mention as string) });
+  });
+
+  it("refuses an Avaliação subjetiva without a list of categories", () => {
+    const result = refuses(
+      (f) => (f.constraints.find((c: any) => c.criterion === "subjective").categories = "subjective-1"),
+    );
+    expect(result).toMatchObject({ reason: expect.stringContaining("Avaliação subjetiva") });
   });
 
   it("refuses two constraints on the same criterion", () => {
