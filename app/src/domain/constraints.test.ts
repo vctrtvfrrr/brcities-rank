@@ -2,7 +2,16 @@ import { describe, expect, it } from "vitest";
 import { addConstraint, constraintOptions, editConstraint, removeConstraint, toggleConstraint } from "./constraints";
 import { datasetWithCities, fixtureDataset } from "./fixture-dataset";
 import { rank } from "./rank";
-import { addSubjective, createInitialSession, setReference, toggleCategory, type Session } from "./session";
+import {
+  activateEvaluator,
+  addEvaluator,
+  addSubjective,
+  createInitialSession,
+  setGrade,
+  setReference,
+  toggleCategory,
+  type Session,
+} from "./session";
 
 const initial = createInitialSession(fixtureDataset);
 
@@ -281,6 +290,86 @@ describe("Corte", () => {
       const off = toggleConstraint(checked, "subjective");
       expect(off.constraints[0]).toEqual({ criterion: "subjective", on: false, categories: ["subjective-2"] });
       expect(toggleConstraint(off, "subjective")).toEqual(checked);
+    });
+  });
+
+  describe("Avaliação subjetiva as Corte", () => {
+    const SAO_PAULO = "3550308";
+    const CURITIBA = "4106902";
+    const twoSubjectives = (s: Session) => addSubjective(addSubjective(s));
+    const requiring = (...categories: string[]) =>
+      withConstraints(twoSubjectives, add("subjective"), edit("subjective", { categories }));
+    const graded =
+      (category: string, ...codes: string[]) =>
+      (s: Session) =>
+        codes.reduce((session, code) => setGrade(session, category, code, 4), s);
+    const asSecondEvaluator = (step: (s: Session) => Session) => (s: Session) => {
+      const second = addEvaluator(s);
+      return activateEvaluator(step(second), s.activeEvaluatorId);
+    };
+    const then = (session: Session, ...steps: ((s: Session) => Session)[]) =>
+      steps.reduce((s, step) => step(s), session);
+
+    it("cuts every city without a grade in a checked category, even with Peso 0", () => {
+      const session = requiring("subjective-1");
+      expect(session.evaluators[0].weights["subjective-1"]).toBe(0);
+      expect(candidateNames(session)).toEqual([]);
+    });
+
+    it("lets a city pass once it has a grade in every checked category", () => {
+      const session = then(
+        requiring("subjective-1", "subjective-2"),
+        graded("subjective-1", SAO_PAULO, CURITIBA),
+        graded("subjective-2", SAO_PAULO),
+      );
+      expect(candidateNames(session)).toEqual(["São Paulo"]);
+    });
+
+    it("accepts a grade from any evaluator", () => {
+      const session = then(requiring("subjective-1"), asSecondEvaluator(graded("subjective-1", CURITIBA)));
+      expect(session.activeEvaluatorId).toBe("evaluator-1");
+      expect(candidateNames(session)).toEqual(["Curitiba"]);
+    });
+
+    it("cuts the city again when its only grade is removed", () => {
+      const once = then(requiring("subjective-1"), graded("subjective-1", CURITIBA));
+      expect(candidateNames(graded("subjective-1", CURITIBA)(once))).toEqual([]);
+    });
+
+    it("ignores a checked category while it is off, and requires it again when it is back on", () => {
+      const off = toggleCategory(requiring("subjective-1"), "subjective-1");
+      expect(candidateNames(off)).toHaveLength(6);
+      expect(candidateNames(toggleCategory(off, "subjective-1"))).toEqual([]);
+    });
+
+    it("cuts no city while off, but still counts the cities it cuts", () => {
+      const session = toggleConstraint(then(requiring("subjective-1"), graded("subjective-1", CURITIBA)), "subjective");
+      const result = rank(fixtureDataset, session);
+      expect(result.candidates).toHaveLength(6);
+      expect(result.cutCounts.subjective).toBe(5);
+    });
+
+    it("is listed among the failed constraints of each city it cuts", () => {
+      const session = then(requiring("subjective-1"), graded("subjective-1", CURITIBA), add("hospital_geral"));
+      const failed = Object.fromEntries(rank(fixtureDataset, session).cut.map((c) => [c.name, c.failedConstraints]));
+      expect(failed["Recife"]).toEqual(["subjective", "hospital_geral"]);
+      expect(failed["São Paulo"]).toEqual(["subjective"]);
+      expect(failed).not.toHaveProperty("Curitiba");
+    });
+
+    it("cuts together with the Pontuação mínima, whatever their order", () => {
+      const a = then(requiring("subjective-1"), graded("subjective-1", CURITIBA, SAO_PAULO), add("score"));
+      const b = then(
+        withConstraints(
+          twoSubjectives,
+          add("score"),
+          add("subjective"),
+          edit("subjective", { categories: ["subjective-1"] }),
+        ),
+        graded("subjective-1", CURITIBA, SAO_PAULO),
+      );
+      expect(candidateNames(a)).toEqual(["Curitiba", "São Paulo"]);
+      expect(candidateNames(b)).toEqual(candidateNames(a));
     });
   });
 

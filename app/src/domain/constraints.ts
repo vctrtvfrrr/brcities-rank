@@ -179,8 +179,22 @@ function roundedAsShown(score: number): number {
 
 export type CityPasser = (index: number) => boolean;
 
+type SubjectiveConstraint = Extract<Constraint, { categories: string[] }>;
+
+export function ungradedRequired(session: Session, constraint: SubjectiveConstraint, code: string) {
+  return session.categories.flatMap((category) =>
+    category.kind === "subjective" &&
+    category.on &&
+    constraint.categories.includes(category.id) &&
+    !session.evaluators.some((evaluator) => evaluator.grades[category.id]?.[code] !== undefined)
+      ? [{ id: category.id, name: category.name }]
+      : [],
+  );
+}
+
 export function passesConstraint(
   dataset: Dataset,
+  session: Session,
   constraint: Constraint,
   scoreOf: (index: number) => number | null,
 ): CityPasser {
@@ -196,7 +210,9 @@ export function passesConstraint(
       return atLeast === null || score === null || roundedAsShown(score) >= atLeast;
     };
   }
-  if ("categories" in constraint) return () => true;
+  if ("categories" in constraint) {
+    return (i) => ungradedRequired(session, constraint, colunas.codigo_ibge[i]).length === 0;
+  }
   if ("states" in constraint) {
     const states = new Set(constraint.states);
     return (i) => states.has(colunas.uf[i]);

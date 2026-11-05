@@ -280,6 +280,28 @@ describe("Referência Candidatas", () => {
     expect(result.candidates.map((c) => c.name)).toEqual(["Cidade 6"]);
   });
 
+  it("leaves the Avaliação subjetiva out of the group, so giving or removing a grade never moves the Régua", () => {
+    const base = withOn(limited("rain", { min: 5 }, addSubjective(createInitialSession(tenths))), "Segurança");
+    const requiring = editConstraint(addConstraint(tenths, base, "subjective"), "subjective", {
+      categories: ["subjective-1"],
+    });
+    const graded = setGrade(setGrade(requiring, "subjective-1", "7", 3), "subjective-1", "11", 5);
+    const objective = (session: Session) =>
+      Object.fromEntries(
+        [...rank(tenths, session).candidates, ...rank(tenths, session).cut].map((city) => [
+          city.name,
+          "criterionScores" in city ? city.criterionScores : city.scores.criterionScores,
+        ]),
+      );
+
+    expect(rank(tenths, graded).candidates.map((c) => c.name)).toEqual(["Cidade 7", "Cidade 11"]);
+    expect(rank(tenths, graded).rulers).toEqual(rank(tenths, base).rulers);
+    expect(objective(graded)).toEqual(objective(base));
+    const ungraded = setGrade(graded, "subjective-1", "7", 3);
+    expect(rank(tenths, ungraded).candidates.map((c) => c.name)).toEqual(["Cidade 11"]);
+    expect(rank(tenths, ungraded).rulers).toEqual(rank(tenths, base).rulers);
+  });
+
   it("does not change the Pontuação of the remaining Candidatas when the Pontuação mínima is turned on", () => {
     const base = withOn(limited("rain", { min: 5 }, createInitialSession(tenths)), "Segurança");
     const strict = editConstraint(addConstraint(tenths, base, "score"), "score", { atLeast: 50 });

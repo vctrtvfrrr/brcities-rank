@@ -1,4 +1,10 @@
-import { numericLimits, passesConstraint, SCORE_CRITERION, type NumericLimits } from "./constraints";
+import {
+  numericLimits,
+  passesConstraint,
+  SCORE_CRITERION,
+  SUBJECTIVE_CRITERION,
+  type NumericLimits,
+} from "./constraints";
 import type { CatalogEntry, Dataset } from "./dataset";
 import type { Session } from "./session";
 
@@ -49,7 +55,7 @@ export function rank(dataset: Dataset, session: Session): RankResult {
   const checks = session.constraints.map((constraint) => ({
     criterion: constraint.criterion,
     on: constraint.on,
-    passes: passesConstraint(dataset, constraint, (index) => scoring.cities[index].score),
+    passes: passesConstraint(dataset, session, constraint, (index) => scoring.cities[index].score),
   }));
   const cutCounts = Object.fromEntries(checks.map((check) => [check.criterion, 0]));
   const candidates: Candidate[] = [];
@@ -140,11 +146,13 @@ type Scoring = {
 
 const noScore = () => null;
 
+const OUTSIDE_REFERENCE_GROUP = [SCORE_CRITERION, SUBJECTIVE_CRITERION];
+
 function referenceIndexesOf(dataset: Dataset, session: Session, indexes: number[]): number[] {
   if (session.reference === "brazil") return indexes;
   const passesGroupConstraints = session.constraints
-    .filter((constraint) => constraint.on && constraint.criterion !== SCORE_CRITERION)
-    .map((constraint) => passesConstraint(dataset, constraint, noScore));
+    .filter((constraint) => constraint.on && !OUTSIDE_REFERENCE_GROUP.includes(constraint.criterion))
+    .map((constraint) => passesConstraint(dataset, session, constraint, noScore));
   return indexes.filter((index) => passesGroupConstraints.every((passes) => passes(index)));
 }
 
