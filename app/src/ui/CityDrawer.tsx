@@ -86,7 +86,11 @@ function Standing({ dataset, detail }: { dataset: Dataset; detail: CityDetail })
         <p className="small">Não passa em:</p>
         <ul className="failed">
           {standing.failed.map((constraint) => (
-            <li key={constraint.criterion}>{describeConstraint(dataset, constraint)}</li>
+            <li key={constraint.criterion}>
+              {describeConstraint(dataset, constraint)}
+              {"categories" in constraint &&
+                `: falta nota em ${standing.ungraded.map((category) => category.name).join(", ")}`}
+            </li>
           ))}
         </ul>
       </div>

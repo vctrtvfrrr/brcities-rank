@@ -1,5 +1,5 @@
 import type { CatalogEntry, Dataset } from "./dataset";
-import { SCORE_CRITERION } from "./constraints";
+import { SCORE_CRITERION, ungradedRequired } from "./constraints";
 import type { Candidate, CityScores, CutCity, RankResult } from "./rank";
 import { gradeOf, type Constraint, type Grade, type Session } from "./session";
 import { voltagePairs, VOLTAGE_CRITERION } from "./voltage";
@@ -7,7 +7,7 @@ import { voltagePairs, VOLTAGE_CRITERION } from "./voltage";
 export type Standing =
   | { kind: "ranked"; position: number; of: number; score: number }
   | { kind: "unscored" }
-  | { kind: "cut"; failed: Constraint[]; score: number | null };
+  | { kind: "cut"; failed: Constraint[]; score: number | null; ungraded: { id: string; name: string }[] };
 
 export type CriterionDetail = {
   key: string;
@@ -143,10 +143,12 @@ function standingOf(
     return { kind: "ranked", position: candidate.position, of: result.candidates.length, score: candidate.score };
   }
   const failedKeys = new Set(cutCity?.failedConstraints);
+  const failed = session.constraints.filter((c) => failedKeys.has(c.criterion));
   return {
     kind: "cut",
-    failed: session.constraints.filter((c) => failedKeys.has(c.criterion)),
+    failed,
     score: scoresShownWhenCut(cutCity)?.score ?? null,
+    ungraded: failed.flatMap((c) => ("categories" in c && cutCity ? ungradedRequired(session, c, cutCity.code) : [])),
   };
 }
 
