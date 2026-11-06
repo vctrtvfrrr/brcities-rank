@@ -316,6 +316,12 @@ describe("Corte", () => {
       expect(candidateNames(session)).toEqual([]);
     });
 
+    it("cuts nobody when the Session has no subjective category", () => {
+      const result = rank(fixtureDataset, withConstraints(add("subjective")));
+      expect(result.candidates).toHaveLength(6);
+      expect(result.cutCounts.subjective).toBe(0);
+    });
+
     it("lets a city pass once it has a grade in every checked category", () => {
       const session = then(
         requiring("subjective-1", "subjective-2"),
