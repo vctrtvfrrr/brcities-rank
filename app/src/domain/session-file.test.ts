@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addConstraint, editConstraint } from "./constraints";
+import { addConstraint, editConstraint, toggleConstraint } from "./constraints";
 import { fixtureDataset } from "./fixture-dataset";
 import {
   addEvaluator,
@@ -45,6 +45,23 @@ describe("serializeSession and parseSession", () => {
     const session = richSession();
     const result = parseSession(fixtureDataset, serializeSession(session));
     expect(result).toEqual({ ok: true, session });
+  });
+
+  it("round-trips an Avaliação subjetiva switched off with its checked categories", () => {
+    let session = addSubjective(addSubjective(addSubjective(createInitialSession(fixtureDataset))));
+    session = addConstraint(fixtureDataset, session, "subjective");
+    session = editConstraint(session, "subjective", { categories: ["subjective-3", "subjective-1"] });
+    session = toggleConstraint(session, "subjective");
+    const result = parseSession(fixtureDataset, serializeSession(session));
+    expect(result).toEqual({ ok: true, session });
+    expect(session.constraints).toEqual([
+      { criterion: "subjective", on: false, categories: ["subjective-1", "subjective-3"] },
+    ]);
+  });
+
+  it("round-trips an Avaliação subjetiva with no category checked", () => {
+    const session = addConstraint(fixtureDataset, createInitialSession(fixtureDataset), "subjective");
+    expect(parseSession(fixtureDataset, serializeSession(session))).toEqual({ ok: true, session });
   });
 
   it("round-trips the initial Session", () => {
