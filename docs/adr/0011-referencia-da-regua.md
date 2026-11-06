@@ -14,7 +14,9 @@ Para não voltar à circularidade que o ADR 0007 evitava, o grupo da Referência
 ## Consequences
 
 - A Sessão ganha a Referência; Sessões e links sem ela abrem com Candidatas, então as notas, as Faixas e as posições delas mudam.
-- Na Referência Candidatas, a nota de uma cidade muda quando outras entram ou saem do grupo, e mexer em qualquer Restrição, menos a Pontuação mínima, pode mudar a Régua.
+- Na Referência Candidatas, a nota de uma cidade muda quando outras entram ou saem do grupo, e mexer em qualquer Restrição, menos a Pontuação mínima e a Avaliação subjetiva, pode mudar a Régua.
 - Num Critério sem valor em nenhuma cidade do grupo, a Régua usa o Brasil, em vez de zerar todo mundo.
 - A cidade cortada é medida pela mesma Régua das Candidatas.
 - O toggle fica junto das categorias e dos Pesos, porque muda as notas, não o Corte.
+
+> A Avaliação subjetiva, que veio depois, também fica fora do grupo da Referência Candidatas: dar ou tirar uma nota subjetiva nunca muda a Régua, só decide se a cidade passa no Corte.
