@@ -19,6 +19,10 @@ export type Category =
   | { id: string; kind: "objective"; on: boolean }
   | { id: string; kind: "subjective"; name: string; on: boolean };
 
+export type SubjectiveCategory = Extract<Category, { kind: "subjective" }>;
+
+export const isSubjective = (category: Category): category is SubjectiveCategory => category.kind === "subjective";
+
 export type Grade = 1 | 2 | 3 | 4 | 5;
 
 export const GRADES: Grade[] = [1, 2, 3, 4, 5];

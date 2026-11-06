@@ -1,6 +1,6 @@
 import type { Dataset } from "./dataset";
 import { inStateOrder, STATES } from "./regions";
-import type { Constraint, Session } from "./session";
+import { isSubjective, type Constraint, type Session } from "./session";
 import { inTerrainOrder, TERRAIN_CLASSES, TERRAIN_CRITERION } from "./terrain";
 import { outletVoltage, voltagePairs, VOLTAGES, VOLTAGE_CRITERION, type Voltage } from "./voltage";
 
@@ -141,7 +141,7 @@ export function editConstraint(session: Session, criterion: string, edit: Constr
 }
 
 function inSubjectiveOrder(session: Session, ids: string[]): string[] {
-  return session.categories.filter((c) => c.kind === "subjective" && ids.includes(c.id)).map((c) => c.id);
+  return session.categories.filter((c) => isSubjective(c) && ids.includes(c.id)).map((c) => c.id);
 }
 
 export function toggleConstraint(session: Session, criterion: string): Session {

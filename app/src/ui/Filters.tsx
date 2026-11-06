@@ -12,7 +12,7 @@ import {
 } from "../domain/constraints";
 import type { CatalogEntry, Dataset } from "../domain/dataset";
 import { REGIONS, regionSelection, toggleRegion } from "../domain/regions";
-import type { Category, Constraint, Session } from "../domain/session";
+import { isSubjective, type Constraint, type Session, type SubjectiveCategory } from "../domain/session";
 import { TERRAIN_CLASSES, TERRAIN_CRITERION } from "../domain/terrain";
 import { VOLTAGES, type Voltage } from "../domain/voltage";
 import { Tooltip } from "./Tooltip";
@@ -80,10 +80,6 @@ function constraintLabels(dataset: Dataset): Record<string, string> {
   labels.subjective = "Avaliação subjetiva";
   return labels;
 }
-
-type SubjectiveCategory = Extract<Category, { kind: "subjective" }>;
-
-const isSubjective = (category: Category): category is SubjectiveCategory => category.kind === "subjective";
 
 function ConstraintCard({
   dataset,

@@ -6,6 +6,7 @@ import { VOLTAGES, VOLTAGE_CRITERION } from "./voltage";
 import {
   createInitialSession,
   MAX_WEIGHT,
+  isSubjective,
   REFERENCES,
   SESSION_VERSION,
   type Category,
@@ -57,7 +58,7 @@ function parseConstraints(dataset: Dataset, raw: unknown, categories: Category[]
   const kinds = new Map(
     constraintOptions(dataset, { constraints: [] } as unknown as Session).map((o) => [o.criterion, o.kind]),
   );
-  const subjectives = categories.filter((c) => c.kind === "subjective").map((c) => c.id);
+  const subjectives = categories.filter(isSubjective).map((c) => c.id);
   const seen = new Set<string>();
   return arrayOf(raw, "As restrições").map((item) => {
     const entry = objectOf(item, "Cada restrição");
