@@ -1,13 +1,20 @@
 import type { CatalogEntry, Dataset } from "./dataset";
-import { SCORE_CRITERION, ungradedRequired } from "./constraints";
+import { isSubjectiveConstraint, SCORE_CRITERION } from "./constraints";
 import type { Candidate, CityScores, CutCity, RankResult } from "./rank";
-import { gradeOf, type Constraint, type Grade, type Session } from "./session";
+import {
+  gradeOf,
+  missingSubjectiveGrades,
+  type Constraint,
+  type Grade,
+  type Session,
+  type SubjectiveCategory,
+} from "./session";
 import { voltagePairs, VOLTAGE_CRITERION } from "./voltage";
 
 export type Standing =
   | { kind: "ranked"; position: number; of: number; score: number }
   | { kind: "unscored" }
-  | { kind: "cut"; failed: Constraint[]; score: number | null; ungraded: { id: string; name: string }[] };
+  | { kind: "cut"; failed: Constraint[]; score: number | null; missingGrades: SubjectiveCategory[] };
 
 export type CriterionDetail = {
   key: string;
@@ -148,7 +155,11 @@ function standingOf(
     kind: "cut",
     failed,
     score: scoresShownWhenCut(cutCity)?.score ?? null,
-    ungraded: failed.flatMap((c) => ("categories" in c && cutCity ? ungradedRequired(session, c, cutCity.code) : [])),
+    missingGrades: cutCity
+      ? failed
+          .filter(isSubjectiveConstraint)
+          .flatMap((c) => missingSubjectiveGrades(session, c.categories, cutCity.code))
+      : [],
   };
 }
 

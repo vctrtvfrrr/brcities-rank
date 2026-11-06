@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { CategoryDetail, CityDetail, CriterionDetail, SubjectiveDetail } from "../domain/city-detail";
+import { isSubjectiveConstraint } from "../domain/constraints";
 import type { Dataset } from "../domain/dataset";
 import { GRADES, type Grade } from "../domain/session";
 import { ScoreBadge } from "./ScoreBadge";
@@ -88,8 +89,8 @@ function Standing({ dataset, detail }: { dataset: Dataset; detail: CityDetail })
           {standing.failed.map((constraint) => (
             <li key={constraint.criterion}>
               {describeConstraint(dataset, constraint)}
-              {"categories" in constraint &&
-                `: falta nota em ${standing.ungraded.map((category) => category.name).join(", ")}`}
+              {isSubjectiveConstraint(constraint) &&
+                `: falta nota em ${standing.missingGrades.map((category) => category.name).join(", ")}`}
             </li>
           ))}
         </ul>

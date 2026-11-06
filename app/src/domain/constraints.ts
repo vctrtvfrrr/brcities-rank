@@ -1,6 +1,6 @@
 import type { Dataset } from "./dataset";
 import { inStateOrder, STATES } from "./regions";
-import { isSubjective, type Constraint, type Session } from "./session";
+import { isSubjective, missingSubjectiveGrades, type Constraint, type Session } from "./session";
 import { inTerrainOrder, TERRAIN_CLASSES, TERRAIN_CRITERION } from "./terrain";
 import { outletVoltage, voltagePairs, VOLTAGES, VOLTAGE_CRITERION, type Voltage } from "./voltage";
 
@@ -179,18 +179,10 @@ function roundedAsShown(score: number): number {
 
 export type CityPasser = (index: number) => boolean;
 
-type SubjectiveConstraint = Extract<Constraint, { categories: string[] }>;
+export type SubjectiveConstraint = Extract<Constraint, { categories: string[] }>;
 
-export function ungradedRequired(session: Session, constraint: SubjectiveConstraint, code: string) {
-  return session.categories.flatMap((category) =>
-    category.kind === "subjective" &&
-    category.on &&
-    constraint.categories.includes(category.id) &&
-    !session.evaluators.some((evaluator) => evaluator.grades[category.id]?.[code] !== undefined)
-      ? [{ id: category.id, name: category.name }]
-      : [],
-  );
-}
+export const isSubjectiveConstraint = (constraint: Constraint): constraint is SubjectiveConstraint =>
+  constraint.criterion === SUBJECTIVE_CRITERION;
 
 export function passesConstraint(
   dataset: Dataset,
@@ -211,7 +203,7 @@ export function passesConstraint(
     };
   }
   if ("categories" in constraint) {
-    return (i) => ungradedRequired(session, constraint, colunas.codigo_ibge[i]).length === 0;
+    return (i) => missingSubjectiveGrades(session, constraint.categories, colunas.codigo_ibge[i]).length === 0;
   }
   if ("states" in constraint) {
     const states = new Set(constraint.states);

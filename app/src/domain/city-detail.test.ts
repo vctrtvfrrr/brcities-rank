@@ -155,9 +155,9 @@ describe("cityDetail of a cut city", () => {
     it("lists the checked categories that are on and still lack a grade", () => {
       const session = setGrade(requiring, "subjective-2", "3550308", 4);
       const detail = open(fixtureDataset, session)("3550308")!;
-      expect(detail.standing).toMatchObject({ kind: "cut", ungraded: [{ id: "subjective-1", name: "Igreja" }] });
+      expect(detail.standing).toMatchObject({ kind: "cut", missingGrades: [{ id: "subjective-1", name: "Igreja" }] });
       expect(open(fixtureDataset, session)(RIO)!.standing).toMatchObject({
-        ungraded: [
+        missingGrades: [
           { id: "subjective-1", name: "Igreja" },
           { id: "subjective-2", name: "Praia" },
         ],
@@ -169,13 +169,13 @@ describe("cityDetail of a cut city", () => {
       session = editConstraint(addConstraint(fixtureDataset, session, "crime"), "crime", { max: 15 });
       const detail = open(fixtureDataset, session)(RIO)!;
       expect(detail.standing.kind === "cut" && detail.standing.failed.map((c) => c.criterion)).toEqual(["crime"]);
-      expect(detail.standing).toMatchObject({ ungraded: [] });
+      expect(detail.standing).toMatchObject({ missingGrades: [] });
     });
 
     it("lists nothing while the Avaliação subjetiva is off", () => {
       let session = editConstraint(addConstraint(fixtureDataset, requiring, "crime"), "crime", { max: 15 });
       session = toggleConstraint(session, "subjective");
-      expect(open(fixtureDataset, session)(RIO)!.standing).toMatchObject({ kind: "cut", ungraded: [] });
+      expect(open(fixtureDataset, session)(RIO)!.standing).toMatchObject({ kind: "cut", missingGrades: [] });
     });
   });
 });

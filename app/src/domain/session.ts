@@ -176,6 +176,17 @@ export function gradeOf(session: Session, id: string, code: string, evaluatorId 
   return session.evaluators.find((e) => e.id === evaluatorId)?.grades[id]?.[code];
 }
 
+export function missingSubjectiveGrades(session: Session, required: string[], code: string): SubjectiveCategory[] {
+  return session.categories
+    .filter(isSubjective)
+    .filter(
+      (category) =>
+        category.on &&
+        required.includes(category.id) &&
+        !session.evaluators.some((evaluator) => evaluator.grades[category.id]?.[code] !== undefined),
+    );
+}
+
 export function setGrade(session: Session, id: string, code: string, grade: Grade): Session {
   return updateActiveEvaluator(session, (evaluator) => {
     const { [code]: current, ...others } = evaluator.grades[id] ?? {};
